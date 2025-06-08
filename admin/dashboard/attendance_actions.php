@@ -169,7 +169,7 @@ if (isset($_GET['stats'])) {
     $conditionStr = implode(" AND ", $conditions);
     
     // Calculate statistics for each status
-    $statuses = ['present', 'absent', 'late', 'holiday'];
+    $statuses = ['present', 'absent', 'holiday'];
     $stats = [];
     
     foreach ($statuses as $status) {
@@ -593,7 +593,7 @@ if (isset($_GET['get_class_stats'])) {
             $classId = $class['class_id'];
             
             // Get attendance stats for this class
-            $statuses = ['present', 'absent', 'late', 'holiday'];
+            $statuses = ['present', 'absent', 'holiday'];
             $stats = [];
             $percentages = [];
             $total = 0;
@@ -662,7 +662,7 @@ if (isset($_GET['get_section_stats']) && isset($_GET['class_id'])) {
             $sectionId = $section['section_id'];
             
             // Get attendance stats for this section
-            $statuses = ['present', 'absent', 'late', 'holiday'];
+            $statuses = ['present', 'absent', 'holiday'];
             $stats = [];
             $percentages = [];
             $total = 0;
@@ -744,13 +744,11 @@ if (isset($_GET['get_students_by_section']) && isset($_GET['section_id'])) {
                 'percentages' => [
                     'present' => 0,
                     'absent' => 0,
-                    'late' => 0,
                     'holiday' => 0
                 ],
                 'counts' => [
                     'present' => 0,
                     'absent' => 0,
-                    'late' => 0,
                     'holiday' => 0
                 ],
                 'total_days' => 0
@@ -793,18 +791,16 @@ if (isset($_GET['get_students_by_section']) && isset($_GET['section_id'])) {
                 // Use sample data if no records found
                 $attendanceData = [
                     'percentages' => [
-                        'present' => 91.9,
-                        'absent' => 4.4,
-                        'late' => 3.7,
+                        'present' => 0,
+                        'absent' => 0,
                         'holiday' => 0
                     ],
                     'counts' => [
-                        'present' => 10,
-                        'absent' => 1,
-                        'late' => 1,
+                        'present' => 0,
+                        'absent' => 0,
                         'holiday' => 0
                     ],
-                    'total_days' => 12
+                    'total_days' => 0
                 ];
             }
             
@@ -904,7 +900,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_attendance'])) {
             if (empty($studentId)) continue;
             
             // Validate status
-            if (!in_array($status, ['present', 'absent', 'late', 'holiday'])) {
+            if (!in_array($status, ['present', 'absent', 'holiday'])) {
                 $status = 'present'; // Default to present if invalid
             }
             
