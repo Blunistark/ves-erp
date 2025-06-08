@@ -1,658 +1,1044 @@
-<?php include 'sidebar.php'; ?>
+<?php 
+include 'sidebar.php'; 
+include 'con.php';
+
+// Check if user is logged in and is a teacher
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'teacher') {
+    header('Location: ../index.php');
+    exit();
+}
+
+$user_id = $_SESSION['user_id'];
+
+// Get teacher's assigned classes for notification targeting
+// This includes both class teacher assignments and subject teaching assignments
+$teacher_classes_sql = "
+    SELECT DISTINCT c.id, c.name as class_name, s.id as section_id, s.name as section_name,
+           CASE 
+               WHEN s.class_teacher_user_id = ? THEN 'Class Teacher'
+               ELSE 'Subject Teacher'
+           END as assignment_type
+    FROM classes c
+    JOIN sections s ON c.id = s.class_id
+    WHERE (
+        -- Classes where teacher is the class teacher
+        s.class_teacher_user_id = ?
+        OR 
+        -- Classes where teacher teaches subjects (from timetable)
+        EXISTS (
+            SELECT 1 FROM timetables t 
+            JOIN timetable_periods tp ON t.id = tp.timetable_id 
+            WHERE t.class_id = c.id 
+            AND t.section_id = s.id 
+            AND tp.teacher_id = ?
+            AND t.status = 'published'
+        )
+    )
+    ORDER BY c.name, s.name";
+$teacher_classes_stmt = mysqli_prepare($conn, $teacher_classes_sql);
+mysqli_stmt_bind_param($teacher_classes_stmt, "iii", $user_id, $user_id, $user_id);
+mysqli_stmt_execute($teacher_classes_stmt);
+$teacher_classes_result = mysqli_stmt_get_result($teacher_classes_stmt);
+
+$teacher_classes = [];
+while ($row = mysqli_fetch_assoc($teacher_classes_result)) {
+    $teacher_classes[] = $row;
+}
+
+// Get teacher permissions directly from database instead of API call
+$permissions = [
+    'can_create_notifications' => 1,
+    'can_target_all_school' => 0,
+    'can_target_other_classes' => 0,
+    'can_schedule_notifications' => 1,
+    'can_require_acknowledgment' => 1,
+    'max_priority_level' => 'important'
+];
+
+// Check if user has custom permissions in database
+$permissions_sql = "SELECT * FROM notification_permissions WHERE user_id = ? AND user_type = 'teacher'";
+$permissions_stmt = mysqli_prepare($conn, $permissions_sql);
+if ($permissions_stmt) {
+    mysqli_stmt_bind_param($permissions_stmt, "i", $user_id);
+    mysqli_stmt_execute($permissions_stmt);
+    $permissions_result = mysqli_stmt_get_result($permissions_stmt);
+    if ($custom_permissions = mysqli_fetch_assoc($permissions_result)) {
+        $permissions = array_merge($permissions, $custom_permissions);
+    }
+}
+?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Notifications & Announcements</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Notifications - Dashboard</title>
     
     <link rel="stylesheet" href="css/sidebar.css">
+    <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     
-    <link rel="stylesheet" href="css/sidebar.css">
-    <link rel="stylesheet" href="css/notifications.css">
+    <style>
+        .notification-dashboard {
+            padding: 2rem;
+            background-color: #f8fafc;
+            min-height: 100vh;
+        }
+        
+        .header-section {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-section h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        
+        .header-section p {
+            margin: 0.5rem 0 0 0;
+            opacity: 0.9;
+        }
+        
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #10b981;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: #6b7280;
+            font-weight: 600;
+        }
+        
+        .action-tabs {
+            display: flex;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .tab-button {
+            flex: 1;
+            padding: 1rem 2rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            color: #6b7280;
+            transition: all 0.3s ease;
+            border-radius: 12px;
+        }
+        
+        .tab-button.active {
+            background-color: #10b981;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-section {
+            margin-bottom: 2rem;
+        }
+        
+        .form-section h3 {
+            margin-bottom: 1rem;
+            color: #374151;
+            font-weight: 600;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .class-targeting {
+            background-color: #f0fdf4;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            border: 2px solid #bbf7d0;
+        }
+        
+        .class-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .class-option {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .class-option:hover {
+            border-color: #10b981;
+        }
+        
+        .class-option.selected {
+            border-color: #10b981;
+            background-color: #ecfdf5;
+        }
+        
+        .class-option input[type="checkbox"] {
+            margin-right: 1rem;
+        }
+        
+        .class-info {
+            flex: 1;
+        }
+        
+        .class-name {
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        .section-name {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        
+        .priority-selector {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .priority-option {
+            padding: 0.75rem 1.5rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            font-weight: 600;
+        }
+          .priority-option.normal {
+            border-color: #10b981;
+            color: #059669;
+        }
+        
+        .priority-option.important {
+            border-color: #f59e0b;
+            color: #d97706;
+        }
+        
+        .priority-option.urgent {
+            border-color: #ef4444;
+            color: #dc2626;
+        }
+        
+        .priority-option.selected {
+            background-color: currentColor;
+            color: white;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background-color: #10b981;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #059669;
+        }
+        
+        .btn-secondary {
+            background-color: #6b7280;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #4b5563;
+        }
+        
+        .notification-list {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .notification-item {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            transition: background-color 0.3s ease;
+        }
+        
+        .notification-item:hover {
+            background-color: #f9fafb;
+        }
+        
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+        
+        .notification-header {
+            display: flex;
+            justify-content: between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+        
+        .notification-title {
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 0.5rem;
+        }
+        
+        .notification-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        
+        .notification-content {
+            color: #374151;
+            line-height: 1.6;
+        }
+        
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        
+        .alert-success {
+            background-color: #ecfdf5;
+            color: #065f46;
+            border: 1px solid #bbf7d0;
+        }
+        
+        .alert-error {
+            background-color: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #6b7280;
+        }
+        
+        @media (max-width: 768px) {
+            .notification-dashboard {
+                padding: 1rem;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .class-selector {
+                grid-template-columns: 1fr;
+            }
+            
+            .priority-selector {
+                flex-direction: column;
+            }
+        }
+    </style>
 </head>
+
 <body>
-<div class="sidebar-overlay"></div>
-<button class="hamburger-btn" type="button" onclick="toggleSidebar()">
-    <svg xmlns="http://www.w3.org/2000/svg" class="hamburger-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" pointer-events="none">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-    </svg>
-</button>
+    <div class="notification-dashboard">
+        <!-- Header Section -->        <div class="header-section">
+            <h1>Teacher Notifications</h1>
+            <p>Communicate with your students and manage class announcements</p>
+        </div>
 
-<div class="dashboard-container">
-    <header class="dashboard-header">
-        <h1 class="header-title">Notifications & Announcements</h1>
-        <p class="header-subtitle">Create and manage important communications</p>
-    </header>
-
-    <main class="dashboard-content">
-        <!-- Main Card -->
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title">Announcements & Notifications</h2>
-                <div>
-                    <button class="btn btn-primary" id="createNewBtn">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="btn-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                        Create New
-                    </button>
-                </div>
+        <!-- Quick Stats -->
+        <div class="quick-stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalClassesCount"><?php echo count($teacher_classes); ?></div>
+                <div class="stat-label">Assigned Classes</div>
             </div>
-            <div class="card-body">
-                <div class="tabs">
-                    <div class="tab active" data-tab="all">All</div>
-                    <div class="tab" data-tab="sent">Sent</div>
-                    <div class="tab" data-tab="received">Received</div>
-                    <div class="tab" data-tab="drafts">Drafts</div>
-                </div>
-                
-                <!-- Search & Filters -->
-                <div class="search-container">
-                    <input type="text" placeholder="Search notifications..." class="search-input">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                </div>
-                
-                <div class="filters-container">
-                    <div class="filter">
-                        <select class="form-select">
-                            <option value="">All Recipients</option>
-                            <option value="students">Students</option>
-                            <option value="parents">Parents</option>
-                            <option value="teachers">Teachers</option>
-                            <option value="class">Specific Class</option>
-                        </select>
-                    </div>
-                    <div class="filter">
-                        <select class="form-select">
-                            <option value="">All Types</option>
-                            <option value="announcement">Announcements</option>
-                            <option value="reminder">Reminders</option>
-                            <option value="event">Events</option>
-                            <option value="notice">Notices</option>
-                        </select>
-                    </div>
-                    <div class="filter">
-                        <select class="form-select">
-                            <option value="">All Time</option>
-                            <option value="today">Today</option>
-                            <option value="week">This Week</option>
-                            <option value="month">This Month</option>
-                            <option value="older">Older</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <!-- All Tab Content -->
-                <div class="tab-content active" id="all-content">
-                    <div class="notification-list">
-                        <!-- Notification Item 1 (Urgent & Unread) -->
-                        <div class="notification-item urgent unread">
-                            <div class="notification-header">
-                                <h3 class="notification-title">Parent-Teacher Meeting Schedule</h3>
-                                <div class="notification-meta">
-                                    <span class="badge badge-urgent">Urgent</span>
-                                    <span class="notification-date">Today, 9:30 AM</span>
-                                </div>
-                            </div>
-                            <div class="notification-content">
-                                <p>The parent-teacher meeting schedule has been updated. Please make note of your assigned slots and ensure you are available for the meetings.</p>
-                            </div>
-                            <div class="notification-footer">
-                                <div class="notification-sender">
-                                    <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Sender" class="sender-avatar">
-                                    <span class="sender-name">Sarah Thompson, Principal</span>
-                                </div>
-                                <div class="notification-actions">
-                                    <button class="btn btn-secondary btn-sm">View</button>
-                                    <button class="btn btn-primary btn-sm">Mark Read</button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Notification Item 2 (Unread) -->
-                        <div class="notification-item unread">
-                            <div class="notification-header">
-                                <h3 class="notification-title">Staff Meeting - Math Department</h3>
-                                <div class="notification-meta">
-                                    <span class="badge badge-teachers">Teachers</span>
-                                    <span class="notification-date">Yesterday, 4:15 PM</span>
-                                </div>
-                            </div>
-                            <div class="notification-content">
-                                <p>There will be a Math Department staff meeting on Friday at 3:30 PM in the Conference Room. Please bring your curriculum plans for the next quarter.</p>
-                            </div>
-                            <div class="notification-footer">
-                                <div class="notification-sender">
-                                    <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Sender" class="sender-avatar">
-                                    <span class="sender-name">Robert Wilson, Department Head</span>
-                                </div>
-                                <div class="notification-actions">
-                                    <button class="btn btn-secondary btn-sm">View</button>
-                                    <button class="btn btn-primary btn-sm">Mark Read</button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Notification Item 3 (Read) -->
-                        <div class="notification-item">
-                            <div class="notification-header">
-                                <h3 class="notification-title">Annual Sports Day Announcement</h3>
-                                <div class="notification-meta">
-                                    <span class="badge badge-all">All</span>
-                                    <span class="notification-date">Mar 10, 2025</span>
-                                </div>
-                            </div>
-                            <div class="notification-content">
-                                <p>The annual sports day will be held on April 5, 2025. Please inform all students and help with the preparations. A detailed schedule will be shared next week.</p>
-                            </div>
-                            <div class="notification-footer">
-                                <div class="notification-sender">
-                                    <img src="https://randomuser.me/api/portraits/men/55.jpg" alt="Sender" class="sender-avatar">
-                                    <span class="sender-name">Michael Brown, Sports Coordinator</span>
-                                </div>
-                                <div class="notification-actions">
-                                    <button class="btn btn-secondary btn-sm">View</button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Notification Item 4 (Class Specific & Read) -->
-                        <div class="notification-item">
-                            <div class="notification-header">
-                                <h3 class="notification-title">Science Project Submission Extension</h3>
-                                <div class="notification-meta">
-                                    <span class="badge badge-class">Class 9B</span>
-                                    <span class="notification-date">Mar 8, 2025</span>
-                                </div>
-                            </div>
-                            <div class="notification-content">
-                                <p>The deadline for the science project submission has been extended to March 20, 2025. Please inform all students in Class 9B about this change.</p>
-                            </div>
-                            <div class="notification-footer">
-                                <div class="notification-sender">
-                                    <img src="https://randomuser.me/api/portraits/women/67.jpg" alt="Sender" class="sender-avatar">
-                                    <span class="sender-name">Jennifer Davis, Science Coordinator</span>
-                                </div>
-                                <div class="notification-actions">
-                                    <button class="btn btn-secondary btn-sm">View</button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Notification Item 5 (Created by you) -->
-                        <div class="notification-item">
-                            <div class="notification-header">
-                                <h3 class="notification-title">Math Quiz Postponed</h3>
-                                <div class="notification-meta">
-                                    <span class="badge badge-class">Class 8A</span>
-                                    <span class="notification-date">Mar 7, 2025</span>
-                                </div>
-                            </div>
-                            <div class="notification-content">
-                                <p>The Math quiz scheduled for March 9 has been postponed to March 14 due to the school event. Students should use this additional time to prepare well.</p>
-                            </div>
-                            <div class="notification-footer">
-                                <div class="notification-sender">
-                                    <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Sender" class="sender-avatar">
-                                    <span class="sender-name">You</span>
-                                </div>
-                                <div class="notification-actions">
-                                    <button class="btn btn-secondary btn-sm">View</button>
-                                    <button class="btn btn-secondary btn-sm">Edit</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Pagination -->
-                    <div class="pagination">
-                        <button class="page-button">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                            </svg>
-                        </button>
-                        <button class="page-button active">1</button>
-                        <button class="page-button">2</button>
-                        <button class="page-button">3</button>
-                        <span class="page-ellipsis">...</span>
-                        <button class="page-button">10</button>
-                        <button class="page-button">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Sent Tab Content -->
-                <div class="tab-content" id="sent-content">
-                    <div class="notification-list">
-                        <!-- Notification Item (Created by you) -->
-                        <div class="notification-item">
-                            <div class="notification-header">
-                                <h3 class="notification-title">Math Quiz Postponed</h3>
-                                <div class="notification-meta">
-                                    <span class="badge badge-class">Class 8A</span>
-                                    <span class="notification-date">Mar 7, 2025</span>
-                                </div>
-                            </div>
-                            <div class="notification-content">
-                                <p>The Math quiz scheduled for March 9 has been postponed to March 14 due to the school event. Students should use this additional time to prepare well.</p>
-                            </div>
-                            <div class="notification-footer">
-                                <div class="notification-sender">
-                                    <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Sender" class="sender-avatar">
-                                    <span class="sender-name">You</span>
-                                </div>
-                                <div class="notification-actions">
-                                    <button class="btn btn-secondary btn-sm">View</button>
-                                    <button class="btn btn-secondary btn-sm">Edit</button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Notification Item (Created by you) -->
-                        <div class="notification-item">
-                            <div class="notification-header">
-                                <h3 class="notification-title">Homework Submission Reminder</h3>
-                                <div class="notification-meta">
-                                    <span class="badge badge-class">Class 9B</span>
-                                    <span class="notification-date">Mar 5, 2025</span>
-                                </div>
-                            </div>
-                            <div class="notification-content">
-                                <p>This is a reminder that the science homework is due tomorrow. Please ensure all experiments are documented with proper observations and conclusions.</p>
-                            </div>
-                            <div class="notification-footer">
-                                <div class="notification-sender">
-                                    <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Sender" class="sender-avatar">
-                                    <span class="sender-name">You</span>
-                                </div>
-                                <div class="notification-actions">
-                                    <button class="btn btn-secondary btn-sm">View</button>
-                                    <button class="btn btn-secondary btn-sm">Edit</button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Notification Item (Created by you) -->
-                        <div class="notification-item">
-                            <div class="notification-header">
-                                <h3 class="notification-title">Parent Meeting Request</h3>
-                                <div class="notification-meta">
-                                    <span class="badge badge-parents">Parents</span>
-                                    <span class="notification-date">Feb 28, 2025</span>
-                                </div>
-                            </div>
-                            <div class="notification-content">
-                                <p>I would like to request a meeting with the parents of students who scored below 60% in the recent mathematics test to discuss strategies for improvement.</p>
-                            </div>
-                            <div class="notification-footer">
-                                <div class="notification-sender">
-                                    <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Sender" class="sender-avatar">
-                                    <span class="sender-name">You</span>
-                                </div>
-                                <div class="notification-actions">
-                                    <button class="btn btn-secondary btn-sm">View</button>
-                                    <button class="btn btn-secondary btn-sm">Edit</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Received Tab Content -->
-                <div class="tab-content" id="received-content">
-                    <div class="notification-list">
-                        <!-- Notification Item 1 (Urgent & Unread) -->
-                        <div class="notification-item urgent unread">
-                            <div class="notification-header">
-                                <h3 class="notification-title">Parent-Teacher Meeting Schedule</h3>
-                                <div class="notification-meta">
-                                    <span class="badge badge-urgent">Urgent</span>
-                                    <span class="notification-date">Today, 9:30 AM</span>
-                                </div>
-                            </div>
-                            <div class="notification-content">
-                                <p>The parent-teacher meeting schedule has been updated. Please make note of your assigned slots and ensure you are available for the meetings.</p>
-                            </div>
-                            <div class="notification-footer">
-                                <div class="notification-sender">
-                                    <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Sender" class="sender-avatar">
-                                    <span class="sender-name">Sarah Thompson, Principal</span>
-                                </div>
-                                <div class="notification-actions">
-                                    <button class="btn btn-secondary btn-sm">View</button>
-                                    <button class="btn btn-primary btn-sm">Mark Read</button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Notification Item 2 (Unread) -->
-                        <div class="notification-item unread">
-                            <div class="notification-header">
-                                <h3 class="notification-title">Staff Meeting - Math Department</h3>
-                                <div class="notification-meta">
-                                    <span class="badge badge-teachers">Teachers</span>
-                                    <span class="notification-date">Yesterday, 4:15 PM</span>
-                                </div>
-                            </div>
-                            <div class="notification-content">
-                                <p>There will be a Math Department staff meeting on Friday at 3:30 PM in the Conference Room. Please bring your curriculum plans for the next quarter.</p>
-                            </div>
-                            <div class="notification-footer">
-                                <div class="notification-sender">
-                                    <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Sender" class="sender-avatar">
-                                    <span class="sender-name">Robert Wilson, Department Head</span>
-                                </div>
-                                <div class="notification-actions">
-                                    <button class="btn btn-secondary btn-sm">View</button>
-                                    <button class="btn btn-primary btn-sm">Mark Read</button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Notification Item 3 (Read) -->
-                        <div class="notification-item">
-                            <div class="notification-header">
-                                <h3 class="notification-title">Annual Sports Day Announcement</h3>
-                                <div class="notification-meta">
-                                    <span class="badge badge-all">All</span>
-                                    <span class="notification-date">Mar 10, 2025</span>
-                                </div>
-                            </div>
-                            <div class="notification-content">
-                                <p>The annual sports day will be held on April 5, 2025. Please inform all students and help with the preparations. A detailed schedule will be shared next week.</p>
-                            </div>
-                            <div class="notification-footer">
-                                <div class="notification-sender">
-                                    <img src="https://randomuser.me/api/portraits/men/55.jpg" alt="Sender" class="sender-avatar">
-                                    <span class="sender-name">Michael Brown, Sports Coordinator</span>
-                                </div>
-                                <div class="notification-actions">
-                                    <button class="btn btn-secondary btn-sm">View</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Drafts Tab Content -->
-                <div class="tab-content" id="drafts-content">
-                    <div class="notification-list">
-                        <!-- Notification Item (Draft) -->
-                        <div class="notification-item">
-                            <div class="notification-header">
-                                <h3 class="notification-title">Field Trip Permission Forms</h3>
-                                <div class="notification-meta">
-                                    <span class="badge badge-class">Class 8A</span>
-                                    <span class="notification-date">Draft</span>
-                                </div>
-                            </div>
-                            <div class="notification-content">
-                                <p>Please remind students to submit their field trip permission forms by March 20. The trip to the Science Museum is scheduled for March 25.</p>
-                            </div>
-                            <div class="notification-footer">
-                                <div class="notification-sender">
-                                    <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Sender" class="sender-avatar">
-                                    <span class="sender-name">You (Draft)</span>
-                                </div>
-                                <div class="notification-actions">
-                                    <button class="btn btn-secondary btn-sm">Edit</button>
-                                    <button class="btn btn-primary btn-sm">Send</button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Empty State for when there are no drafts -->
-                        <div class="empty-state" style="display: none;">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                            <h3 class="empty-title">No Draft Notifications</h3>
-                            <p class="empty-description">You don't have any draft notifications. Create a new notification to get started.</p>
-                            <button class="btn btn-primary">Create New</button>
-                        </div>
-                    </div>
-                </div>
+            <div class="stat-card">
+                <div class="stat-number" id="sentNotificationsCount">0</div>
+                <div class="stat-label">Sent This Week</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="unreadNotificationsCount">0</div>
+                <div class="stat-label">Unread Messages</div>
             </div>
         </div>
-        
-        <!-- Create New Notification Form -->
-        <div class="card" id="createNotificationForm" style="display: none;">
-            <div class="card-header">
-                <h2 class="card-title">Create New Notification</h2>
-            </div>
-            <div class="card-body">
-                <form>
+
+        <!-- Action Tabs -->
+        <div class="action-tabs">
+            <button class="tab-button active" onclick="switchTab('create')">Create Notification</button>
+            <button class="tab-button" onclick="switchTab('sent')">Sent Notifications</button>
+            <button class="tab-button" onclick="switchTab('received')">Received Messages</button>
+        </div>
+
+        <!-- Create Notification Tab -->
+        <div id="create-tab" class="tab-content active">
+            <div id="notification-alert"></div>
+            
+            <form id="create-notification-form">
+                <div class="form-section">
+                    <h3>Notification Details</h3>
+                    
                     <div class="form-group">
-                        <label for="notificationTitle" class="form-label">Title*</label>
-                        <input type="text" id="notificationTitle" class="form-input" placeholder="Enter notification title" required>
+                        <label for="notification-title">Title <span style="color: red;">*</span></label>
+                        <input type="text" id="notification-title" name="title" class="form-control" 
+                               placeholder="Enter notification title" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="notificationType" class="form-label">Type*</label>
-                        <select id="notificationType" class="form-select" required>
-                            <option value="">Select notification type</option>
-                            <option value="announcement">Announcement</option>
-                            <option value="reminder">Reminder</option>
-                            <option value="event">Event</option>
-                            <option value="notice">Notice</option>
-                        </select>
+                        <label for="notification-message">Message <span style="color: red;">*</span></label>
+                        <textarea id="notification-message" name="message" class="form-control" 
+                                  rows="4" placeholder="Enter your message here" required></textarea>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="notificationContent" class="form-label">Content*</label>
-                        <textarea id="notificationContent" class="form-textarea" placeholder="Enter notification content" required></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Recipients*</label>
-                        <select id="recipientType" class="form-select" required>
-                            <option value="">Select recipient type</option>
-                            <option value="all">All (School-wide)</option>
-                            <option value="teachers">All Teachers</option>
-                            <option value="students">All Students</option>
-                            <option value="parents">All Parents</option>
-                            <option value="class">Specific Class</option>
-                            <option value="custom">Custom Recipients</option>
-                        </select>
-                        
-                        <div id="classSelector" style="display: none; margin-top: 1rem;">
-                            <select class="form-select">
-                                <option value="">Select class</option>
-                                <option value="8a">Class 8A - Mathematics</option>
-                                <option value="9b">Class 9B - Science</option>
-                                <option value="10c">Class 10C - Science</option>
-                                <option value="7d">Class 7D - Social Studies</option>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="notification-type">Type</label>
+                            <select id="notification-type" name="type" class="form-control">
+                                <option value="announcement">General Announcement</option>
+                                <option value="assignment">Assignment Notice</option>
+                                <option value="reminder">Reminder</option>
+                                <option value="info">Information</option>
                             </select>
                         </div>
                         
-                        <div id="customRecipients" style="display: none; margin-top: 1rem;">
-                            <input type="text" class="form-input" placeholder="Search users to add...">
-                            <div class="recipients-list">
-                                <div class="recipient-item">
-                                    Class 8A Students
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="remove-recipient" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
+                        <div class="form-group">
+                            <label>Priority</label>                            <div class="priority-selector">
+                                <div class="priority-option normal selected" data-priority="normal">
+                                    <span>Normal</span>
                                 </div>
-                                <div class="recipient-item">
-                                    John Smith
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="remove-recipient" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
+                                <div class="priority-option important" data-priority="important">
+                                    <span>Important</span>
+                                </div>
+                                <?php if ($is_headmaster): ?>
+                                <div class="priority-option urgent" data-priority="urgent">
+                                    <span>Urgent</span>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>                <div class="form-section">
+                    <h3>Target <?php echo $is_headmaster ? 'Recipients' : 'Classes'; ?></h3>
+                    
+                    <?php if ($is_headmaster): ?>
+                    <!-- Headmaster targeting options -->
+                    <div class="targeting-mode">
+                        <div class="form-group">
+                            <label for="targeting-mode">Select targeting mode:</label>
+                            <select id="targeting-mode" name="targeting_mode" class="form-control" onchange="handleTargetingModeChange(this.value)">
+                                <option value="classes">Select Classes</option>
+                                <option value="all_school">All School</option>
+                                <option value="role_based">By Role</option>
+                                <option value="individual">Individual Recipients</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- All School Option -->
+                    <div id="all-school-section" class="targeting-section" style="display: none;">
+                        <div class="alert alert-info">
+                            <strong>All School:</strong> This notification will be sent to all teachers, students, and staff members.
+                        </div>
+                    </div>
+                    
+                    <!-- Role Based Option -->
+                    <div id="role-based-section" class="targeting-section" style="display: none;">
+                        <div class="form-group">
+                            <label>Select roles to target:</label>
+                            <div class="role-checkboxes">
+                                <label><input type="checkbox" name="target_roles[]" value="teachers"> All Teachers</label>
+                                <label><input type="checkbox" name="target_roles[]" value="students"> All Students</label>
+                                <label><input type="checkbox" name="target_roles[]" value="staff"> All Staff</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Individual Recipients Option -->
+                    <div id="individual-section" class="targeting-section" style="display: none;">
+                        <div class="form-group">
+                            <label for="individual-search">Search and select individuals:</label>
+                            <input type="text" id="individual-search" class="form-control" placeholder="Type name or email to search...">
+                            <div id="individual-results" class="search-results"></div>
+                            <div id="selected-individuals" class="selected-recipients"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Classes Option (default) -->
+                    <div id="classes-section" class="targeting-section">
+                        <?php if ($is_headmaster): ?>
+                        <p>Select the classes you want to send this notification to (as headmaster, you can target any class):</p>
+                        <?php else: ?>
+                        <p>Select the classes you want to send this notification to:</p>
+                        <?php endif; ?>
+                        
+                        <div class="class-selector">
+                            <?php 
+                            if ($is_headmaster) {
+                                // Headmaster can target all classes - get all classes from database
+                                $all_classes_sql = "
+                                    SELECT DISTINCT c.id, c.name as class_name, s.id as section_id, s.name as section_name,
+                                           CASE 
+                                               WHEN s.class_teacher_user_id = ? THEN 'Class Teacher (You)'
+                                               WHEN EXISTS (
+                                                   SELECT 1 FROM timetables t 
+                                                   JOIN timetable_periods tp ON t.id = tp.timetable_id 
+                                                   WHERE t.class_id = c.id 
+                                                   AND t.section_id = s.id 
+                                                   AND tp.teacher_id = ?
+                                                   AND t.status = 'published'
+                                               ) THEN 'Subject Teacher (You)'
+                                               ELSE 'Other Class'
+                                           END as assignment_type
+                                    FROM classes c
+                                    JOIN sections s ON c.id = s.class_id
+                                    ORDER BY c.name, s.name";
+                                $all_classes_stmt = mysqli_prepare($conn, $all_classes_sql);
+                                mysqli_stmt_bind_param($all_classes_stmt, "ii", $user_id, $user_id);
+                                mysqli_stmt_execute($all_classes_stmt);
+                                $all_classes_result = mysqli_stmt_get_result($all_classes_stmt);
+                                
+                                while ($class = mysqli_fetch_assoc($all_classes_result)):
+                            ?>
+                            <div class="class-option" onclick="toggleClassSelection(this)">
+                                <input type="checkbox" name="target_classes[]" 
+                                       value="class_<?php echo $class['id']; ?>_section_<?php echo $class['section_id']; ?>">
+                                <div class="class-info">
+                                    <div class="class-name"><?php echo htmlspecialchars($class['class_name']); ?></div>
+                                    <div class="section-name">
+                                        Section: <?php echo htmlspecialchars($class['section_name']); ?>
+                                        <span style="color: #10b981; font-size: 0.75rem; margin-left: 0.5rem;">
+                                            (<?php echo htmlspecialchars($class['assignment_type']); ?>)
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
+                            <?php 
+                                endwhile;
+                            } else {
+                                // Regular teachers can only target their assigned classes
+                                foreach ($teacher_classes as $class): 
+                            ?>
+                            <div class="class-option" onclick="toggleClassSelection(this)">
+                                <input type="checkbox" name="target_classes[]" 
+                                       value="class_<?php echo $class['id']; ?>_section_<?php echo $class['section_id']; ?>">
+                                <div class="class-info">
+                                    <div class="class-name"><?php echo htmlspecialchars($class['class_name']); ?></div>
+                                    <div class="section-name">
+                                        Section: <?php echo htmlspecialchars($class['section_name']); ?>
+                                        <span style="color: #10b981; font-size: 0.75rem; margin-left: 0.5rem;">
+                                            (<?php echo htmlspecialchars($class['assignment_type']); ?>)
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php 
+                                endforeach;
+                            } 
+                            ?>
+                            
+                            <?php if (empty($teacher_classes) && !$is_headmaster): ?>
+                            <div style="text-align: center; padding: 2rem; color: #6b7280;">
+                                <p>No classes assigned yet.</p>
+                                <p style="font-size: 0.875rem;">Contact the admin to get assigned to classes or timetable periods.</p>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <?php else: ?>
+                    <!-- Regular teacher targeting (existing code) -->
+                    <div class="class-targeting">
+                        <p>Select the classes you want to send this notification to:</p>
+                        <div class="class-selector">
+                            <?php foreach ($teacher_classes as $class): ?>
+                            <div class="class-option" onclick="toggleClassSelection(this)">
+                                <input type="checkbox" name="target_classes[]" 
+                                       value="class_<?php echo $class['id']; ?>_section_<?php echo $class['section_id']; ?>">
+                                <div class="class-info">
+                                    <div class="class-name"><?php echo htmlspecialchars($class['class_name']); ?></div>
+                                    <div class="section-name">
+                                        Section: <?php echo htmlspecialchars($class['section_name']); ?>
+                                        <span style="color: #10b981; font-size: 0.75rem; margin-left: 0.5rem;">
+                                            (<?php echo htmlspecialchars($class['assignment_type']); ?>)
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php endforeach; ?>
+                            
+                            <?php if (empty($teacher_classes)): ?>
+                            <div style="text-align: center; padding: 2rem; color: #6b7280;">
+                                <p>No classes assigned yet.</p>
+                                <p style="font-size: 0.875rem;">Contact the admin to get assigned to classes or timetable periods.</p>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                </div>
+
+                <div class="form-section">
+                    <h3>Additional Options</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="expires-at">Expiry Date (optional)</label>
+                            <input type="datetime-local" id="expires-at" name="expires_at" class="form-control">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="scheduled-for">Schedule For (optional)</label>
+                            <input type="datetime-local" id="scheduled-for" name="scheduled_for" class="form-control">
                         </div>
                     </div>
                     
                     <div class="form-group">
-                        <label for="notificationPriority" class="form-label">Priority</label>
-                        <select id="notificationPriority" class="form-select">
-                            <option value="normal">Normal</option>
-                            <option value="urgent">Urgent</option>
-                        </select>
+                        <label>
+                            <input type="checkbox" name="requires_acknowledgment" value="1">
+                            Require acknowledgment from recipients
+                        </label>
                     </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Attachment (Optional)</label>
-                        <div class="file-upload">
-                            <label class="file-upload-label">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                </svg>
-                                <span class="upload-text">Click to upload or drag and drop</span>
-                            </label>
-                            <input type="file" class="file-upload-input">
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Options</label>
-                        <div class="checkbox-group">
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="sendEmail">
-                                <label for="sendEmail" class="checkbox-label">Send email notification</label>
-                            </div>
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="requireConfirmation">
-                                <label for="requireConfirmation" class="checkbox-label">Require read confirmation</label>
-                            </div>
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="scheduleNotification">
-                                <label for="scheduleNotification" class="checkbox-label">Schedule for later</label>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div id="scheduleOptions" style="display: none; margin-top: 1rem;">
-                        <div class="two-col">
-                            <div class="form-group">
-                                <label for="scheduleDate" class="form-label">Date</label>
-                                <input type="date" id="scheduleDate" class="form-input">
-                            </div>
-                            <div class="form-group">
-                                <label for="scheduleTime" class="form-label">Time</label>
-                                <input type="time" id="scheduleTime" class="form-input">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Preview</label>
-                        <div class="notification-preview">
-                            <div class="preview-header">Field Trip Permission Forms</div>
-                            <div class="preview-content">
-                                Please remind students to submit their field trip permission forms by March 20. The trip to the Science Museum is scheduled for March 25.
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
-                        <button type="button" class="btn btn-secondary" id="saveAsDraft">Save as Draft</button>
-                        <button type="button" class="btn btn-secondary" id="cancelNotification">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Send Notification</button>
-                    </div>
-                </form>
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M15.854.146a.5.5 0 0 1 0 .708L11.707 6l-1.414-1.414L14.146.854a.5.5 0 0 1 .708 0z"/>
+                            <path d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
+                        </svg>
+                        Send Notification
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="resetForm()">Reset</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Sent Notifications Tab -->
+        <div id="sent-tab" class="tab-content">
+            <div class="notification-list">
+                <div id="sent-notifications-loading" class="loading">
+                    Loading sent notifications...
+                </div>
+                <div id="sent-notifications-list"></div>
             </div>
         </div>
-    </main>
-</div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Tab switching
-        const tabs = document.querySelectorAll('.tab');
-        const tabContents = document.querySelectorAll('.tab-content');
-        
-        tabs.forEach(tab => {
-            tab.addEventListener('click', function() {
-                // Remove active class from all tabs
-                tabs.forEach(t => t.classList.remove('active'));
-                
-                // Add active class to clicked tab
-                this.classList.add('active');
-                
-                // Hide all tab contents
-                tabContents.forEach(content => content.classList.remove('active'));
-                
-                // Show the corresponding tab content
-                const tabId = this.getAttribute('data-tab');
-                document.getElementById(`${tabId}-content`).classList.add('active');
+        <!-- Received Messages Tab -->
+        <div id="received-tab" class="tab-content">
+            <div class="notification-list">
+                <div id="received-notifications-loading" class="loading">
+                    Loading received messages...
+                </div>
+                <div id="received-notifications-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        // Global variables
+        let currentTab = 'create';
+        let selectedPriority = 'normal';
+
+        // Initialize the page
+        $(document).ready(function() {
+            initializePage();
+            loadNotificationCounts();
+        });
+
+        function initializePage() {
+            // Initialize rich text editor
+            $('#notification-message').summernote({
+                height: 150,
+                toolbar: [
+                    ['style', ['style']],
+                    ['font', ['bold', 'underline', 'clear']],
+                    ['color', ['color']],
+                    ['para', ['ul', 'ol', 'paragraph']],
+                    ['table', ['table']],
+                    ['insert', ['link']],
+                    ['view', ['fullscreen', 'help']]
+                ]
             });
-        });
-        
-        // Create New Button
-        const createNewBtn = document.getElementById('createNewBtn');
-        const createNotificationForm = document.getElementById('createNotificationForm');
-        const cancelNotificationBtn = document.getElementById('cancelNotification');
-        
-        createNewBtn.addEventListener('click', function() {
-            createNotificationForm.style.display = 'block';
-            // Scroll to form
-            createNotificationForm.scrollIntoView({ behavior: 'smooth' });
-        });
-        
-        cancelNotificationBtn.addEventListener('click', function() {
-            createNotificationForm.style.display = 'none';
-        });
-        
-        // Recipient Type Change
-        const recipientType = document.getElementById('recipientType');
-        const classSelector = document.getElementById('classSelector');
-        const customRecipients = document.getElementById('customRecipients');
-        
-        recipientType.addEventListener('change', function() {
-            if (this.value === 'class') {
-                classSelector.style.display = 'block';
-                customRecipients.style.display = 'none';
-            } else if (this.value === 'custom') {
-                classSelector.style.display = 'none';
-                customRecipients.style.display = 'block';
+
+            // Initialize date pickers
+            flatpickr("#expires-at", {
+                enableTime: true,
+                dateFormat: "Y-m-d H:i",
+                minDate: "today"
+            });
+
+            flatpickr("#scheduled-for", {
+                enableTime: true,
+                dateFormat: "Y-m-d H:i",
+                minDate: "today"
+            });
+
+            // Form submission handler
+            $('#create-notification-form').on('submit', handleFormSubmission);
+
+            // Priority selector handlers
+            $('.priority-option').on('click', function() {
+                $('.priority-option').removeClass('selected');
+                $(this).addClass('selected');
+                selectedPriority = $(this).data('priority');
+            });
+        }
+
+        function switchTab(tab) {
+            // Update tab buttons
+            $('.tab-button').removeClass('active');
+            $(`.tab-button:contains(${tab.charAt(0).toUpperCase() + tab.slice(1)})`).addClass('active');
+
+            // Update tab content
+            $('.tab-content').removeClass('active');
+            $(`#${tab}-tab`).addClass('active');
+
+            currentTab = tab;
+
+            // Load data for the selected tab
+            if (tab === 'sent') {
+                loadSentNotifications();
+            } else if (tab === 'received') {
+                loadReceivedNotifications();
+            }
+        }
+
+        function toggleClassSelection(element) {
+            const checkbox = $(element).find('input[type="checkbox"]');
+            const isChecked = !checkbox.prop('checked');
+            
+            checkbox.prop('checked', isChecked);
+            
+            if (isChecked) {
+                $(element).addClass('selected');
             } else {
-                classSelector.style.display = 'none';
-                customRecipients.style.display = 'none';
+                $(element).removeClass('selected');
             }
-        });
-        
-        // Schedule Options
-        const scheduleCheckbox = document.getElementById('scheduleNotification');
-        const scheduleOptions = document.getElementById('scheduleOptions');
-        
-        scheduleCheckbox.addEventListener('change', function() {
-            if (this.checked) {
-                scheduleOptions.style.display = 'block';
-            } else {
-                scheduleOptions.style.display = 'none';
+        }
+
+        function handleFormSubmission(e) {
+            e.preventDefault();
+            
+            // Validate form
+            const title = $('#notification-title').val().trim();
+            const message = $('#notification-message').summernote('code').trim();
+            const selectedClasses = $('input[name="target_classes[]"]:checked');
+
+            if (!title) {
+                showAlert('Please enter a notification title', 'error');
+                return;
             }
-        });
-        
-        // Mark as Read Button
-        const markReadButtons = document.querySelectorAll('.btn-primary');
-        
-        markReadButtons.forEach(button => {
-            if (button.textContent === 'Mark Read') {
-                button.addEventListener('click', function() {
-                    const notificationItem = this.closest('.notification-item');
-                    notificationItem.classList.remove('unread');
-                    this.style.display = 'none';
-                });
+
+            if (!message || message === '<p><br></p>') {
+                showAlert('Please enter a notification message', 'error');
+                return;
             }
-        });
-        
-        // Function to toggle the sidebar (defined in the sidebar.php)
-        window.toggleSidebar = function() {
-            const sidebar = document.getElementById('sidebar');
-            const body = document.body;
-            sidebar.classList.toggle('show');
-            body.classList.toggle('sidebar-open');
-        };
-    });
-</script>
+
+            if (selectedClasses.length === 0) {
+                showAlert('Please select at least one class to notify', 'error');
+                return;
+            }
+
+            // Prepare form data
+            const formData = {
+                title: title,
+                message: message,
+                type: $('#notification-type').val(),
+                priority: selectedPriority,
+                target_type: 'multiple_classes',
+                target_value: Array.from(selectedClasses).map(el => el.value).join(','),
+                expires_at: $('#expires-at').val() || null,
+                scheduled_for: $('#scheduled-for').val() || null,
+                requires_acknowledgment: $('input[name="requires_acknowledgment"]').is(':checked') ? 1 : 0
+            };            // Send to API
+            $.ajax({
+                url: '/erp/backend/api/notifications?action=create',
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify(formData),
+                success: function(response) {
+                    if (response.success) {
+                        showAlert('Notification sent successfully!', 'success');
+                        resetForm();
+                        loadNotificationCounts();
+                    } else {
+                        showAlert(response.message || 'Failed to send notification', 'error');
+                    }
+                },
+                error: function() {
+                    showAlert('Network error. Please try again.', 'error');
+                }
+            });
+        }        function loadNotificationCounts() {
+            $.ajax({
+                url: '/erp/backend/api/notifications?action=count',
+                method: 'GET',
+                success: function(response) {
+                    if (response.success) {
+                        $('#unreadNotificationsCount').text(response.data.unread || 0);
+                    }
+                }
+            });            // Load sent notifications count for this week
+            $.ajax({
+                url: '/erp/backend/api/notifications?action=list&limit=100',
+                method: 'GET',
+                success: function(response) {
+                    if (response.success) {
+                        const thisWeek = response.data.filter(notif => {
+                            const notifDate = new Date(notif.created_at);
+                            const weekAgo = new Date();
+                            weekAgo.setDate(weekAgo.getDate() - 7);
+                            return notifDate >= weekAgo && notif.created_by == <?php echo $user_id; ?>;
+                        });
+                        $('#sentNotificationsCount').text(thisWeek.length);
+                    }
+                }
+            });
+        }        function loadSentNotifications() {
+            $('#sent-notifications-loading').show();
+            $('#sent-notifications-list').empty();
+
+            $.ajax({
+                url: '/erp/backend/api/notifications?action=list&limit=50',
+                method: 'GET',
+                success: function(response) {
+                    $('#sent-notifications-loading').hide();
+                    
+                    if (response.success) {
+                        const sentNotifications = response.data.filter(notif => 
+                            notif.created_by == <?php echo $user_id; ?>
+                        );
+                        
+                        if (sentNotifications.length === 0) {
+                            $('#sent-notifications-list').html('<p class="loading">No sent notifications found.</p>');
+                            return;
+                        }
+
+                        let html = '';
+                        sentNotifications.forEach(function(notification) {
+                            html += buildNotificationItem(notification, true);
+                        });
+                        
+                        $('#sent-notifications-list').html(html);
+                    } else {
+                        $('#sent-notifications-list').html('<p class="loading">Error loading notifications.</p>');
+                    }
+                },
+                error: function() {
+                    $('#sent-notifications-loading').hide();
+                    $('#sent-notifications-list').html('<p class="loading">Network error loading notifications.</p>');
+                }
+            });
+        }
+
+        function loadReceivedNotifications() {
+            $('#received-notifications-loading').show();
+            $('#received-notifications-list').empty();            $.ajax({
+                url: '/erp/backend/api/notifications?action=list&limit=50',
+                method: 'GET',
+                success: function(response) {
+                    $('#received-notifications-loading').hide();
+                    
+                    if (response.success) {
+                        const receivedNotifications = response.data.filter(notif => 
+                            notif.created_by != <?php echo $user_id; ?>
+                        );
+                        
+                        if (receivedNotifications.length === 0) {
+                            $('#received-notifications-list').html('<p class="loading">No received notifications found.</p>');
+                            return;
+                        }
+
+                        let html = '';
+                        receivedNotifications.forEach(function(notification) {
+                            html += buildNotificationItem(notification, false);
+                        });
+                        
+                        $('#received-notifications-list').html(html);
+                    } else {
+                        $('#received-notifications-list').html('<p class="loading">Error loading notifications.</p>');
+                    }
+                },
+                error: function() {
+                    $('#received-notifications-loading').hide();
+                    $('#received-notifications-list').html('<p class="loading">Network error loading notifications.</p>');
+                }
+            });
+        }
+
+        function buildNotificationItem(notification, isSent) {
+            const priorityClass = notification.priority || 'normal';
+            const priorityColor = {
+                'normal': '#10b981',
+                'important': '#f59e0b',
+                'urgent': '#ef4444'
+            }[priorityClass];
+
+            const date = new Date(notification.created_at).toLocaleDateString();
+            const time = new Date(notification.created_at).toLocaleTimeString();
+
+            return `
+                <div class="notification-item">
+                    <div class="notification-header">
+                        <div>
+                            <div class="notification-title" style="border-left: 4px solid ${priorityColor}; padding-left: 1rem;">
+                                ${notification.title}
+                            </div>
+                            <div class="notification-meta">
+                                <span>Type: ${notification.type}</span>
+                                <span>Priority: ${notification.priority}</span>
+                                <span>${date} at ${time}</span>
+                                ${isSent ? `<span>To: Multiple Classes</span>` : `<span>From: ${notification.created_by_name || 'System'}</span>`}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="notification-content">
+                        ${notification.message}
+                    </div>
+                    ${!isSent && !notification.is_read ? `
+                        <div style="margin-top: 1rem;">
+                            <button class="btn btn-sm btn-primary" onclick="markAsRead(${notification.id})">
+                                Mark as Read
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }        function markAsRead(notificationId) {
+            $.ajax({
+                url: '/erp/backend/api/notifications?action=mark_read',
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify({ notification_id: notificationId }),
+                success: function(response) {
+                    if (response.success) {
+                        loadReceivedNotifications();
+                        loadNotificationCounts();
+                    }
+                }
+            });
+        }
+
+        function resetForm() {
+            $('#create-notification-form')[0].reset();
+            $('#notification-message').summernote('code', '');
+            $('.class-option').removeClass('selected');
+            $('.class-option input[type="checkbox"]').prop('checked', false);
+            $('.priority-option').removeClass('selected');
+            $('.priority-option[data-priority="normal"]').addClass('selected');
+            selectedPriority = 'normal';
+        }
+
+        function showAlert(message, type) {
+            const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+            const alertHtml = `
+                <div class="alert ${alertClass}">
+                    ${message}
+                </div>
+            `;
+            
+            $('#notification-alert').html(alertHtml);
+            
+            setTimeout(() => {
+                $('#notification-alert').empty();
+            }, 5000);
+        }
+
+        // Sidebar toggle function (if needed)
+        function toggleSidebar() {
+            // Implementation depends on your sidebar structure
+            console.log('Toggle sidebar');
+        }
+    </script>
 </body>
 </html>

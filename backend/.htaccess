@@ -2,7 +2,12 @@
 RewriteEngine On
 
 # Route API requests to the API router
-RewriteRule ^api(/.*)?$ api/index.php [L,QSA]
+RewriteRule ^api/([^/]+)/?(.*)$ api/index.php [L,QSA]
+
+# Also handle direct API calls without the api/ prefix for backwards compatibility
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^([^/]+)/?(.*)$ api/index.php [L,QSA]
 
 # Set default content type for API responses
 <IfModule mod_headers.c>

@@ -25,14 +25,30 @@ if (isset($_SESSION['user_id'])) {
     
     // Count unread notifications
     $query = "SELECT COUNT(*) as count FROM notifications n 
-              WHERE n.user_id = ? 
-              AND n.is_read = 0";
+              WHERE n.user_id = ? AND n.is_read = 0 AND n.is_active = 1
+              AND (n.expires_at IS NULL OR n.expires_at > NOW())";
     $stmt = $conn->prepare($query);
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $result = $stmt->get_result();
     if ($row = $result->fetch_assoc()) {
         $unread_notifications = $row['count'];
+    }
+    
+    // Count unread announcements
+    $announce_query = "SELECT COUNT(*) as count FROM announcements a
+                      LEFT JOIN notification_read_status nrs ON a.id = nrs.notification_id 
+                      AND nrs.user_id = ? AND nrs.notification_type = 'announcement'
+                      WHERE nrs.notification_id IS NULL 
+                      AND a.is_active = 1 
+                      AND (a.expiry_date IS NULL OR a.expiry_date >= CURDATE())
+                      AND (a.target_audience = 'all' OR a.target_audience = 'teachers')";
+    $stmt2 = $conn->prepare($announce_query);
+    $stmt2->bind_param("i", $user_id);
+    $stmt2->execute();
+    $result2 = $stmt2->get_result();
+    if ($row2 = $result2->fetch_assoc()) {
+        $unread_announcements = $row2['count'];
     }
 }
 

@@ -72,6 +72,10 @@ if (preg_match($pattern, $requestUri, $matches)) {
             require_once __DIR__ . '/student-timetable.php';
             break;
             
+        case 'notifications':
+            require_once __DIR__ . '/notifications.php';
+            break;
+            
         // Add more endpoints as needed
             
         default:
