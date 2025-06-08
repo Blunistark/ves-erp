@@ -7,7 +7,7 @@ include '../includes/functions.php';
 startSecureSession();
 
 // Check if already logged in
-if (isLoggedIn() && hasRole('teacher')) {
+if (isLoggedIn() && hasRole(['teacher', 'headmaster'])) {
     header("Location: dashboard/index.php");
     exit;
 }

@@ -9,10 +9,9 @@ require_once __DIR__ . '/api_handler.php';
 class SectionsApiHandler extends ApiHandler {
     /**
      * Process the API request based on method and path
-     */
-    public function processRequest() {
+     */    public function processRequest() {
         // Require authentication for all operations
-        $this->requireAuthentication(['admin', 'teacher', 'student']);
+        $this->requireAuthentication(['admin', 'teacher', 'student', 'headmaster']);
         
         // Route request based on method and path parameters
         switch ($this->method) {

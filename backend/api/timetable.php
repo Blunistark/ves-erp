@@ -17,7 +17,7 @@ class TimetableApiHandler extends ApiHandler {
             // This allows edittimetable.php to work without an active session
         } else {
             // Require authentication for all other timetable operations
-            $this->requireAuthentication(['admin', 'teacher', 'student']);
+            $this->requireAuthentication(['admin', 'teacher', 'student', 'headmaster']);
         }
         
         // Debug session information - will help figure out what's happening with the teacher login
@@ -86,8 +86,8 @@ class TimetableApiHandler extends ApiHandler {
      */
     private function listTimetables() {
         // Check role-specific access
-        if (hasRole('admin')) {
-            // Admins can see all timetables with filtering
+        if (hasRole('admin') || hasRole('headmaster')) {
+            // Admins and headmasters can see all timetables with filtering
             $this->listTimetablesForAdmin();
         } else if (hasRole('teacher')) {
             // Teachers see only their timetables
@@ -422,8 +422,8 @@ class TimetableApiHandler extends ApiHandler {
      * Create new timetable
      */
     private function createTimetable() {
-        // Only admins can create timetables
-        $this->requireAuthentication(['admin']);
+        // Allow admins and headmasters to create timetables
+        $this->requireAuthentication(['admin', 'headmaster']);
         
         // Validate required fields
         $requiredFields = ['academic_year_id', 'class_id', 'section_id', 'effective_date', 'status'];
@@ -434,6 +434,11 @@ class TimetableApiHandler extends ApiHandler {
         // Validate periods array if present
         if (!isset($this->data['periods']) || !is_array($this->data['periods'])) {
             $this->sendResponse(['error' => 'Periods array is required'], 400);
+        }
+        
+        // Validate status
+        if (!in_array($this->data['status'], ['draft', 'published', 'archived'])) {
+            $this->sendResponse(['error' => 'Invalid status. Must be draft, published, or archived'], 400);
         }
         
         // Begin transaction
@@ -537,8 +542,8 @@ class TimetableApiHandler extends ApiHandler {
      * Update existing timetable
      */
     private function updateTimetable($id) {
-        // Only admins can update timetables
-        $this->requireAuthentication(['admin']);
+        // Allow admins and headmasters to update timetables
+        $this->requireAuthentication(['admin', 'headmaster']);
         
         // Validate ID
         $id = (int)$id;
@@ -554,6 +559,10 @@ class TimetableApiHandler extends ApiHandler {
             $this->sendResponse(['error' => 'Timetable not found'], 404);
         }
         
+        // Debug: Log the received data
+        error_log("updateTimetable - Received data: " . json_encode($this->data));
+        error_log("updateTimetable - Status value: '" . $this->data['status'] . "' (length: " . strlen($this->data['status']) . ")");
+        
         // Validate required fields
         $requiredFields = ['academic_year_id', 'class_id', 'section_id', 'effective_date', 'status'];
         if (!$this->validateRequiredFields($requiredFields)) {
@@ -563,6 +572,12 @@ class TimetableApiHandler extends ApiHandler {
         // Validate periods array if present
         if (!isset($this->data['periods']) || !is_array($this->data['periods'])) {
             $this->sendResponse(['error' => 'Periods array is required'], 400);
+        }
+        
+        // Validate and clean status
+        $status = trim($this->data['status']);
+        if (!in_array($status, ['draft', 'published', 'archived'])) {
+            $this->sendResponse(['error' => 'Invalid status. Must be draft, published, or archived. Received: ' . $status], 400);
         }
         
         // Begin transaction
@@ -588,15 +603,16 @@ class TimetableApiHandler extends ApiHandler {
                 (int)$this->data['section_id'],
                 $this->data['effective_date'],
                 $this->data['description'] ?? '',
-                $this->data['status'],
+                $status, // Use cleaned status value
                 $_SESSION['user_id'],
                 $id
             ];
             
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("iiissisi", ...$params);
+            $stmt->bind_param("iiisssis", ...$params);
             
             if (!$stmt->execute()) {
+                error_log("updateTimetable - SQL Error: " . $stmt->error);
                 throw new Exception("Failed to update timetable: " . $stmt->error);
             }
             
@@ -682,8 +698,8 @@ class TimetableApiHandler extends ApiHandler {
      * Delete timetable
      */
     private function deleteTimetable($id) {
-        // Only admins can delete timetables
-        $this->requireAuthentication(['admin']);
+        // Allow admins and headmasters to delete timetables
+        $this->requireAuthentication(['admin', 'headmaster']);
         
         // Validate ID
         $id = (int)$id;
@@ -748,8 +764,8 @@ class TimetableApiHandler extends ApiHandler {
      * Change timetable status (publish, archive, draft)
      */
     private function changeTimetableStatus($id) {
-        // Only admins can change timetable status
-        $this->requireAuthentication(['admin']);
+        // Allow admins and headmasters to change timetable status
+        $this->requireAuthentication(['admin', 'headmaster']);
         
         // Validate ID
         $id = (int)$id;
@@ -789,8 +805,8 @@ class TimetableApiHandler extends ApiHandler {
      * Validate timetable data for conflicts
      */
     private function validateTimetable() {
-        // Require admin authentication
-        $this->requireAuthentication(['admin']);
+        // Allow admins and headmasters to validate timetables
+        $this->requireAuthentication(['admin', 'headmaster']);
         
         // Validate periods array
         if (!isset($this->data['periods']) || !is_array($this->data['periods'])) {

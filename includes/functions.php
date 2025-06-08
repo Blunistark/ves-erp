@@ -87,7 +87,7 @@ function authenticateTeacher($identifier, $password) {
         $sql = "SELECT u.id, u.email, u.password_hash, u.full_name, u.role, u.status, t.employee_number 
                 FROM users u 
                 INNER JOIN teachers t ON u.id = t.user_id 
-                WHERE u.email = ? AND u.role = 'teacher'";
+                WHERE u.email = ? AND u.role IN ('teacher', 'headmaster')";
         $params = [$identifier];
         $types = "s";
     } else {
@@ -95,7 +95,7 @@ function authenticateTeacher($identifier, $password) {
         $sql = "SELECT u.id, u.email, u.password_hash, u.full_name, u.role, u.status, t.employee_number 
                 FROM users u 
                 INNER JOIN teachers t ON u.id = t.user_id 
-                WHERE t.employee_number = ? AND u.role = 'teacher'";
+                WHERE t.employee_number = ? AND u.role IN ('teacher', 'headmaster')";
         $params = [$identifier];
         $types = "s";
     }

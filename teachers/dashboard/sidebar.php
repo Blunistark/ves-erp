@@ -13,8 +13,8 @@ if (session_status() === PHP_SESSION_NONE) {
     startSecureSession();
 }
 
-// Check if user is logged in and is a teacher
-if (!isLoggedIn() || !hasRole('teacher')) {
+// Check if user is logged in and is a teacher or headmaster
+if (!isLoggedIn() || !hasRole(['teacher', 'headmaster'])) {
     // If it's an AJAX request, return a JSON error
     if (isset($is_ajax) && $is_ajax) {
         header('Content-Type: application/json');
@@ -228,6 +228,46 @@ if (isset($is_ajax) && $is_ajax) {
         </svg>
         <span>Marks Entry Manager</span>
     </a>
+
+    <?php if ($_SESSION['role'] === 'headmaster'): ?>
+    <!-- Head Master Administrative Features -->
+    <div class="nav-group">
+        <div class="nav-group-toggle">
+            <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h4a1 1 0 011 1v5m-6 0V9a1 1 0 011-1h4a1 1 0 011 1v13" />
+            </svg>
+            <span>Administrative Tools</span>
+            <svg class="chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+        </div>
+        <div class="nav-submenu">
+            <!-- Timetable Management -->
+            <a href="timetablemanage.php" class="nav-item">
+                <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>Manage Timetables</span>
+            </a>
+            
+            <!-- Create New Timetable -->
+            <a href="createtimetable.php" class="nav-item">
+                <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                <span>Create Timetable</span>
+            </a>
+            
+            <!-- School Reports -->
+            <a href="school-reports.php" class="nav-item">
+                <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span>School Reports</span>
+            </a>
+        </div>
+    </div>
+    <?php endif; ?>
 </div>
             </div>
 
