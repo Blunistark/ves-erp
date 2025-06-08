@@ -1,0 +1,72 @@
+# Git attributes for School ERP System
+# This file controls how Git handles line endings and file types
+
+# Text files should be normalized (LF) in the repository but can be checked out with platform-specific line endings
+*.php text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.js text eol=lf
+*.sql text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.json text eol=lf
+*.xml text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Shell scripts should always use LF
+*.sh text eol=lf
+
+# PowerShell scripts should use CRLF on Windows
+*.ps1 text eol=crlf
+
+# Binary files should not be normalized
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.tar binary
+*.gz binary
+*.7z binary
+*.rar binary
+*.exe binary
+*.dll binary
+*.so binary
+
+# Font files
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.eot binary
+
+# Archive files
+*.tar binary
+*.gz binary
+*.zip binary
+
+# Special handling for specific file types
+.htaccess text eol=lf
+*.htaccess text eol=lf
+
+# Git files
+.gitignore text eol=lf
+.gitattributes text eol=lf
+
+# Configuration files
+*.conf text eol=lf
+*.config text eol=lf
+*.ini text eol=lf
+
+# Documentation
+README* text eol=lf
+CHANGELOG* text eol=lf
+CONTRIBUTING* text eol=lf
+LICENSE* text eol=lf
+AUTHORS* text eol=lf
+
+# IDE files
+*.code-workspace text eol=lf
