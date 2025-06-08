@@ -521,8 +521,23 @@ if (!empty($teachers) && !empty($subjects)) {
                 left: var(--spacing-md);
                 right: var(--spacing-md);
                 bottom: var(--spacing-lg);
-                top: auto;
-            }
+                top: auto;            }
+        }
+        
+        /* Fix SweetAlert2 z-index to appear above dashboard header and sidebar */
+        .swal2-container {
+            z-index: 99999 !important;
+        }
+        .swal2-popup {
+            z-index: 99999 !important;
+        }
+        .swal2-backdrop-show {
+            z-index: 99998 !important;
+        }
+        
+        /* Ensure dashboard header doesn't interfere with modals */
+        .dashboard-header {
+            z-index: 50 !important;
         }
     </style>
 </head>
@@ -777,11 +792,24 @@ if (!empty($teachers) && !empty($subjects)) {
                 }, 300);
             }, 5000);
         }
-        
-        function showErrorMessage(message) {
-            // You can implement a similar alert for errors
-            alert(message);
+          function showErrorMessage(message) {
+            // Use SweetAlert2 for better error display with proper z-index
+            Swal.fire({
+                title: 'Error!',
+                text: message,
+                icon: 'error',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#ef4444',
+                customClass: {
+                    popup: 'error-modal-popup'
+                },
+                backdrop: true,
+                allowOutsideClick: true
+            });
         }
     </script>
+    
+    <!-- Add SweetAlert2 for better notifications -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.19/dist/sweetalert2.all.min.js"></script>
 </body>
-</html> 
+</html>

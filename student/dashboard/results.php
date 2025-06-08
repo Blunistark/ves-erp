@@ -119,7 +119,7 @@ if (count($exam_assessments)) {
 // --- Dynamic attendance calculation ---
 $attendance_percent = '-';
 $attendance_label = 'N/A';
-$att_sql = "SELECT COUNT(*) as present_days, (SELECT COUNT(*) FROM attendance WHERE student_user_id = $student_user_id AND status IN ('present','late','holiday')) as total_days FROM attendance WHERE student_user_id = $student_user_id AND status = 'present'";
+$att_sql = "SELECT COUNT(*) as present_days, (SELECT COUNT(*) FROM attendance WHERE student_user_id = $student_user_id AND status IN ('present','holiday')) as total_days FROM attendance WHERE student_user_id = $student_user_id AND status = 'present'";
 $attRes = $conn->query($att_sql);
 if ($attRes && $attRow = $attRes->fetch_assoc()) {
     $present_days = $attRow['present_days'];

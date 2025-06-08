@@ -4,7 +4,7 @@ require_once __DIR__ . '/con.php';
 
 // Check if user is logged in and is an admin
 if (!isset($_SESSION['user_id'])) {
-    header('Location: ../login.php');
+    header('Location: ../index.php');
     exit;
 }
 
@@ -22,7 +22,7 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
-    header('Location: ../login.php');
+    header('Location: ../index.php');
     exit;
 }
 

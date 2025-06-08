@@ -8,7 +8,7 @@ This document outlines the reorganized structure of the School ERP System projec
 ```
 /
 ├── index.php              # Main entry point
-├── login.php              # Global login handler
+├── index.php              # Global login handler
 ├── manifest.json          # PWA manifest
 ├── offline.html           # Offline page for PWA
 └── sw.js                  # Service worker for PWA

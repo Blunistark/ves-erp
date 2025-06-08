@@ -68,7 +68,6 @@ $attendanceResult = $stmt->get_result();
 $statsQuery = "SELECT 
                   COUNT(DISTINCT CASE WHEN a.status = 'present' OR (a.status IS NULL AND s.user_id IS NOT NULL) THEN s.user_id END) as present_count,
                   COUNT(DISTINCT CASE WHEN a.status = 'absent' THEN s.user_id END) as absent_count,
-                  COUNT(DISTINCT CASE WHEN a.status = 'late' THEN s.user_id END) as late_count,
                   COUNT(DISTINCT s.user_id) as total_count
                FROM students s
                LEFT JOIN attendance a ON a.student_user_id = s.user_id 
@@ -84,12 +83,11 @@ $statsData = $statsResult->fetch_assoc();
 // Calculate attendance percentage with safe defaults
 $present_count = $statsData['present_count'] ?? 0;
 $absent_count = $statsData['absent_count'] ?? 0;
-$late_count = $statsData['late_count'] ?? 0;
 $total_count = $statsData['total_count'] ?? 0;
 
 $attendance_percentage = 0;
 if ($total_count > 0) {
-    $attendance_percentage = round((($present_count + $late_count) / $total_count) * 100, 1);
+    $attendance_percentage = round(($present_count / $total_count) * 100, 1);
 }
 
 // Handle form submission
@@ -119,7 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $insertStmt = $conn->prepare($insertQuery);
         $insertedCount = 0;
         foreach ($statuses as $student_id => $status) {
-            if (!in_array($status, ['present', 'absent', 'late'])) {
+            if (!in_array($status, ['present', 'absent'])) {
                 throw new Exception("Invalid status value for student #$student_id");
             }
             $remark = $remarks[$student_id] ?? '';
@@ -203,7 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $insertedCount = 0;
         
         foreach ($statuses as $student_id => $status) {
-            if (!in_array($status, ['present', 'absent', 'late'])) {
+            if (!in_array($status, ['present', 'absent'])) {
                 throw new Exception("Invalid status value for student #$student_id");
             }
             
@@ -321,10 +319,6 @@ if (isset($_GET['message']) && !empty($_GET['message'])) {
             border-top: 4px solid #dc3545;
         }
         
-        .stat-box.late {
-            border-top: 4px solid #ffc107;
-        }
-        
         .stat-box.percentage {
             border-top: 4px solid #007bff;
         }
@@ -405,7 +399,6 @@ if (isset($_GET['message']) && !empty($_GET['message'])) {
         }
         .student-card.present { border-color: #28a745; background: #28a745 !important; color: #fff; }
         .student-card.absent { border-color: #dc3545; background: #dc3545 !important; color: #fff; }
-        .student-card.late { border-color: #ffc107; background: #ffc107 !important; color: #222; }
         .status-label {
             font-size: 0.95rem;
             font-weight: 700;
@@ -520,10 +513,6 @@ if (isset($_GET['message']) && !empty($_GET['message'])) {
                 <div class="value">0</div>
                 <div class="label">Absent</div>
             </div>
-            <div class="stat-box late" style="flex:1; margin:0 0.5rem;">
-                <div class="value">0</div>
-                <div class="label">Late</div>
-            </div>
             <div class="stat-box percentage" style="flex:1; margin:0 0 0 0.5rem;">
                 <div class="value">100%</div>
                 <div class="label">Attendance</div>
@@ -560,9 +549,9 @@ if (isset($_GET['message']) && !empty($_GET['message'])) {
             card.addEventListener('click', function(e) {
                 if (e.target.tagName === 'INPUT') return;
                 let current = statusInput.value;
-                let next = current === 'present' ? 'absent' : (current === 'absent' ? 'late' : 'present');
+                let next = current === 'present' ? 'absent' : 'present';
                 statusInput.value = next;
-                card.classList.remove('present', 'absent', 'late');
+                card.classList.remove('present', 'absent');
                 card.classList.add(next);
                 // Update status label text
                 const label = card.querySelector('.status-label');
@@ -619,10 +608,6 @@ if (isset($_GET['message']) && !empty($_GET['message'])) {
                             <div class="value"><?php echo $absent_count; ?></div>
                             <div class="label">Absent</div>
                         </div>
-                        <div class="stat-box late" style="flex:1; margin:0 0.5rem;">
-                            <div class="value"><?php echo $late_count; ?></div>
-                            <div class="label">Late</div>
-                        </div>
                         <div class="stat-box percentage" style="flex:1; margin:0 0 0 0.5rem;">
                             <div class="value"><?php echo $attendance_percentage; ?>%</div>
                             <div class="label">Attendance</div>
@@ -642,20 +627,19 @@ if (isset($_GET['message']) && !empty($_GET['message'])) {
                             $remark = $row['remark'] ?? '';
                             $isPresent = $status === 'present';
                             $isAbsent = $status === 'absent';
-                            $isLate = $status === 'late';
                             
                             // If no attendance record exists, we'll use student_user_id instead of attendance id
                             $formId = $id ?? $row['user_id'];
                             $isNewRecord = $id === null;
                         ?>
-                        <div class="student-card <?php echo $isPresent ? 'present' : ($isAbsent ? 'absent' : ($isLate ? 'late' : '')); ?>" 
+                        <div class="student-card <?php echo $isPresent ? 'present' : ($isAbsent ? 'absent' : ''); ?>" 
                              data-id="<?php echo $formId; ?>" 
                              data-name="<?php echo htmlspecialchars(strtolower($row['full_name'])); ?>" 
                              data-roll="<?php echo htmlspecialchars(strtolower($row['roll_number'])); ?>" 
                              style="width: 260px; min-width: 220px; background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); padding: 1rem; display: flex; flex-direction: column; align-items: flex-start; cursor: pointer; border: 2px solid transparent; transition: border 0.2s, background 0.2s; position: relative;">
                             <!-- Status label at top right -->
                             <div class="status-label" style="position: absolute; top: 1rem; right: 1rem; font-weight: 700; font-size: 1rem; padding: 0.2rem 0.8rem; border-radius: 16px; background: rgba(255,255,255,0.85); color: inherit; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
-                                <?php echo $isPresent ? 'Present' : ($isAbsent ? 'Absent' : ($isLate ? 'Late' : '')); ?>
+                                <?php echo $isPresent ? 'Present' : ($isAbsent ? 'Absent' : ''); ?>
                             </div>
                             <div style="font-weight: 600; font-size: 1.1rem; margin-bottom: 0.25rem;">
                                 <?php echo htmlspecialchars($row['full_name']); ?>
@@ -680,20 +664,18 @@ if (isset($_GET['message']) && !empty($_GET['message'])) {
         document.addEventListener('DOMContentLoaded', function() {
             // Function to update stats display
             function updateStats() {
-                let present = 0, absent = 0, late = 0, total = 0;
+                let present = 0, absent = 0, total = 0;
                 document.querySelectorAll('.student-card').forEach(card => {
                     total++;
                     const status = card.querySelector('.status-input').value;
                     if (status === 'present') present++;
                     else if (status === 'absent') absent++;
-                    else if (status === 'late') late++;
                 });
                 
                 // Update stats display
                 document.querySelector('.stat-box.present .value').textContent = present;
                 document.querySelector('.stat-box.absent .value').textContent = absent;
-                document.querySelector('.stat-box.late .value').textContent = late;
-                const percentage = total > 0 ? Math.round(((present + late) / total) * 100) : 0;
+                const percentage = total > 0 ? Math.round((present / total) * 100) : 0;
                 document.querySelector('.stat-box.percentage .value').textContent = percentage + '%';
             }
 
@@ -704,7 +686,7 @@ if (isset($_GET['message']) && !empty($_GET['message'])) {
                     if (e.target.tagName === 'INPUT') return; // Don't toggle if clicking on input fields
                     
                     let current = statusInput.value;
-                    let next = current === 'present' ? 'absent' : (current === 'absent' ? 'late' : 'present');
+                    let next = current === 'present' ? 'absent' : 'present';
                     
                     // Log the change before updating
                     console.log('Card clicked. Student ID:', card.getAttribute('data-id'), 'Current status:', current, 'Next status:', next);
@@ -716,7 +698,7 @@ if (isset($_GET['message']) && !empty($_GET['message'])) {
                     console.log('Status input value after update:', statusInput.value);
                     
                     // Update card classes
-                    card.classList.remove('present', 'absent', 'late');
+                    card.classList.remove('present', 'absent');
                     card.classList.add(next);
                     
                     // Update status label text

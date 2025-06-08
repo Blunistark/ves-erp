@@ -315,7 +315,7 @@ function hasRole($roles) {
  */
 function requireLogin($roles = null) {
     if (!isLoggedIn()) {
-        header("Location: ../login.php");
+        header("Location: ../index.php");
         exit;
     }
     

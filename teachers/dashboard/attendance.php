@@ -177,7 +177,6 @@ $classResult = $stmt->get_result();
                                     <th>Date</th>
                                     <th>Present</th>
                                     <th>Absent</th>
-                                    <th>Late</th>
                                     <th>Percentage</th>
                                     <th>Actions</th>
                                 </tr>
@@ -521,9 +520,8 @@ $classResult = $stmt->get_result();
                             // Calculate attendance percentage with fallback values for null/undefined
                             const present = parseInt(record.present) || 0;
                             const absent = parseInt(record.absent) || 0;
-                            const late = parseInt(record.late) || 0;
-                            const total = present + absent + late;
-                            const percentage = total > 0 ? ((present + late) / total * 100).toFixed(1) : '0.0';
+                            const total = present + absent;
+                            const percentage = total > 0 ? (present / total * 100).toFixed(1) : '0.0';
                             
                             // Use safe default values for missing data
                             const className = record.class_name || 'Unknown';
@@ -537,7 +535,6 @@ $classResult = $stmt->get_result();
                                 </td>
                                 <td>${present}</td>
                                 <td>${absent}</td>
-                                <td>${late}</td>
                                 <td>${percentage}%</td>
                                 <td>
                                     <a href="attendance_details.php?class_id=${record.class_id}&section_id=${record.section_id}&date=${record.date}" class="btn btn-secondary btn-sm">View</a>
@@ -633,7 +630,6 @@ $classResult = $stmt->get_result();
                                         <th>Roll Number</th>
                                         <th>Present Days</th>
                                         <th>Absent Days</th>
-                                        <th>Late Days</th>
                                         <th>Attendance %</th>
                                     </tr>
                                 </thead>
@@ -644,7 +640,6 @@ $classResult = $stmt->get_result();
                                             <td>${student.roll_number || 'N/A'}</td>
                                             <td>${student.present_days || 0}</td>
                                             <td>${student.absent_days || 0}</td>
-                                            <td>${student.late_days || 0}</td>
                                             <td>${student.attendance_percentage || 0}%</td>
                                         </tr>
                                     `).join('')}
@@ -680,9 +675,9 @@ $classResult = $stmt->get_result();
         const students = lastReportData.report.students;
         let csv = '';
         // Header
-        csv += 'Student Name,Roll Number,Present Days,Absent Days,Late Days,Attendance %\n';
+        csv += 'Student Name,Roll Number,Present Days,Absent Days,Attendance %\n';
         students.forEach(student => {
-            csv += `"${student.full_name || ''}","${student.roll_number || ''}",${student.present_days || 0},${student.absent_days || 0},${student.late_days || 0},${student.attendance_percentage || 0}\n`;
+            csv += `"${student.full_name || ''}","${student.roll_number || ''}",${student.present_days || 0},${student.absent_days || 0},${student.attendance_percentage || 0}\n`;
         });
         // Download
         const blob = new Blob([csv], { type: 'text/csv' });

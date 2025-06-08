@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ves_login'])) {
         <html>
         <head><title>Redirecting...</title></head>
         <body>
-        <form id="vesForm" method="POST" action="ves-reception/login.php">
+        <form id="vesForm" method="POST" action="ves-reception/index.php">
             <input type="hidden" name="username" value="' . htmlspecialchars($email) . '">
             <input type="hidden" name="password" value="' . htmlspecialchars($password) . '">
         </form>

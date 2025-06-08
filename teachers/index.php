@@ -18,12 +18,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validate CSRF token
     if (!isset($_POST['csrf_token']) || !validateCSRFToken($_POST['csrf_token'])) {
         $error = "Invalid form submission. Please try again.";
-    } else {
-        $email = sanitizeInput($_POST['email'] ?? '');
+    } else {        $identifier = sanitizeInput($_POST['identifier'] ?? '');
         $password = $_POST['password'] ?? ''; // Don't sanitize password
         
-        // Authenticate user as teacher
-        $user = authenticateUser($email, $password, 'teacher');
+        // Authenticate teacher using employee ID or email
+        $user = authenticateTeacher($identifier, $password);
         
         if ($user) {
             // Set session variables
@@ -36,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header("Location: dashboard/index.php");
             exit;
         } else {
-            $error = "Invalid email or password. Please try again.";
+            $error = "Invalid Employee ID or password. Please try again.";
         }
     }
 }
@@ -835,7 +834,7 @@ $csrf_token = generateCSRFToken();
         <div class="login-section">
             <div class="login-form">
                 <h1 class="form-title">Teacher Sign In</h1>
-                <p class="form-subtitle">Enter your teacher credentials</p>
+                <p class="form-subtitle">Enter your Employee ID and password</p>
 
                 <?php if ($error): ?>
                     <div class="error-alert"><?php echo htmlspecialchars($error); ?></div>
@@ -843,10 +842,9 @@ $csrf_token = generateCSRFToken();
 
                 <form method="POST" id="loginForm">
                     <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
-                    
-                    <div class="input-group">
-                        <label for="email">Email Address</label>
-                        <input type="email" id="email" name="email" required autocomplete="username" placeholder="Enter your email">
+                      <div class="input-group">
+                        <label for="identifier">Employee ID</label>
+                        <input type="text" id="identifier" name="identifier" required autocomplete="username" placeholder="Enter your Employee ID (e.g., VES2025T006)">
                     </div>
 
                     <div class="input-group">

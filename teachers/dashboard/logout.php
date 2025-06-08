@@ -94,7 +94,7 @@ exit;
         <span>Logout</span>
     </a>
 
-    AND ADD THIS TO YOUR login.php FILE (after "Please enter your details" paragraph):
+    AND ADD THIS TO YOUR index.php FILE (after "Please enter your details" paragraph):
 
     <?php
     // Check if there's a logout message in cookies

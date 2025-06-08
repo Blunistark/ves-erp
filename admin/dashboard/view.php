@@ -235,7 +235,6 @@
                             <option value="">All Statuses</option>
                             <option value="present">Present</option>
                             <option value="absent">Absent</option>
-                            <option value="late">Late</option>
                             <option value="leave">On Leave</option>
                         </select>
                     </div>
@@ -316,16 +315,6 @@
                         <span class="percentage-decrease">1.4% from last month</span>
                     </div>
                 </div>
-                <div class="overview-card late-card">
-                    <h3 class="overview-title">Late</h3>
-                    <div class="overview-value">4.5%</div>
-                    <div class="overview-percentage">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="percentage-decrease">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                        </svg>
-                        <span class="percentage-decrease">0.8% from last month</span>
-                    </div>
-                </div>
                 <div class="overview-card leave-card">
                     <h3 class="overview-title">On Leave</h3>
                     <div class="overview-value">1.6%</div>
@@ -375,10 +364,6 @@
                     <div class="stat-item">
                         <div class="stat-value value-absent">8.2%</div>
                         <div class="stat-label">Absent Rate</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value value-late">4.5%</div>
-                        <div class="stat-label">Late Rate</div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-value value-leave">1.6%</div>
@@ -432,11 +417,6 @@
                             <h4>Absent</h4>
                             <div id="absentDaysCount" class="status-count">0</div>
                             <div id="absentDaysPercent" class="status-percent">0%</div>
-                        </div>
-                        <div class="status-card late-card">
-                            <h4>Late</h4>
-                            <div id="lateDaysCount" class="status-count">0</div>
-                            <div id="lateDaysPercent" class="status-percent">0%</div>
                         </div>
                     </div>
                     <div class="attendance-records">
@@ -1075,8 +1055,8 @@
                                     roll_number: 0,
                                     profile_image: "../../assets/img/default-profile.png",
                                     attendance: {
-                                        percentages: { present: 91.9, absent: 4.4, late: 3.7, holiday: 0 },
-                                        counts: { present: 10, absent: 1, late: 1, holiday: 0 },
+                                        percentages: { present: 95.6, absent: 4.4, holiday: 0 },
+                                        counts: { present: 11, absent: 1, holiday: 0 },
                                         total_days: 12
                                     }
                                 },
@@ -1087,8 +1067,8 @@
                                     roll_number: 1,
                                     profile_image: "../../assets/img/default-profile.png",
                                     attendance: {
-                                        percentages: { present: 85.5, absent: 9.1, late: 5.4, holiday: 0 },
-                                        counts: { present: 9, absent: 1, late: 1, holiday: 0 },
+                                        percentages: { present: 90.9, absent: 9.1, holiday: 0 },
+                                        counts: { present: 10, absent: 1, holiday: 0 },
                                         total_days: 11
                                     }
                                 },
@@ -1099,8 +1079,8 @@
                                     roll_number: 2,
                                     profile_image: "../../assets/img/default-profile.png",
                                     attendance: {
-                                        percentages: { present: 95.2, absent: 0, late: 4.8, holiday: 0 },
-                                        counts: { present: 10, absent: 0, late: 1, holiday: 0 },
+                                        percentages: { present: 100, absent: 0, holiday: 0 },
+                                        counts: { present: 11, absent: 0, holiday: 0 },
                                         total_days: 11
                                     }
                                 },
@@ -1111,8 +1091,8 @@
                                     roll_number: 3,
                                     profile_image: "../../assets/img/default-profile.png",
                                     attendance: {
-                                        percentages: { present: 88.9, absent: 11.1, late: 0, holiday: 0 },
-                                        counts: { present: 8, absent: 1, late: 0, holiday: 0 },
+                                        percentages: { present: 88.9, absent: 11.1, holiday: 0 },
+                                        counts: { present: 8, absent: 1, holiday: 0 },
                                         total_days: 9
                                     }
                                 },
@@ -1123,8 +1103,8 @@
                                     roll_number: 4,
                                     profile_image: "../../assets/img/default-profile.png",
                                     attendance: {
-                                        percentages: { present: 91.7, absent: 0, late: 8.3, holiday: 0 },
-                                        counts: { present: 11, absent: 0, late: 1, holiday: 0 },
+                                        percentages: { present: 100, absent: 0, holiday: 0 },
+                                        counts: { present: 12, absent: 0, holiday: 0 },
                                         total_days: 12
                                     }
                                 },
@@ -1135,8 +1115,8 @@
                                     roll_number: 5,
                                     profile_image: "../../assets/img/default-profile.png",
                                     attendance: {
-                                        percentages: { present: 91.7, absent: 0, late: 8.3, holiday: 0 },
-                                        counts: { present: 11, absent: 0, late: 1, holiday: 0 },
+                                        percentages: { present: 100, absent: 0, holiday: 0 },
+                                        counts: { present: 12, absent: 0, holiday: 0 },
                                         total_days: 12
                                     }
                                 }
@@ -1164,7 +1144,6 @@
                             // Calculate attendance summary
                             const presentPercent = student.attendance?.percentages?.present || 0;
                             const absentPercent = student.attendance?.percentages?.absent || 0;
-                            const latePercent = student.attendance?.percentages?.late || 0;
                             
                             // Determine status color
                             let statusClass = 'status-good';
@@ -1194,10 +1173,6 @@
                                         <div class="attendance-stat">
                                             <div class="stat-value value-absent">${absentPercent}%</div>
                                             <div class="stat-label">Absent</div>
-                                        </div>
-                                        <div class="attendance-stat">
-                                            <div class="stat-value value-late">${latePercent}%</div>
-                                            <div class="stat-label">Late</div>
                                         </div>
                                     </div>
                                     <div class="student-card-actions">
@@ -1300,7 +1275,6 @@
                                         <select id="editStatus" name="status" class="filter-select">
                                             <option value="present">Present</option>
                                             <option value="absent">Absent</option>
-                                            <option value="late">Late</option>
                                             <option value="holiday">On Leave/Holiday</option>
                                         </select>
                                     </div>
@@ -1573,13 +1547,6 @@
                 absentTrend.className = stats.trends.absent <= 0 ? 'percentage-decrease' : 'percentage-increase';
                 document.querySelector('.absent-card .overview-percentage svg').className = stats.trends.absent <= 0 ? 'percentage-decrease' : 'percentage-increase';
                 
-                // Late card
-                document.querySelector('.late-card .overview-value').textContent = stats.percentages.late || 0 + '%';
-                const lateTrend = document.querySelector('.late-card .overview-percentage span');
-                lateTrend.textContent = `${Math.abs(stats.trends.late || 0)}% from last month`;
-                lateTrend.className = stats.trends.late <= 0 ? 'percentage-decrease' : 'percentage-increase';
-                document.querySelector('.late-card .overview-percentage svg').className = stats.trends.late <= 0 ? 'percentage-decrease' : 'percentage-increase';
-                
                 // Leave/Holiday card
                 document.querySelector('.leave-card .overview-value').textContent = stats.percentages.holiday || 0 + '%';
                 const leaveTrend = document.querySelector('.leave-card .overview-percentage span');
@@ -1597,10 +1564,9 @@
                 // Update statistics
                 document.querySelector('.stat-item:nth-child(1) .stat-value').textContent = (stats.percentages.present || 0) + '%';
                 document.querySelector('.stat-item:nth-child(2) .stat-value').textContent = (stats.percentages.absent || 0) + '%';
-                document.querySelector('.stat-item:nth-child(3) .stat-value').textContent = (stats.percentages.late || 0) + '%';
-                document.querySelector('.stat-item:nth-child(4) .stat-value').textContent = (stats.percentages.holiday || 0) + '%';
-                document.querySelector('.stat-item:nth-child(5) .stat-value').textContent = stats.school_days || 0;
-                document.querySelector('.stat-item:nth-child(6) .stat-value').textContent = stats.student_count || 0;
+                document.querySelector('.stat-item:nth-child(3) .stat-value').textContent = (stats.percentages.holiday || 0) + '%';
+                document.querySelector('.stat-item:nth-child(4) .stat-value').textContent = stats.school_days || 0;
+                document.querySelector('.stat-item:nth-child(5) .stat-value').textContent = stats.student_count || 0;
             }
             
             // Fetch calendar attendance data for the current month
@@ -1723,8 +1689,6 @@
                                 statusClass = 'status-present';
                             } else if (status === 'absent') {
                                 statusClass = 'status-absent';
-                            } else if (status === 'late') {
-                                statusClass = 'status-late';
                             } else if (status === 'holiday') {
                                 statusClass = 'status-leave';
                             }
@@ -1947,7 +1911,6 @@
                 style.textContent = `
                     .status-present { background-color: rgba(72, 187, 120, 0.2); color: #2f855a; }
                     .status-absent { background-color: rgba(245, 101, 101, 0.2); color: #c53030; }
-                    .status-late { background-color: rgba(237, 137, 54, 0.2); color: #c05621; }
                     .status-leave, .status-holiday { background-color: rgba(144, 205, 244, 0.2); color: #2b6cb0; }
                     
                     .loading-message {
@@ -2327,7 +2290,6 @@
                                  <select name="statuses[]" class="status-select">
                                      <option value="present" ${student.status === 'present' ? 'selected' : ''}>Present</option>
                                      <option value="absent" ${student.status === 'absent' ? 'selected' : ''}>Absent</option>
-                                     <option value="late" ${student.status === 'late' ? 'selected' : ''}>Late</option>
                                      <option value="holiday" ${student.status === 'holiday' ? 'selected' : ''}>Holiday/Leave</option>
                                  </select>
                              `;
@@ -2450,7 +2412,6 @@
                             // Calculate attendance summary
                             const presentPercent = student.attendance?.percentages?.present || 0;
                             const absentPercent = student.attendance?.percentages?.absent || 0;
-                            const latePercent = student.attendance?.percentages?.late || 0;
                             
                             // Determine status color
                             let statusClass = 'status-good';
@@ -2480,10 +2441,6 @@
                                         <div class="attendance-stat">
                                             <div class="stat-value value-absent">${absentPercent}%</div>
                                             <div class="stat-label">Absent</div>
-                                        </div>
-                                        <div class="attendance-stat">
-                                            <div class="stat-value value-late">${latePercent}%</div>
-                                            <div class="stat-label">Late</div>
                                         </div>
                                     </div>
                                     <div class="student-card-actions">
@@ -2592,10 +2549,8 @@
                 // Reset counters
                 document.getElementById('presentDaysCount').textContent = '0';
                 document.getElementById('absentDaysCount').textContent = '0';
-                document.getElementById('lateDaysCount').textContent = '0';
                 document.getElementById('presentDaysPercent').textContent = '0%';
                 document.getElementById('absentDaysPercent').textContent = '0%';
-                document.getElementById('lateDaysPercent').textContent = '0%';
                 
                 // Fetch data from API
                 fetch(`attendance_actions.php?get_student_attendance_dates=1&student_id=${studentId}&start_date=${startDate}&end_date=${endDate}`)
@@ -2614,7 +2569,6 @@
                         // Count status types
                         let presentCount = 0;
                         let absentCount = 0;
-                        let lateCount = 0;
                         
                         if (records.length === 0) {
                             tableBody.innerHTML = `
@@ -2628,7 +2582,6 @@
                                 // Count by status
                                 if (record.status === 'present') presentCount++;
                                 else if (record.status === 'absent') absentCount++;
-                                else if (record.status === 'late') lateCount++;
                                 
                                 const row = document.createElement('tr');
                                 row.className = `status-${record.status}`;
@@ -2673,12 +2626,11 @@
                         }
                         
                         // Calculate totals
-                        const totalDays = presentCount + absentCount + lateCount;
+                        const totalDays = presentCount + absentCount;
                         
                         // Update counters
                         document.getElementById('presentDaysCount').textContent = presentCount;
                         document.getElementById('absentDaysCount').textContent = absentCount;
-                        document.getElementById('lateDaysCount').textContent = lateCount;
                         
                         // Update percentages
                         if (totalDays > 0) {
@@ -2686,12 +2638,9 @@
                                 `${Math.round((presentCount / totalDays) * 100)}%`;
                             document.getElementById('absentDaysPercent').textContent = 
                                 `${Math.round((absentCount / totalDays) * 100)}%`;
-                            document.getElementById('lateDaysPercent').textContent = 
-                                `${Math.round((lateCount / totalDays) * 100)}%`;
                         } else {
                             document.getElementById('presentDaysPercent').textContent = '0%';
                             document.getElementById('absentDaysPercent').textContent = '0%';
-                            document.getElementById('lateDaysPercent').textContent = '0%';
                         }
                     })
                     .catch(error => {
@@ -2727,7 +2676,6 @@
                                 <select id="editAttendanceStatus" class="form-control">
                                     <option value="present">Present</option>
                                     <option value="absent">Absent</option>
-                                    <option value="late">Late</option>
                                     <option value="holiday">Holiday</option>
                                 </select>
                             </div>
@@ -2923,9 +2871,6 @@
                     background-color: #f44336;
                 }
                 
-                .late-card {
-                    background-color: #ff9800;
-                }
                 
                 .attendance-table {
                     width: 100%;
@@ -2958,10 +2903,6 @@
                 
                 .status-badge.status-absent {
                     background-color: #f44336;
-                }
-                
-                .status-badge.status-late {
-                    background-color: #ff9800;
                 }
                 
                 .status-badge.status-holiday {
@@ -3095,10 +3036,6 @@
                 
                 tr.status-absent {
                     background-color: rgba(244, 67, 54, 0.1);
-                }
-                
-                tr.status-late {
-                    background-color: rgba(255, 152, 0, 0.1);
                 }
             `;
             document.head.appendChild(styleElement);

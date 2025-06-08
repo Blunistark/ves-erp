@@ -21,12 +21,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!isset($_POST['csrf_token']) || !validateCSRFToken($_POST['csrf_token'])) {
         $message = "Invalid form submission. Please try again.";
         $messageType = "error";
-    } else {
-        $email = sanitizeInput($_POST['email'] ?? '');
+    } else {        $identifier = sanitizeInput($_POST['identifier'] ?? '');
         
-        // Check if email exists and is a teacher
-        $sql = "SELECT id, email, full_name FROM users WHERE email = ? AND role = 'teacher' AND status = 'active'";
-        $result = executeQuery($sql, "s", [$email]);
+        // Check if identifier exists (Employee ID or email) and is a teacher
+        $sql = "SELECT u.id, u.email, u.full_name, t.employee_number 
+                FROM users u 
+                INNER JOIN teachers t ON u.id = t.user_id 
+                WHERE (u.email = ? OR t.employee_number = ?) AND u.role = 'teacher' AND u.status = 'active'";
+        $result = executeQuery($sql, "ss", [$identifier, $identifier]);
         
         if (!empty($result)) {
             $user = $result[0];
@@ -55,9 +57,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $message = "An error occurred. Please try again.";
                 $messageType = "error";
             }
-        } else {
-            // Don't reveal if email exists or not for security
-            $message = "If your email is registered, you will receive a password reset link.";
+        } else {            // Don't reveal if identifier exists or not for security
+            $message = "If your Employee ID or email is registered, you will receive a password reset link.";
             $messageType = "success";
         }
     }
@@ -557,9 +558,8 @@ $csrf_token = generateCSRFToken();
                         Back to Login
                     </a>
                 </div>
-                
-                <h1 class="form-title">Reset Password</h1>
-                <p class="form-subtitle">Enter your email to receive a password reset link</p>
+                  <h1 class="form-title">Reset Password</h1>
+                <p class="form-subtitle">Enter your Employee ID to receive a password reset link</p>
                 
                 <?php if (!empty($message)): ?>
                 <div class="message <?php echo $messageType; ?>">
@@ -571,8 +571,8 @@ $csrf_token = generateCSRFToken();
                     <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                     
                     <div class="input-group">
-                        <label for="email">Email Address</label>
-                        <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                        <label for="identifier">Employee ID</label>
+                        <input type="text" id="identifier" name="identifier" placeholder="Enter your Employee ID (e.g., VES2025T006)" required>
                     </div>
                     
                     <button type="submit" class="login-btn">Send Reset Link</button>

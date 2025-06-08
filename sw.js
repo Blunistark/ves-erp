@@ -8,7 +8,7 @@ const OFFLINE_URL = '/erp/offline.html';
 const CACHE_FILES = [
   '/erp/',
   '/erp/index.php',
-  '/erp/login.php',
+  '/erp/index.php',
   '/erp/manifest.json',
   
   // CSS Files

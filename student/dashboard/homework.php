@@ -3,7 +3,7 @@ require_once 'con.php';
 session_start();
 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'student') {
-    header('Location: ../login.php');
+    header('Location: ../index.php');
     exit;
 }
 
@@ -22,7 +22,7 @@ $stmt->execute();
 $student = $stmt->get_result()->fetch_assoc();
 
 if (!$student) {
-    header('Location: ../login.php');
+    header('Location: ../index.php');
     exit;
 }
 

@@ -9,7 +9,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Check if user is logged in and is an admin
 if (!isLoggedIn() || !hasRole('admin')) {
-    header("Location: ../../login.php");
+    header("Location: ../../index.php");
     exit;
 }
 

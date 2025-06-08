@@ -135,7 +135,6 @@ ob_end_clean();
     $todayQuery = "SELECT 
                       COUNT(CASE WHEN status = 'present' THEN 1 END) as present_count,
                       COUNT(CASE WHEN status = 'absent' THEN 1 END) as absent_count,
-                      COUNT(CASE WHEN status = 'late' THEN 1 END) as late_count,
                       COUNT(*) as total_count
                    FROM attendance 
                    WHERE class_id IN ($classIdStr) 
@@ -153,7 +152,6 @@ ob_end_clean();
     $yesterdayQuery = "SELECT 
                          COUNT(CASE WHEN status = 'present' THEN 1 END) as present_count,
                          COUNT(CASE WHEN status = 'absent' THEN 1 END) as absent_count,
-                         COUNT(CASE WHEN status = 'late' THEN 1 END) as late_count,
                          COUNT(*) as total_count
                       FROM attendance 
                       WHERE class_id IN ($classIdStr) 
@@ -171,7 +169,6 @@ ob_end_clean();
     $weeklyQuery = "SELECT 
                        COUNT(CASE WHEN status = 'present' THEN 1 END) as present_count,
                        COUNT(CASE WHEN status = 'absent' THEN 1 END) as absent_count,
-                       COUNT(CASE WHEN status = 'late' THEN 1 END) as late_count,
                        COUNT(*) as total_count
                     FROM attendance 
                     WHERE class_id IN ($classIdStr) 
@@ -190,7 +187,6 @@ ob_end_clean();
     $prevWeekQuery = "SELECT 
                         COUNT(CASE WHEN status = 'present' THEN 1 END) as present_count,
                         COUNT(CASE WHEN status = 'absent' THEN 1 END) as absent_count,
-                        COUNT(CASE WHEN status = 'late' THEN 1 END) as late_count,
                         COUNT(*) as total_count
                      FROM attendance 
                      WHERE class_id IN ($classIdStr) 
@@ -208,7 +204,6 @@ ob_end_clean();
     $monthlyQuery = "SELECT 
                         COUNT(CASE WHEN status = 'present' THEN 1 END) as present_count,
                         COUNT(CASE WHEN status = 'absent' THEN 1 END) as absent_count,
-                        COUNT(CASE WHEN status = 'late' THEN 1 END) as late_count,
                         COUNT(*) as total_count
                      FROM attendance 
                      WHERE class_id IN ($classIdStr) 
@@ -227,7 +222,6 @@ ob_end_clean();
     $prevMonthQuery = "SELECT 
                          COUNT(CASE WHEN status = 'present' THEN 1 END) as present_count,
                          COUNT(CASE WHEN status = 'absent' THEN 1 END) as absent_count,
-                         COUNT(CASE WHEN status = 'late' THEN 1 END) as late_count,
                          COUNT(*) as total_count
                       FROM attendance 
                       WHERE class_id IN ($classIdStr) 
@@ -264,27 +258,27 @@ ob_end_clean();
     $prevMonthPercentage = 0;
     
     if ($todayData['total_count'] > 0) {
-        $todayPercentage = round((($todayData['present_count'] + $todayData['late_count']) / $todayData['total_count']) * 100, 1);
+        $todayPercentage = round(($todayData['present_count'] / $todayData['total_count']) * 100, 1);
     }
     
     if ($yesterdayData['total_count'] > 0) {
-        $yesterdayPercentage = round((($yesterdayData['present_count'] + $yesterdayData['late_count']) / $yesterdayData['total_count']) * 100, 1);
+        $yesterdayPercentage = round(($yesterdayData['present_count'] / $yesterdayData['total_count']) * 100, 1);
     }
     
     if ($weeklyData['total_count'] > 0) {
-        $weeklyPercentage = round((($weeklyData['present_count'] + $weeklyData['late_count']) / $weeklyData['total_count']) * 100, 1);
+        $weeklyPercentage = round(($weeklyData['present_count'] / $weeklyData['total_count']) * 100, 1);
     }
     
     if ($prevWeekData['total_count'] > 0) {
-        $prevWeekPercentage = round((($prevWeekData['present_count'] + $prevWeekData['late_count']) / $prevWeekData['total_count']) * 100, 1);
+        $prevWeekPercentage = round(($prevWeekData['present_count'] / $prevWeekData['total_count']) * 100, 1);
     }
     
     if ($monthlyData['total_count'] > 0) {
-        $monthlyPercentage = round((($monthlyData['present_count'] + $monthlyData['late_count']) / $monthlyData['total_count']) * 100, 1);
+        $monthlyPercentage = round(($monthlyData['present_count'] / $monthlyData['total_count']) * 100, 1);
     }
     
     if ($prevMonthData['total_count'] > 0) {
-        $prevMonthPercentage = round((($prevMonthData['present_count'] + $prevMonthData['late_count']) / $prevMonthData['total_count']) * 100, 1);
+        $prevMonthPercentage = round(($prevMonthData['present_count'] / $prevMonthData['total_count']) * 100, 1);
     }
     
     // Calculate trends
@@ -660,7 +654,6 @@ function getAttendanceHistory($conn, $teacher_user_id) {
         $historyQuery = "SELECT a.date, c.name as class_name, s.name as section_name, c.id as class_id, s.id as section_id,
                             COUNT(CASE WHEN a.status = 'present' THEN 1 END) as present,
                             COUNT(CASE WHEN a.status = 'absent' THEN 1 END) as absent,
-                            COUNT(CASE WHEN a.status = 'late' THEN 1 END) as late
                          FROM attendance a
                          JOIN classes c ON a.class_id = c.id
                          JOIN sections s ON a.section_id = s.id
@@ -675,7 +668,6 @@ function getAttendanceHistory($conn, $teacher_user_id) {
         $historyQuery = "SELECT a.date, c.name as class_name, s.name as section_name, c.id as class_id, s.id as section_id,
                             COUNT(CASE WHEN a.status = 'present' THEN 1 END) as present,
                             COUNT(CASE WHEN a.status = 'absent' THEN 1 END) as absent,
-                            COUNT(CASE WHEN a.status = 'late' THEN 1 END) as late
                          FROM attendance a
                          JOIN classes c ON a.class_id = c.id
                          JOIN sections s ON a.section_id = s.id
@@ -712,7 +704,6 @@ function getAttendanceHistory($conn, $teacher_user_id) {
         // Convert number strings to integers for consistent JSON output
         $row['present'] = intval($row['present']);
         $row['absent'] = intval($row['absent']);
-        $row['late'] = intval($row['late']);
         $row['class_id'] = intval($row['class_id']);
         $row['section_id'] = intval($row['section_id']);
         
@@ -890,7 +881,6 @@ function getAttendanceReport($conn, $teacher_user_id) {
         $attendanceQuery = "SELECT 
                              COUNT(CASE WHEN status = 'present' THEN 1 END) as present_days,
                              COUNT(CASE WHEN status = 'absent' THEN 1 END) as absent_days,
-                             COUNT(CASE WHEN status = 'late' THEN 1 END) as late_days,
                              COUNT(*) as total_days
                            FROM attendance
                            WHERE student_user_id = ? AND class_id = ? AND section_id = ? AND date BETWEEN ? AND ?";
@@ -910,16 +900,14 @@ function getAttendanceReport($conn, $teacher_user_id) {
         $attendance_percentage = 0;
         $present_days = intval($attendanceData['present_days'] ?? 0);
         $absent_days = intval($attendanceData['absent_days'] ?? 0);
-        $late_days = intval($attendanceData['late_days'] ?? 0);
         $student_total_days = intval($attendanceData['total_days'] ?? 0);
         
         if ($student_total_days > 0) {
-            $attendance_percentage = round((($present_days + $late_days) / $student_total_days) * 100, 1);
+            $attendance_percentage = round(($present_days / $student_total_days) * 100, 1);
         }
         
         $student['present_days'] = $present_days;
         $student['absent_days'] = $absent_days;
-        $student['late_days'] = $late_days;
         $student['attendance_percentage'] = $attendance_percentage;
         
         $total_attendance_percentage += $attendance_percentage;

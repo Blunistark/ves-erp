@@ -26,7 +26,7 @@ switch ($action) {
         $stmt->bind_param('iii', $student_id, $month, $year);
         $stmt->execute();
         $result = $stmt->get_result();
-        $summary = ['present' => 0, 'absent' => 0, 'late' => 0, 'holiday' => 0];
+        $summary = ['present' => 0, 'absent' => 0, 'holiday' => 0];
         $total = 0;
         while ($row = $result->fetch_assoc()) {
             $summary[$row['status']] = (int)$row['count'];

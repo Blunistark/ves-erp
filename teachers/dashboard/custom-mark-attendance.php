@@ -349,7 +349,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                                                 <select name="status[<?php echo $student['student_user_id']; ?>]" class="form-select status-select" required>
                                                     <option value="present" <?php echo (isset($existing_attendance[$student['student_user_id']]) && $existing_attendance[$student['student_user_id']]['status'] == 'present') ? 'selected' : ''; ?>>Present</option>
                                                     <option value="absent" <?php echo (isset($existing_attendance[$student['student_user_id']]) && $existing_attendance[$student['student_user_id']]['status'] == 'absent') ? 'selected' : ''; ?>>Absent</option>
-                                                    <option value="late" <?php echo (isset($existing_attendance[$student['student_user_id']]) && $existing_attendance[$student['student_user_id']]['status'] == 'late') ? 'selected' : ''; ?>>Late</option>
                                                 </select>
                                             </td>
                                             <td>

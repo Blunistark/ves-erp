@@ -63,7 +63,7 @@
                             </svg>
                         </div>
                         <h3 class="report-title">Daily Attendance Report</h3>
-                        <p class="report-description">Comprehensive daily attendance report showing present, absent, late, and leave status for each student in a specific class.</p>
+                        <p class="report-description">Comprehensive daily attendance report showing present, absent, and leave status for each student in a specific class.</p>
                         <ul class="report-features">
                             <li>
                                 <svg class="feature-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -237,12 +237,8 @@
                             <div class="checkbox-group">
                                 <label class="checkbox-item">
                                     <input type="checkbox" name="status" value="present" checked> Present
-                                </label>
-                                <label class="checkbox-item">
+                                </label>                                <label class="checkbox-item">
                                     <input type="checkbox" name="status" value="absent" checked> Absent
-                                </label>
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="status" value="late" checked> Late
                                 </label>
                                 <label class="checkbox-item">
                                     <input type="checkbox" name="status" value="leave" checked> On Leave
@@ -331,15 +327,7 @@
                                     <td>ST002</td>
                                     <td>Emma Smith</td>
                                     <td>Present</td>
-                                    <td>08:15 AM</td>
-                                    <td>-</td>
-                                </tr>
-                                <tr>
-                                    <td>ST003</td>
-                                    <td>Michael Johnson</td>
-                                    <td>Late</td>
-                                    <td>09:10 AM</td>
-                                    <td>Parent notified</td>
+                                    <td>08:15 AM</td>                                <td>-</td>
                                 </tr>
                                 <tr>
                                     <td>ST004</td>
@@ -361,10 +349,8 @@
                         <div style="margin-top: 2rem;">
                             <h4>Summary</h4>
                             <ul>
-                                <li>Total Students: 5</li>
-                                <li>Present: 3 (60%)</li>
-                                <li>Late: 1 (20%)</li>
-                                <li>Absent: 1 (20%)</li>
+                                <li>Total Students: 5</li>                                <li>Present: 3 (75%)</li>
+                                <li>Absent: 1 (25%)</li>
                                 <li>On Leave: 0 (0%)</li>
                             </ul>
                         </div>

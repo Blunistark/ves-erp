@@ -11,7 +11,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Check if user is logged in and is an admin
 if (!isLoggedIn() || !hasRole('admin')) {
-    header("Location: ../login.php");
+    header("Location: ../index.php");
     exit;
 }
 
@@ -105,27 +105,83 @@ include 'sidebar.php';
     <link rel="stylesheet" href="css/sidebar.css">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    
- <style>
-        /* Main Layout Styles */
+     <style>        /* Main Layout Styles */
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
             margin: 0;
             padding: 0;
             background: #f8fafc;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            height: 100vh;
-            overflow: hidden;
         }
 
-        .container {
-            display: flex;
-            height: 100vh;
-        }
-
-        .main-content {
-            flex: 1;
+        .dashboard-container {
+            min-height: 100vh;
+        }        .main-content {
+            margin-left: 280px;
+            transition: margin-left 0.3s ease;
+            min-height: 100vh;
             overflow-y: auto;
-            position: relative;
+            max-height: 100vh;
+            padding: 0;
+        }
+
+        /* Sidebar Overlay */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 40;
+            display: none;
+        }
+
+        /* Mobile Hamburger Button */
+        .hamburger-btn {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 60;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 0.75rem;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        .hamburger-icon {
+            width: 20px;
+            height: 20px;
+            stroke: #374151;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .hamburger-btn {
+                display: block;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            .sidebar-overlay.active {
+                display: block;
+            }
         }
 
         /* Header Styles */
@@ -205,14 +261,13 @@ include 'sidebar.php';
 
         .user-dropdown-menu a:hover {
             background-color: #f2f2f2;
-        }
-
-        /* Card Styles */
+        }        /* Card Styles */
         .card {
             background: white;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             overflow: hidden;
+            margin: 0;
         }
 
         .card-header {
@@ -234,13 +289,12 @@ include 'sidebar.php';
 
         .card-body {
             padding: 20px 0;
-        }
-
-        /* Content Styles */
+        }        /* Content Styles */
         .content {
-            padding: 20px 0;
+            padding: 20px;
             background: #f5f5f5;
-            min-height: 100vh;
+            min-height: calc(100vh - 40px);
+            overflow-y: auto;
         }
 
         /* Button Styles */
@@ -358,9 +412,7 @@ include 'sidebar.php';
             outline: none;
             border-color: #2563eb;
             box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
-        }
-
-        /* Table container with horizontal scroll */
+        }        /* Table container with horizontal scroll */
         .table-container {
             overflow-x: auto;
             overflow-y: visible;
@@ -370,6 +422,7 @@ include 'sidebar.php';
             width: 100%;
             max-width: 100%;
             position: relative;
+            scroll-behavior: smooth;
         }
 
         .user-table {
@@ -981,33 +1034,19 @@ include 'sidebar.php';
                 font-size: 12px;
                 min-width: 30px;
             }
-        }
-    </style>
+        }    </style>
 </head>
 <body>
-    <div class="container">
-        
-        
-        <div class="main-content">
-            <div class="header">
-                <div class="menu-toggle">
-                    <div class="bar"></div>
-                    <div class="bar"></div>
-                    <div class="bar"></div>
-                </div>
-                <h1>User Management</h1>
-                <div class="user-dropdown">
-                    <button class="user-dropdown-toggle">
-                        <span><?php echo $_SESSION['full_name'] ?></span>
-                        <i class="fas fa-chevron-down"></i>
-                    </button>
-                    <div class="user-dropdown-menu">
-                        <a href="adminprofile.php">Profile</a>
-                        <a href="logout.php">Logout</a>
-                    </div>
-                </div>
-            </div>
-            
+    <div class="sidebar-overlay"></div>
+    
+    <button class="hamburger-btn" type="button" onclick="toggleSidebar()">
+        <svg xmlns="http://www.w3.org/2000/svg" class="hamburger-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+    </button>
+
+    <div class="dashboard-container">
+        <main class="main-content">
             <div class="content">
                 <div class="card">
                     <div class="card-header">
@@ -1128,12 +1167,11 @@ include 'sidebar.php';
                             <span class="disabled">Next &rsaquo;</span>
                             <span class="disabled">Last &raquo;</span>
                             <?php endif; ?>
-                        </div>
-                        <?php endif; ?>
+                        </div>                        <?php endif; ?>
                     </div>
                 </div>
             </div>
-        </div>
+        </main>
     </div>
     
     <!-- Hidden forms for status changes and password reset -->
@@ -1156,8 +1194,7 @@ include 'sidebar.php';
     </form>
     
     <!-- Include JavaScript files -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>    <script>
     $(document).ready(function() {
         // Toggle sidebar
         $('.menu-toggle').click(function() {
@@ -1212,7 +1249,42 @@ include 'sidebar.php';
                 $('#resetPasswordForm').submit();
             }
         });
+
+        // Smooth scroll to top when pagination changes
+        $('.pagination a').click(function() {
+            // Small delay to allow page transition, then scroll to top of content
+            setTimeout(function() {
+                $('.main-content').animate({
+                    scrollTop: 0
+                }, 300);
+            }, 100);
+        });
+
+        // Auto-scroll to content area after page load
+        if (window.location.hash) {
+            setTimeout(function() {
+                const target = $(window.location.hash);
+                if (target.length) {
+                    $('.main-content').animate({
+                        scrollTop: target.offset().top - $('.main-content').offset().top + $('.main-content').scrollTop() - 20
+                    }, 500);
+                }
+            }, 300);
+        }
     });
+
+    // Hamburger menu toggle function
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.querySelector('.sidebar-overlay');
+        
+        if (sidebar) {
+            sidebar.classList.toggle('show');
+            if (overlay) {
+                overlay.classList.toggle('active');
+            }
+        }
+    }
     </script>
 </body>
 </html> 

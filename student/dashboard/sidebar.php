@@ -10,7 +10,7 @@ if (session_status() === PHP_SESSION_NONE) {
 // Check if user is logged in and is a student or parent
 if (!isLoggedIn() || !hasRole(['student', 'parent'])) {
     // Redirect to login page
-    header("Location: ../login.php");
+    header("Location: ../index.php");
     exit;
 }
 
