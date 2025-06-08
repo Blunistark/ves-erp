@@ -1,0 +1,150 @@
+/* Responsive CSS for Dashboard Pages */
+
+/* Dashboard Container */
+.dashboard-container {
+    margin-left: 280px;
+    transition: all 0.3s ease;
+    position: relative;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+/* Body with sidebar open */
+body.sidebar-open {
+    overflow: hidden;
+}
+
+/* Hamburger button */
+.hamburger-btn {
+    display: none;
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+    /* Dashboard container on mobile */
+    .dashboard-container {
+        margin-left: 0;
+        width: 100%;
+    }
+    
+    /* Show hamburger button on mobile */
+    .hamburger-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 42px;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        cursor: pointer;
+        position: fixed;
+        top: 1.25rem;
+        left: 1.25rem;
+        z-index: 49;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    /* Dashboard header padding for hamburger button */
+    .dashboard-header {
+        padding-left: 5rem;
+    }
+    
+    /* Responsive sidebar behavior */
+    .sidebar {
+        transform: translateX(-100%);
+    }
+    
+    .sidebar.show {
+        transform: translateX(0);
+        z-index: 48;
+    }
+}
+
+/* Responsive action button styles */
+.action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+}
+
+@media (min-width: 768px) {
+    .action-buttons {
+        width: auto;
+    }
+}
+
+/* Responsive form layout */
+@media (max-width: 576px) {
+    .form-row {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .form-actions {
+        flex-direction: column !important;
+    }
+    
+    .btn {
+        width: 100%;
+    }
+}
+
+/* Responsive table */
+@media (max-width: 991px) {
+    table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* Responsive tabs */
+@media (max-width: 767px) {
+    .results-tabs {
+        overflow-x: auto;
+        white-space: nowrap;
+        padding-bottom: 5px;
+    }
+    
+    .results-tab {
+        padding: 10px 15px;
+        font-size: 14px;
+    }
+    
+    .summary-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .charts-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Medium screens */
+@media (min-width: 768px) and (max-width: 991px) {
+    .summary-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Hide sidebar overlay by default */
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 45;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+/* Show overlay when sidebar is open */
+.sidebar.show ~ .sidebar-overlay {
+    opacity: 1;
+    visibility: visible;
+} 

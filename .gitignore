@@ -1,0 +1,86 @@
+   # Environment and Configuration
+.env
+.env.local
+.env.production
+.env.development
+
+# Database
+*.sql.backup
+*.sql.bak
+db/backups/
+
+# Logs
+*.log
+logs/
+admin/dashboard/logs/
+admin/dashboard/*debug.log
+admin/dashboard/cache/
+teachers/dashboard/cache/
+teachers/dashboard/debug.log
+backend/api/*debug.log
+/assets/*.log
+
+# Uploads and User Content
+uploads/*
+admin/uploads/*
+!uploads/.gitkeep
+!admin/uploads/.gitkeep
+
+# Cache and Temporary Files
+cache/
+temp/
+tmp/
+*.tmp
+*.cache
+
+# IDE and Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# PHP Specific
+/vendor/
+composer.phar
+composer.lock
+
+# Session Files
+sessions/
+
+# Error and Debug Files
+error.log
+php_errors.log
+debug.txt
+*.debug
+
+# Backup Files
+*.bak
+*.backup
+*~
+
+# Node modules (if any)
+node_modules/
+
+# Connection Files (sensitive)
+admin/dashboard/con.php
+student/dashboard/con.php
+teachers/dashboard/con.php
+
+# Payment Proofs and Sensitive Data
+uploads/payment_proofs/*
+!uploads/payment_proofs/.gitkeep
+
+# Test Files
+test_*.php
+*_test.php
+debug_*.php

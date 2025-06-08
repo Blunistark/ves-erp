@@ -1,0 +1,27 @@
+# Enable rewriting
+RewriteEngine On
+
+# Route API requests to the API router
+RewriteRule ^api(/.*)?$ api/index.php [L,QSA]
+
+# Set default content type for API responses
+<IfModule mod_headers.c>
+    <FilesMatch "^api/.*\.php$">
+        Header set Content-Type "application/json"
+    </FilesMatch>
+</IfModule>
+
+# Disable directory listing
+Options -Indexes
+
+# Deny access to files with specific extensions
+<FilesMatch "(\.(bak|config|sql|fla|psd|ini|log|sh|inc|swp|dist)|~)$">
+    Require all denied
+</FilesMatch>
+
+# Deny access to hidden files and directories
+<IfModule mod_rewrite.c>
+    RewriteCond %{SCRIPT_FILENAME} -d [OR]
+    RewriteCond %{SCRIPT_FILENAME} -f
+    RewriteRule "(^|/)\." - [F]
+</IfModule> 

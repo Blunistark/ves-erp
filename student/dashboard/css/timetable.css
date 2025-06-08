@@ -1,0 +1,510 @@
+/* Fade Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f8fafc;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            height: 100vh;
+            overflow-x: hidden;
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        /* Add page exit animation trigger class */
+        body.fade-out {
+            animation: fadeOut 0.5s ease-out forwards;
+        }
+
+        .dashboard-container {
+            margin-left: 280px;
+            transition: all 0.3s ease;
+            position: relative;
+            height: 100vh;
+            overflow-y: auto;
+            opacity: 0;
+            animation: fadeIn 0.5s ease-out 0.2s forwards;
+        }
+
+        .dashboard-header {
+            background: white;
+            padding: 1.5rem 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            opacity: 0;
+            animation: fadeIn 0.5s ease-out 0.4s forwards;
+        }
+
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 0;
+        }
+
+        .header-date {
+            color: #6b7280;
+            font-size: 0.95rem;
+            margin-top: 0.25rem;
+        }
+
+        .dashboard-content {
+            padding: 2rem;
+            padding-bottom: 4rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            animation: fadeIn 0.5s ease-out 0.6s forwards;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 0 0 1.5rem 0;
+            color: #1a1a1a;
+        }
+
+        /* Today's Schedule */
+        .todays-schedule {
+            margin-bottom: 2rem;
+        }
+
+        .schedule-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+        }
+
+        .schedule-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .current-class-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            background: #f0fdf4;
+            color: #166534;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            gap: 0.25rem;
+        }
+
+        .current-class-dot {
+            width: 8px;
+            height: 8px;
+            background: #16a34a;
+            border-radius: 50%;
+        }
+
+        .schedule-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .schedule-item {
+            display: flex;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .schedule-item:hover {
+            border-color: #d1d5db;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .schedule-item.current {
+            border-color: #bbf7d0;
+            background: #f0fdf4;
+        }
+
+        .schedule-time {
+            padding: 1rem;
+            background: #f9fafb;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 90px;
+            flex-shrink: 0;
+            border-right: 1px solid #e5e7eb;
+        }
+
+        .schedule-item.current .schedule-time {
+            background: #dcfce7;
+        }
+
+        .time-start {
+            font-weight: 600;
+            color: #1a1a1a;
+            font-size: 0.95rem;
+        }
+
+        .time-end {
+            color: #6b7280;
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+        }
+
+        .schedule-content {
+            padding: 1rem;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .schedule-subject {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .subject-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .math-icon {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .science-icon {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .language-icon {
+            background: #f1f5f9;
+            color: #334155;
+        }
+
+        .history-icon {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .arts-icon {
+            background: #fce7f3;
+            color: #9d174d;
+        }
+
+        .physical-icon {
+            background: #ffedd5;
+            color: #c2410c;
+        }
+
+        .break-icon {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .subject-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .subject-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .subject-name {
+            font-weight: 600;
+            color: #1a1a1a;
+            font-size: 1rem;
+        }
+
+        .subject-teacher {
+            color: #6b7280;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
+        .schedule-location {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            background: #f3f4f6;
+            border-radius: 8px;
+            color: #4b5563;
+            font-size: 0.875rem;
+        }
+
+        .schedule-location svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Weekly Timetable */
+        .timetable-container {
+            overflow-x: auto;
+        }
+
+        .timetable {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            min-width: 800px;
+        }
+
+        .timetable th {
+            padding: 1rem;
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+            color: #4b5563;
+            font-weight: 500;
+            text-align: left;
+        }
+
+        .timetable th:first-child {
+            border-top-left-radius: 10px;
+            width: 80px;
+        }
+
+        .timetable th:last-child {
+            border-top-right-radius: 10px;
+        }
+
+        .timetable td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+            vertical-align: top;
+        }
+
+        .timetable td:first-child {
+            color: #4b5563;
+            font-weight: 500;
+        }
+
+        .timetable-slot {
+            padding: 0.5rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            min-height: 40px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .timetable-subject {
+            font-weight: 500;
+        }
+
+        .timetable-teacher {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+
+        .timetable-location {
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            color: #4b5563;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .timetable-location svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        .slot-math {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .slot-science {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .slot-language {
+            background: #f1f5f9;
+            color: #334155;
+        }
+
+        .slot-history {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .slot-arts {
+            background: #fce7f3;
+            color: #9d174d;
+        }
+
+        .slot-physical {
+            background: #ffedd5;
+            color: #c2410c;
+        }
+
+        .slot-break {
+            background: #f3f4f6;
+            color: #6b7280;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        /* Class Selector */
+        .class-selector {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .class-option {
+            padding: 0.5rem 1rem;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            color: #4b5563;
+        }
+
+        .class-option:hover {
+            border-color: #d1d5db;
+        }
+
+        .class-option.active {
+            background: #4f46e5;
+            color: white;
+            border-color: #4f46e5;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .dashboard-container {
+                margin-left: 0;
+            }
+
+            .dashboard-header {
+                padding: 1.5rem;
+                padding-left: 5rem;
+            }
+
+            .dashboard-content {
+                padding: 1.5rem;
+            }
+
+            .card {
+                padding: 1.5rem;
+            }
+
+            .schedule-content {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .schedule-location {
+                align-self: flex-start;
+            }
+
+            .class-selector {
+                justify-content: center;
+            }
+        }
+
+        /* Hamburger Button */
+        .hamburger-btn {
+            width: 42px;
+            height: 42px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border: 0px solid #e5e7eb;
+            border-radius: 10px;
+            cursor: pointer;
+            position: fixed;
+            top: 1.25rem;
+            left: 1.25rem;
+            z-index: 50;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger-icon {
+            width: 24px;
+            height: 24px;
+            color: #4b5563;
+        }
+
+        @media (max-width: 768px) {
+            .hamburger-btn {
+                display: flex;
+            }
+        }
+
+        /* Sidebar Overlay */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.93);
+            z-index: 45;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar.show ~ .sidebar-overlay {
+            opacity: 1;
+            visibility: visible;
+        }

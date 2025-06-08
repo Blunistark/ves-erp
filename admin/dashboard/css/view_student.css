@@ -1,0 +1,17 @@
+body { margin:0; padding:0; background:#f8fafc; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+        .dashboard-container { margin-left:280px; transition:all .3s ease; position:relative; height:100vh; overflow-y:auto; }
+        .dashboard-header { background:white; padding:1.5rem 2rem; box-shadow:0 2px 4px rgba(0,0,0,.02); position:sticky; top:0; z-index:40; }
+        .header-title { font-size:1.5rem; font-weight:600; margin:0; color:#1a1a1a; }
+        .header-path { color:#6b7280; font-size:0.95rem; margin-top:0.25rem; }
+        .dashboard-content { padding:2rem; padding-bottom:4rem; }
+        .form-container { background:white; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,.1); padding:2rem; }
+        .section-title { font-size:1.125rem; font-weight:600; margin-bottom:1.5rem; border-bottom:1px solid #e5e7eb; padding-bottom:.75rem; }
+        .form-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:1.5rem; margin-bottom:1.5rem; }
+        .form-group { display:flex; flex-direction:column; }
+        .form-label { font-size:0.95rem; color:#4b5563; margin-bottom:0.5rem; }
+        .form-input, .form-select { width:100%; padding:.75rem; border:1px solid #e5e7eb; border-radius:6px; transition:all .3s ease; }
+        .form-input:focus, .form-select:focus { outline:none; border-color:#667eea; box-shadow:0 0 0 3px rgba(102,126,234,.1); }
+        .btn { display:inline-flex; align-items:center; justify-content:center; padding:.75rem 1.5rem; border-radius:8px; font-weight:500; transition:all .3s ease; gap:.5rem; border:none; }
+        .btn-primary { background:#667eea; color:white; } .btn-outline { background:white; color:#4b5563; border:1px solid #e5e7eb; }
+        .form-actions { display:flex; justify-content:flex-end; gap:1rem; margin-top:2rem; padding-top:1.5rem; border-top:1px solid #e5e7eb; }
+        .alert-message { background-color:#d1fae5; color:#065f46; padding:1rem; border-radius:6px; margin-bottom:1.5rem; border:1px solid #10b981; }

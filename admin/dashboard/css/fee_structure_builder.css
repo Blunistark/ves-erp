@@ -1,0 +1,343 @@
+/* Fee Structure Builder Styles */
+.fee-builder-container {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.builder-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.builder-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+}
+
+.builder-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.template-selector {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.template-dropdown {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    background-color: #f9fafb;
+}
+
+.builder-sections {
+    display: grid;
+    gap: 20px;
+}
+
+.builder-section {
+    background-color: #f9fafb;
+    border-radius: 8px;
+    padding: 15px;
+    border: 1px solid #eee;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #444;
+}
+
+.section-toggle {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    font-size: 20px;
+}
+
+.fee-components-container {
+    margin-top: 15px;
+    transition: all 0.3s ease;
+}
+
+.fee-component {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+    padding: 12px;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    background-color: white;
+    transition: all 0.2s ease;
+}
+
+.fee-component:hover {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.fee-component-drag {
+    cursor: move;
+    color: #999;
+}
+
+.fee-component-name {
+    flex: 2;
+}
+
+.fee-component-amount {
+    flex: 1;
+}
+
+.fee-component-remove {
+    cursor: pointer;
+    color: #ef4444;
+    transition: transform 0.2s;
+}
+
+.fee-component-remove:hover {
+    transform: scale(1.1);
+}
+
+.add-component-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px;
+    border: 1px dashed #ddd;
+    border-radius: 4px;
+    background-color: #f9fafb;
+    text-align: center;
+    color: #555;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: all 0.2s;
+}
+
+.add-component-btn:hover {
+    background-color: #f5f5f5;
+    border-color: #4a6cf7;
+    color: #4a6cf7;
+}
+
+.component-library {
+    position: absolute;
+    z-index: 10;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+    width: 300px;
+}
+
+.component-library-item {
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.component-library-item:hover {
+    background-color: #f5f5f5;
+}
+
+.payment-schedule {
+    margin-top: 20px;
+}
+
+.schedule-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.schedule-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.installment-container {
+    margin-top: 15px;
+    display: none;
+}
+
+.installment-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 10px;
+}
+
+.installment-table th,
+.installment-table td {
+    padding: 10px;
+    border: 1px solid #eee;
+}
+
+.add-installment-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    background-color: #f9fafb;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.add-installment-btn:hover {
+    background-color: #f5f5f5;
+}
+
+.class-selection {
+    margin-top: 20px;
+}
+
+.class-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.class-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.class-checkbox:hover {
+    background-color: #f5f5f5;
+}
+
+.preview-panel {
+    margin-top: 20px;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.preview-header {
+    padding: 10px 15px;
+    background-color: #f9fafb;
+    border-bottom: 1px solid #eee;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.preview-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #666;
+}
+
+.preview-content {
+    padding: 15px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.preview-content.open {
+    max-height: 500px;
+}
+
+.total-calculation {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f0f9ff;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.total-label {
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.total-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #4a6cf7;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+/* Animation for adding/removing components */
+.component-enter {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+.component-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 300ms, transform 300ms;
+}
+
+.component-exit {
+    opacity: 1;
+}
+
+.component-exit-active {
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 300ms, transform 300ms;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .fee-component {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .fee-component-name,
+    .fee-component-amount {
+        width: 100%;
+    }
+    
+    .fee-component-remove {
+        align-self: flex-end;
+    }
+    
+    .class-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    }
+} 
