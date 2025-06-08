@@ -1,4 +1,4 @@
-   # Environment and Configuration
+# Environment and Configuration
 .env
 .env.local
 .env.production
@@ -8,6 +8,8 @@
 *.sql.backup
 *.sql.bak
 db/backups/
+database/backups/
+database/*.backup
 
 # Logs
 *.log
@@ -19,6 +21,7 @@ teachers/dashboard/cache/
 teachers/dashboard/debug.log
 backend/api/*debug.log
 /assets/*.log
+dev-tools/*.log
 
 # Uploads and User Content
 uploads/*
@@ -84,3 +87,10 @@ uploads/payment_proofs/*
 test_*.php
 *_test.php
 debug_*.php
+
+# Development and Testing Directories
+tests/
+dev-tools/*.log
+dev-tools/output/
+database/backups/
+database/*.backup
