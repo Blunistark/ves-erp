@@ -2,11 +2,11 @@
 include 'sidebar.php'; 
 include 'con.php';
 
-// Check if user is logged in and is a teacher
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'teacher') {
-    header('Location: ../index.php');
-    exit();
-}
+if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['teacher', 'headmaster'])) {
+  header('Location: ../index.php');
+  exit();
+} 
+
 
 $user_id = $_SESSION['user_id'];
 ?>
