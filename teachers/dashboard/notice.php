@@ -3,7 +3,7 @@ include 'sidebar.php';
 
 include 'con.php';
 
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'teacher') {
+if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['teacher', 'headmaster'])) {
     header('Location: ../index.php');
     exit();
 }

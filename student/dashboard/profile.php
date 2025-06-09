@@ -5,8 +5,6 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-
-
 // Get comprehensive student details
 $student_id = $_SESSION['user_id'];
 $query = "SELECT s.*, u.email, u.full_name as user_full_name, u.created_at as join_date, 
@@ -88,69 +86,146 @@ if (!empty($student['dob']) && $student['dob'] != '0000-00-00') {
     <link rel="stylesheet" href="css/sidebar.css">
     <link rel="stylesheet" href="css/profile.css">
     <style>
-       
-        
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-top: 1.5rem;
+        /* Main container and sidebar integration */
+        .main-content {
+            margin-left: 250px;
+            padding: 2rem;
+            background-color: #f8fafc;
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
         }
         
-        .info-card {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 1.5rem;
+        .sidebar.collapsed ~ .main-content {
+            margin-left: 70px;
         }
         
-        .info-card h4 {
-            color: #1e293b;
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            border-bottom: 2px solid #e2e8f0;
-            padding-bottom: 0.5rem;
+        /* Mobile responsive for sidebar */
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+            
+            .sidebar.active ~ .main-content {
+                margin-left: 0;
+            }
         }
         
-        .info-row {
+        /* Hamburger button for mobile */
+        .hamburger-btn {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1001;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        @media (max-width: 768px) {
+            .hamburger-btn {
+                display: block;
+            }
+        }
+        
+        .hamburger-icon {
+            width: 24px;
+            height: 24px;
+        }
+        
+        /* Sidebar overlay for mobile */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+        
+        .sidebar-overlay.active {
+            display: block;
+        }
+        
+        /* Header styling */
+        .dashboard-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.75rem 0;
-            border-bottom: 1px solid #f1f5f9;
+            padding: 20px 0;
+            border-bottom: 2px solid #f0f0f0;
+            margin-bottom: 25px;
         }
         
-        .info-row:last-child {
-            border-bottom: none;
+        .header-title {
+            margin: 0;
+            color: #333;
+            font-size: 1.8rem;
+            font-weight: 600;
         }
         
-        .info-label {
+        .header-subtitle {
+            color: #666;
+            font-size: 1rem;
             font-weight: 500;
-            color: #64748b;
-            flex: 1;
         }
         
-        .info-value {
+        /* Profile header card */
+        .profile-header-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .profile-image {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 1.5rem;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .profile-name {
+            margin-bottom: 0.5rem;
             color: #1e293b;
-            font-weight: 500;
-            flex: 2;
-            text-align: right;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .profile-info {
+            color: #64748b;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
         }
         
         .status-active {
             color: #059669;
             background: #d1fae5;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.75rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: inline-block;
         }
         
+        /* Profile stats grid */
         .profile-stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 1rem;
-            margin: 1.5rem 0;
+            margin: 2rem 0;
         }
         
         .stat-card {
@@ -159,12 +234,26 @@ if (!empty($student['dob']) && $student['dob'] != '0000-00-00') {
             padding: 1.5rem;
             border-radius: 12px;
             text-align: center;
+            transition: transform 0.2s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .stat-card:nth-child(2) {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .stat-card:nth-child(3) {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
         }
         
         .stat-number {
             font-size: 2rem;
             font-weight: 700;
             margin-bottom: 0.5rem;
+            line-height: 1;
         }
         
         .stat-label {
@@ -172,19 +261,13 @@ if (!empty($student['dob']) && $student['dob'] != '0000-00-00') {
             opacity: 0.9;
         }
         
-        .profile-header-card {
-            background: white;
-            border-radius: 12px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-        
+        /* Quick actions */
         .quick-actions {
             display: flex;
             gap: 1rem;
             margin-top: 1.5rem;
             flex-wrap: wrap;
+            justify-content: center;
         }
         
         .action-btn {
@@ -199,11 +282,13 @@ if (!empty($student['dob']) && $student['dob'] != '0000-00-00') {
             align-items: center;
             gap: 0.5rem;
             font-weight: 500;
-            transition: background 0.2s;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
         }
         
         .action-btn:hover {
             background: #3730a3;
+            transform: translateY(-1px);
         }
         
         .action-btn.secondary {
@@ -214,48 +299,109 @@ if (!empty($student['dob']) && $student['dob'] != '0000-00-00') {
             background: #475569;
         }
         
-        /* Sidebar and Layout adjustments */
-        .dashboard-container {
-            padding: 2rem 1.5rem;
-            margin-left: 280px;
-            width: calc(100% - 280px);
-            transition: all 0.3s ease;
+        /* Information grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
         }
         
-        .sidebar-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 40;
-        }
-        
-        .hamburger-btn {
-            display: none;
-            position: fixed;
-            left: 1rem;
-            top: 1rem;
-            z-index: 60;
+        .info-card {
             background: white;
-            border: 1px solid #e5e7eb;
-            padding: 0.5rem;
-            border-radius: 0.375rem;
-            cursor: pointer;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
         
-        .hamburger-icon {
-            width: 1.5rem;
-            height: 1.5rem;
-            color: #4b5563;
+        .info-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .info-card h4 {
+            color: #1e293b;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            font-weight: 500;
+            color: #64748b;
+            flex: 1;
+            min-width: 120px;
+        }
+        
+        .info-value {
+            color: #1e293b;
+            font-weight: 500;
+            flex: 2;
+            text-align: right;
+            word-break: break-word;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 1200px) {
+            .info-grid {
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            }
         }
         
         @media (max-width: 768px) {
+            .main-content {
+                padding: 1rem;
+            }
+            
+            .dashboard-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+            
+            .header-title {
+                font-size: 1.4rem;
+            }
+            
+            .profile-header-card {
+                padding: 1.5rem;
+            }
+            
+            .profile-image {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .profile-name {
+                font-size: 1.25rem;
+            }
+            
             .info-grid {
                 grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .info-card {
+                padding: 1.25rem;
             }
             
             .info-row {
@@ -266,39 +412,136 @@ if (!empty($student['dob']) && $student['dob'] != '0000-00-00') {
             
             .info-value {
                 text-align: left;
+                font-size: 0.9rem;
+            }
+            
+            .info-label {
+                font-size: 0.85rem;
+                min-width: auto;
             }
             
             .profile-stats {
                 grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+            
+            .stat-card {
+                padding: 1.25rem;
+            }
+            
+            .stat-number {
+                font-size: 1.5rem;
             }
             
             .quick-actions {
                 flex-direction: column;
+                gap: 0.75rem;
             }
             
-            .dashboard-container {
-                margin-left: 0;
-                width: 100%;
+            .action-btn {
+                justify-content: center;
+                padding: 1rem 1.5rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .main-content {
+                padding: 0.75rem;
             }
             
-            .hamburger-btn {
-                display: block;
+            .profile-header-card {
+                padding: 1rem;
             }
             
-            .sidebar {
-                transform: translateX(-100%);
+            .profile-image {
+                width: 80px;
+                height: 80px;
             }
             
-            .sidebar.active {
-                transform: translateX(0);
+            .profile-name {
+                font-size: 1.125rem;
             }
             
-            .sidebar-overlay {
-                display: none;
+            .profile-info {
+                font-size: 0.875rem;
             }
             
-            .sidebar-overlay.active {
-                display: block;
+            .info-card {
+                padding: 1rem;
+            }
+            
+            .info-card h4 {
+                font-size: 1rem;
+            }
+            
+            .stat-card {
+                padding: 1rem;
+            }
+            
+            .stat-number {
+                font-size: 1.25rem;
+            }
+            
+            .stat-label {
+                font-size: 0.8rem;
+            }
+        }
+        
+        /* Print styles */
+        @media print {
+            .hamburger-btn,
+            .sidebar-overlay,
+            .quick-actions {
+                display: none !important;
+            }
+            
+            .main-content {
+                margin-left: 0 !important;
+                padding: 0 !important;
+            }
+            
+            .profile-header-card,
+            .info-card {
+                box-shadow: none !important;
+                border: 1px solid #ccc !important;
+            }
+        }
+        
+        /* Loading and error states */
+        .error-message {
+            text-align: center;
+            padding: 2rem;
+            color: #dc2626;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 12px;
+            margin: 2rem 0;
+        }
+        
+        /* Accessibility improvements */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+        
+        /* Focus styles for keyboard navigation */
+        .action-btn:focus,
+        .hamburger-btn:focus {
+            outline: 2px solid #4f46e5;
+            outline-offset: 2px;
+        }
+        
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            .info-card {
+                border-width: 2px;
+            }
+            
+            .stat-card {
+                border: 2px solid #333;
             }
         }
     </style>
@@ -313,221 +556,218 @@ if (!empty($student['dob']) && $student['dob'] != '0000-00-00') {
 
 <?php if (isset($error_message)): ?>
     <!-- Error message display -->
-    <div class="dashboard-container">
-        <div style="text-align: center; padding: 2rem; color: #dc2626;">
+    <div class="main-content">
+        <div class="error-message">
             <h2><?php echo $error_message; ?></h2>
         </div>
     </div>
 <?php else: ?>
     <!-- Main profile content -->
-    <div class="dashboard-container">
+    <div class="main-content">
         <header class="dashboard-header">
-            <h1 class="header-title">
-                Student Profile 
-            </h1>
-            <span class="header-subtitle">Complete profile information</span>
+            <div>
+                <h1 class="header-title">Student Profile</h1>
+                <span class="header-subtitle">Complete profile information</span>
+            </div>
         </header>
 
-    <main class="dashboard-content">
-        <!-- Profile Header Card -->
-        <div class="profile-header-card">
-            <div style="text-align: center;">
-                <div style="margin: 0 auto 1.5rem; width: 120px; height: 120px;">
-                    <img src="<?php echo $photo_url; ?>" alt="Student Profile" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid #e2e8f0;">
-                </div>
-                <h2 style="margin-bottom: 0.5rem; color: #1e293b; font-size: 1.5rem;"><?php echo safeDisplay($student['full_name']); ?></h2>
-                <p style="color: #64748b; margin-bottom: 0.5rem;">Student • <?php echo safeDisplay($student['class_name'] . ' - ' . $student['section_name']); ?></p>
+        <main class="dashboard-content">
+            <!-- Profile Header Card -->
+            <div class="profile-header-card">
+                <img src="<?php echo $photo_url; ?>" alt="Student Profile" class="profile-image">
+                <h2 class="profile-name"><?php echo safeDisplay($student['full_name']); ?></h2>
+                <p class="profile-info">Student • <?php echo safeDisplay($student['class_name'] . ' - ' . $student['section_name']); ?></p>
                 <span class="status-active">Account Active</span>
-            </div>
-            
-            <!-- Quick Stats -->
-            <div class="profile-stats">
-                <div class="stat-card">
-                    <div class="stat-number"><?php echo safeDisplay($student['roll_number']); ?></div>
-                    <div class="stat-label">Roll Number</div>
+                
+                <!-- Quick Stats -->
+                <div class="profile-stats">
+                    <div class="stat-card">
+                        <div class="stat-number"><?php echo safeDisplay($student['roll_number']); ?></div>
+                        <div class="stat-label">Roll Number</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number"><?php echo $age; ?></div>
+                        <div class="stat-label">Age</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number"><?php echo date('Y', strtotime($student['admission_date'] ?? 'now')); ?></div>
+                        <div class="stat-label">Admission Year</div>
+                    </div>
                 </div>
-                <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                    <div class="stat-number"><?php echo $age; ?></div>
-                    <div class="stat-label">Age</div>
-                </div>
-                <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-                    <div class="stat-number"><?php echo date('Y', strtotime($student['admission_date'] ?? 'now')); ?></div>
-                    <div class="stat-label">Admission Year</div>
-                </div>
-            </div>
-            
-            <!-- Quick Actions -->
-            <div class="quick-actions">
-                <a href="id-card_student.php" class="action-btn">
-                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M3 4h18a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm1 2v12h16V6H4zm8 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm0 2a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
-                    </svg>
-                    View ID Card
-                </a>
-                <button class="action-btn secondary" onclick="window.print()">
-                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M6 2h12v4H6V2zM4 6h16a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-3v4H7v-4H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2zm0 2v6h2v-2h12v2h2V8H4zm5 8v2h6v-2H9z"/>
-                    </svg>
-                    Print Profile
-                </button>
-            </div>
-        </div>
-
-        <!-- Information Grid -->
-        <div class="info-grid">
-            <!-- Personal Information -->
-            <div class="info-card">
-                <h4>Personal Information</h4>
-                <div class="info-row">
-                    <span class="info-label">Full Name</span>
-                    <span class="info-value"><?php echo safeDisplay($student['full_name']); ?></span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Date of Birth</span>
-                    <span class="info-value"><?php echo $formatted_dob; ?></span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Gender</span>
-                    <span class="info-value"><?php echo safeDisplay($student['gender_name']); ?></span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Blood Group</span>
-                    <span class="info-value"><?php echo safeDisplay($student['blood_group_name']); ?></span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Mother Tongue</span>
-                    <span class="info-value"><?php echo safeDisplay($student['mother_tongue']); ?></span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Nationality</span>
-                    <span class="info-value"><?php echo safeDisplay($student['nationality'], 'Indian'); ?></span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Aadhar Number</span>
-                    <span class="info-value"><?php echo safeDisplay($student['aadhar_card_number']); ?></span>
+                
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <a href="id-card_student.php" class="action-btn">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M3 4h18a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm1 2v12h16V6H4zm8 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm0 2a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+                        </svg>
+                        View ID Card
+                    </a>
+                    <button class="action-btn secondary" onclick="window.print()">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M6 2h12v4H6V2zM4 6h16a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-3v4H7v-4H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2zm0 2v6h2v-2h12v2h2V8H4zm5 8v2h6v-2H9z"/>
+                        </svg>
+                        Print Profile
+                    </button>
                 </div>
             </div>
 
-            <!-- Academic Information -->
-            <div class="info-card">
-                <h4>Academic Information</h4>
-                <div class="info-row">
-                    <span class="info-label">Admission Number</span>
-                    <span class="info-value"><?php echo safeDisplay($student['admission_number']); ?></span>
+            <!-- Information Grid -->
+            <div class="info-grid">
+                <!-- Personal Information -->
+                <div class="info-card">
+                    <h4>👤 Personal Information</h4>
+                    <div class="info-row">
+                        <span class="info-label">Full Name</span>
+                        <span class="info-value"><?php echo safeDisplay($student['full_name']); ?></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Date of Birth</span>
+                        <span class="info-value"><?php echo $formatted_dob; ?></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Gender</span>
+                        <span class="info-value"><?php echo safeDisplay($student['gender_name']); ?></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Blood Group</span>
+                        <span class="info-value"><?php echo safeDisplay($student['blood_group_name']); ?></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Mother Tongue</span>
+                        <span class="info-value"><?php echo safeDisplay($student['mother_tongue']); ?></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Nationality</span>
+                        <span class="info-value"><?php echo safeDisplay($student['nationality'], 'Indian'); ?></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Aadhar Number</span>
+                        <span class="info-value"><?php echo safeDisplay($student['aadhar_card_number']); ?></span>
+                    </div>
                 </div>
-                <div class="info-row">
-                    <span class="info-label">Admission Date</span>
-                    <span class="info-value"><?php echo $formatted_admission_date; ?></span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Class</span>
-                    <span class="info-value"><?php echo safeDisplay($student['class_name']); ?></span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Section</span>
-                    <span class="info-value"><?php echo safeDisplay($student['section_name']); ?></span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Roll Number</span>
-                    <span class="info-value"><?php echo safeDisplay($student['roll_number']); ?></span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Academic Year</span>
-                    <span class="info-value"><?php echo safeDisplay($student['academic_year']); ?></span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Class Teacher</span>
-                    <span class="info-value"><?php echo safeDisplay($student['class_teacher_name']); ?></span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Student State Code</span>
-                    <span class="info-value"><?php echo safeDisplay($student['student_state_code']); ?></span>
-                </div>
-            </div>
 
-            <!-- Contact Information -->
-            <div class="info-card">
-                <h4>Contact Information</h4>
-                <div class="info-row">
-                    <span class="info-label">Email Address</span>
-                    <span class="info-value"><?php echo safeDisplay($student['email']); ?></span>
+                <!-- Academic Information -->
+                <div class="info-card">
+                    <h4>🎓 Academic Information</h4>
+                    <div class="info-row">
+                        <span class="info-label">Admission Number</span>
+                        <span class="info-value"><?php echo safeDisplay($student['admission_number']); ?></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Admission Date</span>
+                        <span class="info-value"><?php echo $formatted_admission_date; ?></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Class</span>
+                        <span class="info-value"><?php echo safeDisplay($student['class_name']); ?></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Section</span>
+                        <span class="info-value"><?php echo safeDisplay($student['section_name']); ?></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Roll Number</span>
+                        <span class="info-value"><?php echo safeDisplay($student['roll_number']); ?></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Academic Year</span>
+                        <span class="info-value"><?php echo safeDisplay($student['academic_year']); ?></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Class Teacher</span>
+                        <span class="info-value"><?php echo safeDisplay($student['class_teacher_name']); ?></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Student State Code</span>
+                        <span class="info-value"><?php echo safeDisplay($student['student_state_code']); ?></span>
+                    </div>
                 </div>
-                <div class="info-row">
-                    <span class="info-label">Mobile Number</span>
-                    <span class="info-value"><?php echo safeDisplay($student['mobile']); ?></span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Alternative Mobile</span>
-                    <span class="info-value"><?php echo safeDisplay($student['alt_mobile']); ?></span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Contact Email</span>
-                    <span class="info-value"><?php echo safeDisplay($student['contact_email']); ?></span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Address</span>
-                    <span class="info-value"><?php echo safeDisplay($student['address']); ?></span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Pincode</span>
-                    <span class="info-value"><?php echo safeDisplay($student['pincode']); ?></span>
-                </div>
-            </div>
 
-            <!-- Family Information -->
-            <div class="info-card">
-                <h4>Family Information</h4>
-                <div class="info-row">
-                    <span class="info-label">Father's Name</span>
-                    <span class="info-value"><?php echo safeDisplay($student['father_name']); ?></span>
+                <!-- Contact Information -->
+                <div class="info-card">
+                    <h4>📞 Contact Information</h4>
+                    <div class="info-row">
+                        <span class="info-label">Email Address</span>
+                        <span class="info-value"><?php echo safeDisplay($student['email']); ?></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Mobile Number</span>
+                        <span class="info-value"><?php echo safeDisplay($student['mobile']); ?></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Alternative Mobile</span>
+                        <span class="info-value"><?php echo safeDisplay($student['alt_mobile']); ?></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Contact Email</span>
+                        <span class="info-value"><?php echo safeDisplay($student['contact_email']); ?></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Address</span>
+                        <span class="info-value"><?php echo safeDisplay($student['address']); ?></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Pincode</span>
+                        <span class="info-value"><?php echo safeDisplay($student['pincode']); ?></span>
+                    </div>
                 </div>
-                <div class="info-row">
-                    <span class="info-label">Father's Aadhar</span>
-                    <span class="info-value"><?php echo safeDisplay($student['father_aadhar_number']); ?></span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Mother's Name</span>
-                    <span class="info-value"><?php echo safeDisplay($student['mother_name']); ?></span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Mother's Aadhar</span>
-                    <span class="info-value"><?php echo safeDisplay($student['mother_aadhar_number']); ?></span>
-                </div>
-            </div>
 
-            <!-- Account Information -->
-            <div class="info-card">
-                <h4>Account Information</h4>
-                <div class="info-row">
-                    <span class="info-label">Account Created</span>
-                    <span class="info-value"><?php echo $formatted_join_date; ?></span>
+                <!-- Family Information -->
+                <div class="info-card">
+                    <h4>👨‍👩‍👧‍👦 Family Information</h4>
+                    <div class="info-row">
+                        <span class="info-label">Father's Name</span>
+                        <span class="info-value"><?php echo safeDisplay($student['father_name']); ?></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Father's Aadhar</span>
+                        <span class="info-value"><?php echo safeDisplay($student['father_aadhar_number']); ?></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Mother's Name</span>
+                        <span class="info-value"><?php echo safeDisplay($student['mother_name']); ?></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Mother's Aadhar</span>
+                        <span class="info-value"><?php echo safeDisplay($student['mother_aadhar_number']); ?></span>
+                    </div>
                 </div>
-                <div class="info-row">
-                    <span class="info-label">Last Login</span>
-                    <span class="info-value"><?php echo $formatted_last_login; ?></span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Account Status</span>
-                    <span class="info-value">
-                        <span class="status-active"><?php echo ucfirst(safeDisplay($student['user_status'], 'Active')); ?></span>
-                    </span>
-                </div>
-            </div>
 
-            <!-- Medical Information -->
-            <div class="info-card">
-                <h4>Medical Information</h4>
-                <div class="info-row">
-                    <span class="info-label">Medical Conditions</span>
-                    <span class="info-value"><?php echo safeDisplay($student['medical_conditions'], 'None reported'); ?></span>
-                </div>                <div class="info-row">
-                    <span class="info-label">Emergency Contact</span>
-                    <span class="info-value"><?php echo safeDisplay($student['mobile']); ?></span>
+                <!-- Account Information -->
+                <div class="info-card">
+                    <h4>⚙️ Account Information</h4>
+                    <div class="info-row">
+                        <span class="info-label">Account Created</span>
+                        <span class="info-value"><?php echo $formatted_join_date; ?></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Last Login</span>
+                        <span class="info-value"><?php echo $formatted_last_login; ?></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Account Status</span>
+                        <span class="info-value">
+                            <span class="status-active"><?php echo ucfirst(safeDisplay($student['user_status'], 'Active')); ?></span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Medical Information -->
+                <div class="info-card">
+                    <h4>🏥 Medical Information</h4>
+                    <div class="info-row">
+                        <span class="info-label">Medical Conditions</span>
+                        <span class="info-value"><?php echo safeDisplay($student['medical_conditions'], 'None reported'); ?></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Emergency Contact</span>
+                        <span class="info-value"><?php echo safeDisplay($student['mobile']); ?></span>
+                    </div>
                 </div>
             </div>
-        </div>
-    </main>
-</div>
+        </main>
+    </div>
 <?php endif; ?>
 
 <script>
@@ -540,16 +780,13 @@ if (!empty($student['dob']) && $student['dob'] != '0000-00-00') {
             input.style.cursor = 'not-allowed';
         });
         
-        // Add a notice for any edit attempts
-        document.addEventListener('contextmenu', function(e) {
-            // Allow right-click for normal use
-        });
-        
         // Print functionality
         window.print = function() {
             window.print();
         };
-    });    // Sidebar toggle function (if not defined elsewhere)
+    });
+
+    // Sidebar toggle function
     function toggleSidebar() {
         const sidebar = document.querySelector('.sidebar');
         const overlay = document.querySelector('.sidebar-overlay');
@@ -559,6 +796,24 @@ if (!empty($student['dob']) && $student['dob'] != '0000-00-00') {
             overlay.classList.toggle('active');
         }
     }
+
+    // Handle window resize for sidebar responsiveness
+    window.addEventListener('resize', function() {
+        if (window.innerWidth > 768) {
+            document.querySelector('.sidebar-overlay').classList.remove('active');
+            document.querySelector('.sidebar').classList.remove('active');
+        }
+    });
+
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', function(e) {
+        if (window.innerWidth <= 768) {
+            if (!e.target.closest('.sidebar, .hamburger-btn')) {
+                document.querySelector('.sidebar').classList.remove('active');
+                document.querySelector('.sidebar-overlay').classList.remove('active');
+            }
+        }
+    });
 </script>
 </body>
 </html>

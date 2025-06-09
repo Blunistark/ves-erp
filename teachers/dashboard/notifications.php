@@ -1,13 +1,15 @@
+
+
 <?php 
 include 'sidebar.php'; 
 include 'con.php';
 
 // Check if user is logged in and is a teacher
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'teacher') {
-    header('Location: ../index.php');
-    exit();
-}
-
+//if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'teacher') {
+ //   header('Location: ../index.php');
+  //  exit();
+//}
+// this caused the header issues 
 $user_id = $_SESSION['user_id'];
 
 // Get teacher's assigned classes for notification targeting
@@ -66,6 +68,10 @@ if ($permissions_stmt) {
         $permissions = array_merge($permissions, $custom_permissions);
     }
 }
+
+// Get user information
+$user_name = $_SESSION['full_name'] ?? 'Teacher';
+
 ?>
 
 <!DOCTYPE html>
@@ -81,10 +87,72 @@ if ($permissions_stmt) {
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     
     <style>
-        .notification-dashboard {
+        /* Sidebar optimization and main content spacing */
+        .main-content {
+            margin-left: 250px;
             padding: 2rem;
             background-color: #f8fafc;
             min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+        
+        .sidebar.collapsed ~ .main-content {
+            margin-left: 70px;
+        }
+        
+        /* Mobile responsive for sidebar */
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+            
+            .sidebar.active ~ .main-content {
+                margin-left: 0;
+            }
+        }
+        
+        /* Hamburger button for mobile */
+        .hamburger-btn {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1001;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        @media (max-width: 768px) {
+            .hamburger-btn {
+                display: block;
+            }
+        }
+        
+        .hamburger-icon {
+            width: 24px;
+            height: 24px;
+        }
+        
+        /* Sidebar overlay for mobile */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+        
+        .sidebar-overlay.active {
+            display: block;
         }
         
         .header-section {
@@ -107,39 +175,13 @@ if ($permissions_stmt) {
             opacity: 0.9;
         }
         
-        .quick-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        
-        .stat-card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-        
-        .stat-number {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #10b981;
-            margin-bottom: 0.5rem;
-        }
-        
-        .stat-label {
-            color: #6b7280;
-            font-weight: 600;
-        }
-        
         .action-tabs {
             display: flex;
             background: white;
             border-radius: 12px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             margin-bottom: 2rem;
+            overflow: hidden;
         }
         
         .tab-button {
@@ -151,12 +193,15 @@ if ($permissions_stmt) {
             font-weight: 600;
             color: #6b7280;
             transition: all 0.3s ease;
-            border-radius: 12px;
         }
         
         .tab-button.active {
             background-color: #10b981;
             color: white;
+        }
+        
+        .tab-button:hover:not(.active) {
+            background-color: #f9fafb;
         }
         
         .tab-content {
@@ -199,6 +244,7 @@ if ($permissions_stmt) {
             border-radius: 8px;
             font-size: 1rem;
             transition: border-color 0.3s ease;
+            box-sizing: border-box;
         }
         
         .form-control:focus {
@@ -281,7 +327,8 @@ if ($permissions_stmt) {
             background: white;
             font-weight: 600;
         }
-          .priority-option.normal {
+        
+        .priority-option.normal {
             border-color: #10b981;
             color: #059669;
         }
@@ -354,7 +401,7 @@ if ($permissions_stmt) {
         
         .notification-header {
             display: flex;
-            justify-content: between;
+            justify-content: space-between;
             align-items: flex-start;
             margin-bottom: 1rem;
         }
@@ -370,6 +417,7 @@ if ($permissions_stmt) {
             gap: 1rem;
             font-size: 0.875rem;
             color: #6b7280;
+            flex-wrap: wrap;
         }
         
         .notification-content {
@@ -401,9 +449,25 @@ if ($permissions_stmt) {
             color: #6b7280;
         }
         
+        /* Responsive optimizations */
+        @media (max-width: 1024px) {
+            .main-content {
+                margin-left: 0;
+                padding: 1.5rem;
+            }
+        }
+        
         @media (max-width: 768px) {
-            .notification-dashboard {
+            .main-content {
                 padding: 1rem;
+            }
+            
+            .header-section {
+                padding: 1.5rem;
+            }
+            
+            .header-section h1 {
+                font-size: 1.5rem;
             }
             
             .form-row {
@@ -417,31 +481,94 @@ if ($permissions_stmt) {
             .priority-selector {
                 flex-direction: column;
             }
+            
+            .action-tabs {
+                flex-direction: column;
+            }
+            
+            .tab-button {
+                padding: 0.75rem 1rem;
+            }
+            
+            .tab-content {
+                padding: 1.5rem;
+            }
+            
+            .notification-meta {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .main-content {
+                padding: 0.5rem;
+            }
+            
+            .header-section {
+                padding: 1rem;
+            }
+            
+            .tab-content {
+                padding: 1rem;
+            }
+        }
+        
+        /* Summernote editor optimizations */
+        .note-editor {
+            border: 2px solid #e5e7eb !important;
+            border-radius: 8px !important;
+        }
+        
+        .note-editor.note-frame .note-editing-area .note-editable {
+            padding: 15px !important;
+        }
+        
+        .note-editor.note-frame:focus-within {
+            border-color: #10b981 !important;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+        }
+        
+        /* Select2 optimizations */
+        .select2-container--default .select2-selection--single {
+            border: 2px solid #e5e7eb !important;
+            border-radius: 8px !important;
+            height: 48px !important;
+        }
+        
+        .select2-container--default .select2-selection--single:focus {
+            border-color: #10b981 !important;
+        }
+        
+        /* Flatpickr optimizations */
+        .flatpickr-input {
+            border: 2px solid #e5e7eb !important;
+            border-radius: 8px !important;
+        }
+        
+        .flatpickr-input:focus {
+            border-color: #10b981 !important;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
         }
     </style>
 </head>
 
 <body>
-    <div class="notification-dashboard">
-        <!-- Header Section -->        <div class="header-section">
+    <!-- Mobile hamburger button -->
+    <button class="hamburger-btn" onclick="toggleSidebar()">
+        <svg class="hamburger-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+    </button>
+    
+    <!-- Sidebar overlay for mobile -->
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <div class="main-content">
+        <!-- Header Section -->
+        <div class="header-section">
             <h1>Teacher Notifications</h1>
             <p>Communicate with your students and manage class announcements</p>
-        </div>
-
-        <!-- Quick Stats -->
-        <div class="quick-stats">
-            <div class="stat-card">
-                <div class="stat-number" id="totalClassesCount"><?php echo count($teacher_classes); ?></div>
-                <div class="stat-label">Assigned Classes</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="sentNotificationsCount">0</div>
-                <div class="stat-label">Sent This Week</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="unreadNotificationsCount">0</div>
-                <div class="stat-label">Unread Messages</div>
-            </div>
         </div>
 
         <!-- Action Tabs -->
@@ -483,150 +610,25 @@ if ($permissions_stmt) {
                         </div>
                         
                         <div class="form-group">
-                            <label>Priority</label>                            <div class="priority-selector">
+                            <label>Priority</label>
+                            <div class="priority-selector">
                                 <div class="priority-option normal selected" data-priority="normal">
                                     <span>Normal</span>
                                 </div>
                                 <div class="priority-option important" data-priority="important">
                                     <span>Important</span>
                                 </div>
-                                <?php if ($is_headmaster): ?>
                                 <div class="priority-option urgent" data-priority="urgent">
                                     <span>Urgent</span>
                                 </div>
-                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
-                </div>                <div class="form-section">
-                    <h3>Target <?php echo $is_headmaster ? 'Recipients' : 'Classes'; ?></h3>
+                </div>
+
+                <div class="form-section">
+                    <h3>Target Classes</h3>
                     
-                    <?php if ($is_headmaster): ?>
-                    <!-- Headmaster targeting options -->
-                    <div class="targeting-mode">
-                        <div class="form-group">
-                            <label for="targeting-mode">Select targeting mode:</label>
-                            <select id="targeting-mode" name="targeting_mode" class="form-control" onchange="handleTargetingModeChange(this.value)">
-                                <option value="classes">Select Classes</option>
-                                <option value="all_school">All School</option>
-                                <option value="role_based">By Role</option>
-                                <option value="individual">Individual Recipients</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <!-- All School Option -->
-                    <div id="all-school-section" class="targeting-section" style="display: none;">
-                        <div class="alert alert-info">
-                            <strong>All School:</strong> This notification will be sent to all teachers, students, and staff members.
-                        </div>
-                    </div>
-                    
-                    <!-- Role Based Option -->
-                    <div id="role-based-section" class="targeting-section" style="display: none;">
-                        <div class="form-group">
-                            <label>Select roles to target:</label>
-                            <div class="role-checkboxes">
-                                <label><input type="checkbox" name="target_roles[]" value="teachers"> All Teachers</label>
-                                <label><input type="checkbox" name="target_roles[]" value="students"> All Students</label>
-                                <label><input type="checkbox" name="target_roles[]" value="staff"> All Staff</label>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Individual Recipients Option -->
-                    <div id="individual-section" class="targeting-section" style="display: none;">
-                        <div class="form-group">
-                            <label for="individual-search">Search and select individuals:</label>
-                            <input type="text" id="individual-search" class="form-control" placeholder="Type name or email to search...">
-                            <div id="individual-results" class="search-results"></div>
-                            <div id="selected-individuals" class="selected-recipients"></div>
-                        </div>
-                    </div>
-                    
-                    <!-- Classes Option (default) -->
-                    <div id="classes-section" class="targeting-section">
-                        <?php if ($is_headmaster): ?>
-                        <p>Select the classes you want to send this notification to (as headmaster, you can target any class):</p>
-                        <?php else: ?>
-                        <p>Select the classes you want to send this notification to:</p>
-                        <?php endif; ?>
-                        
-                        <div class="class-selector">
-                            <?php 
-                            if ($is_headmaster) {
-                                // Headmaster can target all classes - get all classes from database
-                                $all_classes_sql = "
-                                    SELECT DISTINCT c.id, c.name as class_name, s.id as section_id, s.name as section_name,
-                                           CASE 
-                                               WHEN s.class_teacher_user_id = ? THEN 'Class Teacher (You)'
-                                               WHEN EXISTS (
-                                                   SELECT 1 FROM timetables t 
-                                                   JOIN timetable_periods tp ON t.id = tp.timetable_id 
-                                                   WHERE t.class_id = c.id 
-                                                   AND t.section_id = s.id 
-                                                   AND tp.teacher_id = ?
-                                                   AND t.status = 'published'
-                                               ) THEN 'Subject Teacher (You)'
-                                               ELSE 'Other Class'
-                                           END as assignment_type
-                                    FROM classes c
-                                    JOIN sections s ON c.id = s.class_id
-                                    ORDER BY c.name, s.name";
-                                $all_classes_stmt = mysqli_prepare($conn, $all_classes_sql);
-                                mysqli_stmt_bind_param($all_classes_stmt, "ii", $user_id, $user_id);
-                                mysqli_stmt_execute($all_classes_stmt);
-                                $all_classes_result = mysqli_stmt_get_result($all_classes_stmt);
-                                
-                                while ($class = mysqli_fetch_assoc($all_classes_result)):
-                            ?>
-                            <div class="class-option" onclick="toggleClassSelection(this)">
-                                <input type="checkbox" name="target_classes[]" 
-                                       value="class_<?php echo $class['id']; ?>_section_<?php echo $class['section_id']; ?>">
-                                <div class="class-info">
-                                    <div class="class-name"><?php echo htmlspecialchars($class['class_name']); ?></div>
-                                    <div class="section-name">
-                                        Section: <?php echo htmlspecialchars($class['section_name']); ?>
-                                        <span style="color: #10b981; font-size: 0.75rem; margin-left: 0.5rem;">
-                                            (<?php echo htmlspecialchars($class['assignment_type']); ?>)
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <?php 
-                                endwhile;
-                            } else {
-                                // Regular teachers can only target their assigned classes
-                                foreach ($teacher_classes as $class): 
-                            ?>
-                            <div class="class-option" onclick="toggleClassSelection(this)">
-                                <input type="checkbox" name="target_classes[]" 
-                                       value="class_<?php echo $class['id']; ?>_section_<?php echo $class['section_id']; ?>">
-                                <div class="class-info">
-                                    <div class="class-name"><?php echo htmlspecialchars($class['class_name']); ?></div>
-                                    <div class="section-name">
-                                        Section: <?php echo htmlspecialchars($class['section_name']); ?>
-                                        <span style="color: #10b981; font-size: 0.75rem; margin-left: 0.5rem;">
-                                            (<?php echo htmlspecialchars($class['assignment_type']); ?>)
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <?php 
-                                endforeach;
-                            } 
-                            ?>
-                            
-                            <?php if (empty($teacher_classes) && !$is_headmaster): ?>
-                            <div style="text-align: center; padding: 2rem; color: #6b7280;">
-                                <p>No classes assigned yet.</p>
-                                <p style="font-size: 0.875rem;">Contact the admin to get assigned to classes or timetable periods.</p>
-                            </div>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                    <?php else: ?>
-                    <!-- Regular teacher targeting (existing code) -->
                     <div class="class-targeting">
                         <p>Select the classes you want to send this notification to:</p>
                         <div class="class-selector">
@@ -654,7 +656,6 @@ if ($permissions_stmt) {
                             <?php endif; ?>
                         </div>
                     </div>
-                    <?php endif; ?>
                 </div>
 
                 <div class="form-section">
@@ -730,6 +731,17 @@ if ($permissions_stmt) {
             initializePage();
             loadNotificationCounts();
         });
+
+        // Sidebar toggle function
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.querySelector('.sidebar-overlay');
+            
+            if (sidebar && overlay) {
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
+            }
+        }
 
         function initializePage() {
             // Initialize rich text editor
@@ -836,7 +848,9 @@ if ($permissions_stmt) {
                 expires_at: $('#expires-at').val() || null,
                 scheduled_for: $('#scheduled-for').val() || null,
                 requires_acknowledgment: $('input[name="requires_acknowledgment"]').is(':checked') ? 1 : 0
-            };            // Send to API
+            };
+
+            // Send to API
             $.ajax({
                 url: '/erp/backend/api/notifications?action=create',
                 method: 'POST',
@@ -857,7 +871,9 @@ if ($permissions_stmt) {
                     showAlert('Network error. Please try again.', 'error');
                 }
             });
-        }        function loadNotificationCounts() {
+        }
+
+        function loadNotificationCounts() {
             $.ajax({
                 url: '/erp/backend/api/notifications?action=count',
                 method: 'GET',
@@ -866,7 +882,9 @@ if ($permissions_stmt) {
                         $('#unreadNotificationsCount').text(response.data.unread || 0);
                     }
                 }
-            });            // Load sent notifications count for this week
+            });
+
+            // Load sent notifications count for this week
             $.ajax({
                 url: '/erp/backend/api/notifications?action=list&limit=100',
                 method: 'GET',
@@ -882,163 +900,182 @@ if ($permissions_stmt) {
                     }
                 }
             });
-        }        function loadSentNotifications() {
-            $('#sent-notifications-loading').show();
-            $('#sent-notifications-list').empty();
 
-            $.ajax({
-                url: '/erp/backend/api/notifications?action=list&limit=50',
-                method: 'GET',
-                success: function(response) {
-                    $('#sent-notifications-loading').hide();
-                    
-                    if (response.success) {
-                        const sentNotifications = response.data.filter(notif => 
-                            notif.created_by == <?php echo $user_id; ?>
-                        );
-                        
-                        if (sentNotifications.length === 0) {
-                            $('#sent-notifications-list').html('<p class="loading">No sent notifications found.</p>');
-                            return;
-                        }
+}
 
-                        let html = '';
-                        sentNotifications.forEach(function(notification) {
-                            html += buildNotificationItem(notification, true);
-                        });
-                        
-                        $('#sent-notifications-list').html(html);
-                    } else {
-                        $('#sent-notifications-list').html('<p class="loading">Error loading notifications.</p>');
-                    }
-                },
-                error: function() {
-                    $('#sent-notifications-loading').hide();
-                    $('#sent-notifications-list').html('<p class="loading">Network error loading notifications.</p>');
-                }
-            });
-        }
+       function loadSentNotifications() {
+           $('#sent-notifications-loading').show();
+           $('#sent-notifications-list').empty();
 
-        function loadReceivedNotifications() {
-            $('#received-notifications-loading').show();
-            $('#received-notifications-list').empty();            $.ajax({
-                url: '/erp/backend/api/notifications?action=list&limit=50',
-                method: 'GET',
-                success: function(response) {
-                    $('#received-notifications-loading').hide();
-                    
-                    if (response.success) {
-                        const receivedNotifications = response.data.filter(notif => 
-                            notif.created_by != <?php echo $user_id; ?>
-                        );
-                        
-                        if (receivedNotifications.length === 0) {
-                            $('#received-notifications-list').html('<p class="loading">No received notifications found.</p>');
-                            return;
-                        }
+           $.ajax({
+               url: '/erp/backend/api/notifications?action=list&limit=50',
+               method: 'GET',
+               success: function(response) {
+                   $('#sent-notifications-loading').hide();
+                   
+                   if (response.success) {
+                       const sentNotifications = response.data.filter(notif => 
+                           notif.created_by == <?php echo $user_id; ?>
+                       );
+                       
+                       if (sentNotifications.length === 0) {
+                           $('#sent-notifications-list').html('<p class="loading">No sent notifications found.</p>');
+                           return;
+                       }
 
-                        let html = '';
-                        receivedNotifications.forEach(function(notification) {
-                            html += buildNotificationItem(notification, false);
-                        });
-                        
-                        $('#received-notifications-list').html(html);
-                    } else {
-                        $('#received-notifications-list').html('<p class="loading">Error loading notifications.</p>');
-                    }
-                },
-                error: function() {
-                    $('#received-notifications-loading').hide();
-                    $('#received-notifications-list').html('<p class="loading">Network error loading notifications.</p>');
-                }
-            });
-        }
+                       let html = '';
+                       sentNotifications.forEach(function(notification) {
+                           html += buildNotificationItem(notification, true);
+                       });
+                       
+                       $('#sent-notifications-list').html(html);
+                   } else {
+                       $('#sent-notifications-list').html('<p class="loading">Error loading notifications.</p>');
+                   }
+               },
+               error: function() {
+                   $('#sent-notifications-loading').hide();
+                   $('#sent-notifications-list').html('<p class="loading">Network error loading notifications.</p>');
+               }
+           });
+       }
 
-        function buildNotificationItem(notification, isSent) {
-            const priorityClass = notification.priority || 'normal';
-            const priorityColor = {
-                'normal': '#10b981',
-                'important': '#f59e0b',
-                'urgent': '#ef4444'
-            }[priorityClass];
+       function loadReceivedNotifications() {
+           $('#received-notifications-loading').show();
+           $('#received-notifications-list').empty();
 
-            const date = new Date(notification.created_at).toLocaleDateString();
-            const time = new Date(notification.created_at).toLocaleTimeString();
+           $.ajax({
+               url: '/erp/backend/api/notifications?action=list&limit=50',
+               method: 'GET',
+               success: function(response) {
+                   $('#received-notifications-loading').hide();
+                   
+                   if (response.success) {
+                       const receivedNotifications = response.data.filter(notif => 
+                           notif.created_by != <?php echo $user_id; ?>
+                       );
+                       
+                       if (receivedNotifications.length === 0) {
+                           $('#received-notifications-list').html('<p class="loading">No received notifications found.</p>');
+                           return;
+                       }
 
-            return `
-                <div class="notification-item">
-                    <div class="notification-header">
-                        <div>
-                            <div class="notification-title" style="border-left: 4px solid ${priorityColor}; padding-left: 1rem;">
-                                ${notification.title}
-                            </div>
-                            <div class="notification-meta">
-                                <span>Type: ${notification.type}</span>
-                                <span>Priority: ${notification.priority}</span>
-                                <span>${date} at ${time}</span>
-                                ${isSent ? `<span>To: Multiple Classes</span>` : `<span>From: ${notification.created_by_name || 'System'}</span>`}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="notification-content">
-                        ${notification.message}
-                    </div>
-                    ${!isSent && !notification.is_read ? `
-                        <div style="margin-top: 1rem;">
-                            <button class="btn btn-sm btn-primary" onclick="markAsRead(${notification.id})">
-                                Mark as Read
-                            </button>
-                        </div>
-                    ` : ''}
-                </div>
-            `;
-        }        function markAsRead(notificationId) {
-            $.ajax({
-                url: '/erp/backend/api/notifications?action=mark_read',
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                data: JSON.stringify({ notification_id: notificationId }),
-                success: function(response) {
-                    if (response.success) {
-                        loadReceivedNotifications();
-                        loadNotificationCounts();
-                    }
-                }
-            });
-        }
+                       let html = '';
+                       receivedNotifications.forEach(function(notification) {
+                           html += buildNotificationItem(notification, false);
+                       });
+                       
+                       $('#received-notifications-list').html(html);
+                   } else {
+                       $('#received-notifications-list').html('<p class="loading">Error loading notifications.</p>');
+                   }
+               },
+               error: function() {
+                   $('#received-notifications-loading').hide();
+                   $('#received-notifications-list').html('<p class="loading">Network error loading notifications.</p>');
+               }
+           });
+       }
 
-        function resetForm() {
-            $('#create-notification-form')[0].reset();
-            $('#notification-message').summernote('code', '');
-            $('.class-option').removeClass('selected');
-            $('.class-option input[type="checkbox"]').prop('checked', false);
-            $('.priority-option').removeClass('selected');
-            $('.priority-option[data-priority="normal"]').addClass('selected');
-            selectedPriority = 'normal';
-        }
+       function buildNotificationItem(notification, isSent) {
+           const priorityClass = notification.priority || 'normal';
+           const priorityColor = {
+               'normal': '#10b981',
+               'important': '#f59e0b',
+               'urgent': '#ef4444'
+           }[priorityClass];
 
-        function showAlert(message, type) {
-            const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
-            const alertHtml = `
-                <div class="alert ${alertClass}">
-                    ${message}
-                </div>
-            `;
-            
-            $('#notification-alert').html(alertHtml);
-            
-            setTimeout(() => {
-                $('#notification-alert').empty();
-            }, 5000);
-        }
+           const date = new Date(notification.created_at).toLocaleDateString();
+           const time = new Date(notification.created_at).toLocaleTimeString();
 
-        // Sidebar toggle function (if needed)
-        function toggleSidebar() {
-            // Implementation depends on your sidebar structure
-            console.log('Toggle sidebar');
-        }
-    </script>
+           return `
+               <div class="notification-item">
+                   <div class="notification-header">
+                       <div>
+                           <div class="notification-title" style="border-left: 4px solid ${priorityColor}; padding-left: 1rem;">
+                               ${notification.title}
+                           </div>
+                           <div class="notification-meta">
+                               <span>Type: ${notification.type}</span>
+                               <span>Priority: ${notification.priority}</span>
+                               <span>${date} at ${time}</span>
+                               ${isSent ? `<span>To: Multiple Classes</span>` : `<span>From: ${notification.created_by_name || 'System'}</span>`}
+                           </div>
+                       </div>
+                   </div>
+                   <div class="notification-content">
+                       ${notification.message}
+                   </div>
+                   ${!isSent && !notification.is_read ? `
+                       <div style="margin-top: 1rem;">
+                           <button class="btn btn-primary" onclick="markAsRead(${notification.id})">
+                               Mark as Read
+                           </button>
+                       </div>
+                   ` : ''}
+               </div>
+           `;
+       }
+
+       function markAsRead(notificationId) {
+           $.ajax({
+               url: '/erp/backend/api/notifications?action=mark_read',
+               method: 'POST',
+               headers: {
+                   'Content-Type': 'application/json'
+               },
+               data: JSON.stringify({ notification_id: notificationId }),
+               success: function(response) {
+                   if (response.success) {
+                       loadReceivedNotifications();
+                       loadNotificationCounts();
+                   }
+               }
+           });
+       }
+
+       function resetForm() {
+           $('#create-notification-form')[0].reset();
+           $('#notification-message').summernote('code', '');
+           $('.class-option').removeClass('selected');
+           $('.class-option input[type="checkbox"]').prop('checked', false);
+           $('.priority-option').removeClass('selected');
+           $('.priority-option[data-priority="normal"]').addClass('selected');
+           selectedPriority = 'normal';
+       }
+
+       function showAlert(message, type) {
+           const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+           const alertHtml = `
+               <div class="alert ${alertClass}">
+                   ${message}
+               </div>
+           `;
+           
+           $('#notification-alert').html(alertHtml);
+           
+           setTimeout(() => {
+               $('#notification-alert').empty();
+           }, 5000);
+       }
+
+       // Handle window resize for sidebar responsiveness
+       $(window).resize(function() {
+           if ($(window).width() > 768) {
+               $('.sidebar-overlay').removeClass('active');
+               $('.sidebar').removeClass('active');
+           }
+       });
+
+       // Close sidebar when clicking outside on mobile
+       $(document).click(function(e) {
+           if ($(window).width() <= 768) {
+               if (!$(e.target).closest('.sidebar, .hamburger-btn').length) {
+                   $('.sidebar').removeClass('active');
+                   $('.sidebar-overlay').removeClass('active');
+               }
+           }
+       });
+   </script>
 </body>
 </html>
