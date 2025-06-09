@@ -180,11 +180,9 @@ if ($sections_res) {
                     </div>
                     <div class="filter">
                         <select id="filterType" class="form-select">
-                            <option value="">All Exam Types</option>
-                            <option value="quiz">Quiz</option>
-                            <option value="test">Unit Test</option>
-                            <option value="midterm">Mid-Term Exam</option>
-                            <option value="final">Final Exam</option>
+                            <option value="">All Assessment Types</option>
+                            <option value="SA">SA (Summative Assessment)</option>
+                            <option value="FA">FA (Formative Assessment)</option>
                         </select>
                     </div>
                     <div class="filter">
@@ -332,14 +330,21 @@ if ($sections_res) {
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="examType" class="form-label">Exam Type*</label>
+                            <label for="examType" class="form-label">Assessment Type*</label>
                             <select id="examType" class="form-select" required>
-                                <option value="">Select exam type</option>
-                                <option value="quiz">Quiz</option>
-                                <option value="test">Unit Test</option>
-                                <option value="midterm">Mid-Term Exam</option>
-                                <option value="final">Final Exam</option>
+                                <option value="">Select assessment type</option>
+                                <option value="SA">📊 SA (Summative Assessment)</option>
+                                <?php if (hasRole(['teacher', 'headmaster'])): ?>
+                                <option value="FA">📝 FA (Formative Assessment)</option>
+                                <?php endif; ?>
                             </select>
+                            <small class="form-help">
+                                <?php if (hasRole(['teacher', 'headmaster'])): ?>
+                                SA: Formal exams (percentage-based grading) | FA: Continuous assessments (marks-based grading)
+                                <?php else: ?>
+                                Only SA assessments can be created. Contact administrator for FA assessments.
+                                <?php endif; ?>
+                            </small>
                         </div>
                     </div>
                     
@@ -542,7 +547,7 @@ if ($sections_res) {
             const event = new Event('change');
             form.examClass.dispatchEvent(event);
             setTimeout(() => { form.examSection.value = exam.section_id; }, 100); // Wait for section options
-            form.examType.value = exam.type;
+            form.examType.value = exam.assessment_type || exam.type; // Support both new and legacy field names
             form.examDate.value = exam.date;
             form.examStartTime.value = exam.start_time || '';
             form.examEndTime.value = exam.end_time || '';
@@ -571,7 +576,7 @@ if ($sections_res) {
                 title: form.examTitle.value.trim(),
                 class_id: form.examClass.value,
                 section_id: form.examSection.value,
-                type: form.examType.value,
+                assessment_type: form.examType.value, // Changed from 'type' to 'assessment_type'
                 date: form.examDate.value,
                 start_time: form.examStartTime.value,
                 end_time: form.examEndTime.value,
@@ -582,7 +587,7 @@ if ($sections_res) {
                 passing_marks: form.examPassingMarks.value,
                 subject_id: form.examSubject.value
             };
-            if (!data.title || !data.class_id || !data.section_id || !data.type || !data.date || !data.start_time || !data.end_time) {
+            if (!data.title || !data.class_id || !data.section_id || !data.assessment_type || !data.date || !data.start_time || !data.end_time) {
                 showFormMessage('Please fill all required fields.', 'red');
                 submitBtn.disabled = false;
                 return;
@@ -658,7 +663,7 @@ if ($sections_res) {
             let filtered = allExams;
             if (classVal) filtered = filtered.filter(e => e.class_id == classVal);
             if (sectionVal) filtered = filtered.filter(e => e.section_id == sectionVal);
-            if (typeVal) filtered = filtered.filter(e => (e.type || '').toLowerCase() === typeVal.toLowerCase());
+            if (typeVal) filtered = filtered.filter(e => (e.assessment_type || e.type || '').toLowerCase() === typeVal.toLowerCase());
             if (statusVal) filtered = filtered.filter(e => (e.status || '').toLowerCase() === statusVal.toLowerCase());
             renderExamTable(filtered);
             bindViewButtons();

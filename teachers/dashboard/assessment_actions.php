@@ -19,6 +19,9 @@ switch ($action) {
     case 'create_assessment':
         createAssessment($data);
         break;
+    case 'update_assessment':
+        updateAssessment($data);
+        break;
     case 'record_results':
         recordResults($data);
         break;
@@ -55,7 +58,7 @@ function createAssessment($data) {
         // Insert into assessments table (now with subject_id and assessment_type)
         $stmt = $conn->prepare("INSERT INTO assessments (class_id, section_id, teacher_user_id, title, assessment_type, total_marks, date, subject_id) 
                                VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("iiissssi", 
+        $stmt->bind_param("iissssi", 
             $data['class_id'], 
             $data['section_id'], 
             $teacher_id,
@@ -108,6 +111,52 @@ function createAssessment($data) {
         
         $conn->commit();
         echo json_encode(['success' => true, 'assessment_id' => $assessment_id]);
+    } catch (Exception $e) {
+        $conn->rollback();
+        echo json_encode(['error' => $e->getMessage()]);
+    }
+}
+
+// Update existing assessment
+function updateAssessment($data) {
+    global $conn, $teacher_id;
+    
+    try {
+        $conn->begin_transaction();
+        
+        // Verify teacher owns this assessment
+        $stmt = $conn->prepare("SELECT id FROM assessments WHERE id = ? AND teacher_user_id = ?");
+        $stmt->bind_param("ii", $data['assessment_id'], $teacher_id);
+        $stmt->execute();
+        if (!$stmt->get_result()->fetch_assoc()) {
+            throw new Exception('Unauthorized access to assessment');
+        }
+        
+        // Update the assessment
+        $stmt = $conn->prepare("UPDATE assessments SET 
+                               class_id = ?, 
+                               section_id = ?, 
+                               title = ?, 
+                               assessment_type = ?, 
+                               total_marks = ?, 
+                               date = ?, 
+                               subject_id = ?
+                               WHERE id = ? AND teacher_user_id = ?");
+        $stmt->bind_param("iiissssii", 
+            $data['class_id'], 
+            $data['section_id'], 
+            $data['title'],
+            $data['assessment_type'],
+            $data['total_marks'],
+            $data['date'],
+            $data['subject_id'],
+            $data['assessment_id'],
+            $teacher_id
+        );
+        $stmt->execute();
+        
+        $conn->commit();
+        echo json_encode(['success' => true]);
     } catch (Exception $e) {
         $conn->rollback();
         echo json_encode(['error' => $e->getMessage()]);
@@ -375,4 +424,4 @@ function getNextUpcomingExam() {
     } catch (Exception $e) {
         echo json_encode(['error' => $e->getMessage()]);
     }
-} 
+}
