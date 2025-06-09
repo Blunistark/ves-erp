@@ -305,12 +305,52 @@ switch ($method) {
         $auth = checkAuth();
         
         switch ($action) {
+            case 'get_unread_count':
+                $user_id = $auth['user_id']; // $auth is set at the start of 'GET' case
+
+                $count_sql = "SELECT COUNT(n.id) as unread_count
+                              FROM notifications n
+                              LEFT JOIN notification_read_status nrs ON n.id = nrs.notification_id AND nrs.user_id = ?
+                              WHERE n.is_active = 1 
+                              AND (n.expires_at IS NULL OR n.expires_at > NOW())
+                              AND nrs.user_id IS NULL";
+                // Additional filtering based on user role/permissions for targeted notifications can be added here if necessary.
+                
+                $count_params = [$user_id];
+                $count_param_types = "i";
+                
+                $stmt_count = mysqli_prepare($conn, $count_sql);
+                if (!$stmt_count) {
+                    sendNotificationResponse(false, null, 'Failed to prepare count statement: ' . mysqli_error($conn), 500);
+                    exit;
+                }
+                mysqli_stmt_bind_param($stmt_count, $count_param_types, ...$count_params);
+                mysqli_stmt_execute($stmt_count);
+                $result_count = mysqli_stmt_get_result($stmt_count);
+                $row_count = mysqli_fetch_assoc($result_count);
+                
+                if ($row_count) {
+                    sendNotificationResponse(true, ['count' => (int)$row_count['unread_count']], 'Unread count fetched successfully.');
+                } else {
+                    sendNotificationResponse(false, ['count' => 0], 'Failed to fetch unread count. Error: ' . mysqli_error($conn), 500);
+                }
+                mysqli_stmt_close($stmt_count);
+                break;
+
             case 'list':
                 $user_id = $auth['user_id'];
-                $limit = (int)($_GET['limit'] ?? 50);
-                $offset = (int)($_GET['offset'] ?? 0);
-                $type = $_GET['type'] ?? '';
-                $unread_only = $_GET['unread_only'] ?? false;
+
+                $page = (int)($_GET['page'] ?? 1);
+                $limit = (int)($_GET['limit'] ?? 10); // Default limit for dropdown or general list
+                if ($page < 1) $page = 1;
+                $offset = ($page - 1) * $limit;
+
+                $type = $_GET['type'] ?? ''; // For filtering by notification type e.g. 'alert', 'info'
+                
+                $status_filter = strtolower($_GET['status'] ?? ''); // e.g., 'unread', 'read', 'all'
+                $unread_only = ($status_filter === 'unread');
+                // Add more logic here if you need to filter by 'read' status specifically
+                // $read_only = ($status_filter === 'read');
                 
                 $sql = "
                     SELECT n.*, 
@@ -334,7 +374,7 @@ switch ($method) {
                     $param_types .= "s";
                 }
                 
-                if ($unread_only) {
+                if ($unread_only) { // This condition is now set based on status_filter === 'unread'
                     $sql .= " AND nrs.user_id IS NULL";
                 }
                 

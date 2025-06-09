@@ -1,0 +1,299 @@
+/* General Body Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    background-color: #f4f7f6;
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column; /* Changed to column for sticky footer if needed */
+}
+
+/* Top Navigation Bar */
+.top-navbar {
+    background-color: #ffffff;
+    color: #333;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1001; /* Higher than sidebar */
+    height: 60px; /* Fixed height */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.top-navbar .nav-left {
+    display: flex;
+    align-items: center;
+}
+
+.top-navbar .nav-right {
+    display: flex;
+    align-items: center;
+}
+
+.sidebar-toggle {
+    background: none;
+    border: none;
+    color: #333;
+    font-size: 24px;
+    cursor: pointer;
+    margin-right: 15px;
+}
+
+.page-title-display {
+    font-size: 1.2em;
+    font-weight: 500;
+    color: #333;
+}
+
+.user-info {
+    margin-left: 20px;
+    position: relative; /* For potential dropdown later */
+    color: #555;
+}
+
+.user-info .welcome-msg {
+    margin-right: 15px;
+}
+
+.user-info .logout-link {
+    color: #007bff;
+    text-decoration: none;
+}
+.user-info .logout-link:hover {
+    text-decoration: underline;
+}
+
+/* Notification Bell */
+.notification-bell {
+    position: relative;
+    cursor: pointer;
+    margin-right: 20px;
+}
+
+.notification-bell .fa-bell {
+    font-size: 20px;
+    color: #555;
+}
+
+.notification-count {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: red;
+    color: white;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 10px;
+    font-weight: bold;
+    border: 1px solid white;
+}
+
+.notifications-dropdown {
+    display: none;
+    position: absolute;
+    top: 45px; /* Adjust based on navbar height and bell position */
+    right: 0;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    width: 320px;
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 1002;
+}
+
+.notifications-dropdown.show {
+    display: block;
+}
+
+.notifications-header {
+    padding: 10px 15px;
+    font-weight: bold;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.notifications-header .mark-all-read {
+    font-size: 0.8em;
+    color: #007bff;
+    cursor: pointer;
+}
+.notifications-header .mark-all-read:hover {
+    text-decoration: underline;
+}
+
+.notification-item {
+    padding: 10px 15px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    font-size: 0.9em;
+}
+
+.notification-item:last-child {
+    border-bottom: none;
+}
+
+.notification-item:hover {
+    background-color: #f9f9f9;
+}
+
+.notification-item.unread {
+    background-color: #e9f5ff; /* Light blue for unread */
+    font-weight: bold;
+}
+
+.notification-item .notification-title {
+    display: block;
+    color: #333;
+    margin-bottom: 3px;
+}
+
+.notification-item .notification-message {
+    color: #555;
+    font-size: 0.9em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 280px; /* ensure it fits */
+}
+
+.notification-item .notification-time {
+    font-size: 0.75em;
+    color: #777;
+    margin-top: 5px;
+    display: block;
+}
+
+.notifications-footer {
+    padding: 10px;
+    text-align: center;
+    border-top: 1px solid #eee;
+}
+
+.notifications-footer a {
+    color: #007bff;
+    text-decoration: none;
+    font-size: 0.9em;
+}
+
+.notifications-footer a:hover {
+    text-decoration: underline;
+}
+
+.no-notifications {
+    padding: 20px;
+    text-align: center;
+    color: #777;
+}
+
+/* Sidebar (assuming existing sidebar.css might handle some of this) */
+#sidebar {
+    width: 250px;
+    background: #343a40; /* Dark sidebar */
+    color: #fff;
+    position: fixed;
+    top: 60px; /* Below top-navbar */
+    left: -250px; /* Initially hidden */
+    height: calc(100vh - 60px); /* Full height minus navbar */
+    transition: left 0.3s ease;
+    z-index: 1000;
+    padding-top: 20px;
+    overflow-y: auto;
+}
+
+#sidebar.active {
+    left: 0;
+}
+
+/* Main Content Area */
+.main-content {
+    margin-top: 60px; /* Height of the top-navbar */
+    margin-left: 0; /* Default when sidebar is hidden */
+    padding: 20px;
+    width: 100%; /* Take full width initially */
+    transition: margin-left 0.3s ease;
+    flex-grow: 1; /* Allows content to fill space if body is flex column */
+    box-sizing: border-box;
+}
+
+/* Adjust main content when sidebar is active */
+.main-content.sidebar-active {
+    margin-left: 250px; /* Width of the sidebar */
+    width: calc(100% - 250px);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #sidebar {
+        width: 200px;
+        left: -200px;
+    }
+    #sidebar.active {
+        left: 0;
+    }
+    .main-content.sidebar-active {
+        margin-left: 200px;
+        width: calc(100% - 200px);
+    }
+    .page-title-display {
+        font-size: 1em;
+    }
+    .user-info .welcome-msg {
+        display: none; /* Hide welcome message on smaller screens */
+    }
+    .notifications-dropdown {
+        width: 280px; /* Slightly smaller dropdown */
+    }
+}
+
+/* Styling for sidebar links (example, adjust as per your sidebar.php) */
+#sidebar ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+#sidebar ul li a {
+    display: block;
+    padding: 12px 15px;
+    color: #adb5bd;
+    text-decoration: none;
+    border-left: 3px solid transparent;
+}
+
+#sidebar ul li a:hover,
+#sidebar ul li a.active-link {
+    background-color: #495057;
+    color: #fff;
+    border-left-color: #007bff;
+}
+
+#sidebar ul li a .fa {
+    margin-right: 10px;
+}
+
+.sidebar-header {
+    padding: 10px 15px;
+    text-align: center;
+    border-bottom: 1px solid #495057;
+    margin-bottom: 10px;
+}
+
+.sidebar-header img {
+    max-width: 80px;
+    margin-bottom: 5px;
+}
+
+.sidebar-header h3 {
+    color: #fff;
+    font-size: 1.1em;
+    margin: 0;
+}
