@@ -1,4 +1,6 @@
 
+https://vinodhenglishschool.com/erp/teachers/dashboard/notifications.php
+
 <?php 
 include 'sidebar.php'; 
 include 'con.php';
@@ -77,295 +79,224 @@ $user_name = $_SESSION['full_name'] ?? 'Teacher';
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teacher Notifications - Dashboard</title>
     
     <link rel="stylesheet" href="css/sidebar.css">
-    <link rel="stylesheet" href="css/index.css">
     <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     
     <style>
-        /* Enhanced styles while maintaining the same theme */
-        .dashboard-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 0;
-            border-bottom: 2px solid #f0f0f0;
-            margin-bottom: 25px;
+        /* Sidebar optimization and main content spacing */
+        .main-content {
+            margin-left: 250px;
+            padding: 2rem;
+            background-color: #f8fafc;
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
         }
         
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 15px;
+        .sidebar.collapsed ~ .main-content {
+            margin-left: 70px;
         }
         
-        .school-logo {
-            width: 50px;
-            height: 50px;
-            object-fit: contain;
+        /* Mobile responsive for sidebar */
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+            
+            .sidebar.active ~ .main-content {
+                margin-left: 0;
+            }
+        }
+        
+        /* Hamburger button for mobile */
+        .hamburger-btn {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1001;
+            background: #10b981;
+            color: white;
+            border: none;
             border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 10px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
         
-        .header-title {
-            margin: 0;
-            color: #333;
-            font-size: 1.8rem;
-            font-weight: 600;
+        @media (max-width: 768px) {
+            .hamburger-btn {
+                display: block;
+            }
         }
         
-        .header-date {
-            color: #666;
-            font-size: 1rem;
-            font-weight: 500;
+        .hamburger-icon {
+            width: 24px;
+            height: 24px;
         }
         
-        .user-welcome {
-            background: linear-gradient(135deg, #f9f9f9 0%, #f0f0f0 100%);
-            border-radius: 12px;
-            padding: 25px;
-            margin-bottom: 25px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .user-welcome::before {
-            content: '';
-            position: absolute;
+        /* Sidebar overlay for mobile */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
         }
         
-        .welcome-text h2 {
-            margin: 0;
-            color: #333;
-            font-size: 1.6rem;
-            font-weight: 600;
+        .sidebar-overlay.active {
+            display: block;
         }
         
-        .welcome-text p {
-            margin: 8px 0 0;
-            color: #666;
-            font-size: 1rem;
-        }
-        
-        .date-time {
-            background: rgba(255,255,255,0.9);
-            padding: 15px 20px;
-            border-radius: 10px;
-            text-align: center;
-            min-width: 200px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        
-        .date-time .time {
-            font-size: 1.4rem;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 5px;
-            font-family: 'Courier New', monospace;
-        }
-        
-        .date-time .date {
-            font-size: 0.9rem;
-            color: #666;
-        }
-        
-        /* Quick Stats Section */
-        .quick-stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .stat-card {
-            background: #fff;
+        .header-section {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 2rem;
             border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-            text-align: center;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            border-left: 4px solid #667eea;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         
-        .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        .header-section h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 700;
         }
         
-        .stat-card.classes { border-left-color: #667eea; }
-        .stat-card.sent { border-left-color: #4CAF50; }
-        .stat-card.received { border-left-color: #FF9800; }
-        
-        .stat-number {
-            font-size: 2.2rem;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 5px;
-            line-height: 1.2;
+        .header-section p {
+            margin: 0.5rem 0 0 0;
+            opacity: 0.9;
         }
         
-        .stat-label {
-            font-size: 0.85rem;
-            color: #666;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            line-height: 1.3;
-        }
-        
-        /* Enhanced tab system */
         .action-tabs {
             display: flex;
             background: white;
             border-radius: 12px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-            margin-bottom: 25px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
             overflow: hidden;
         }
         
         .tab-button {
             flex: 1;
-            padding: 15px 20px;
+            padding: 1rem 2rem;
             background: none;
             border: none;
             cursor: pointer;
             font-weight: 600;
-            color: #666;
+            color: #6b7280;
             transition: all 0.3s ease;
-            position: relative;
         }
         
         .tab-button.active {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background-color: #10b981;
             color: white;
         }
         
         .tab-button:hover:not(.active) {
-            background-color: #f8f9fa;
-            color: #333;
+            background-color: #f9fafb;
         }
         
-        /* Enhanced tab content */
         .tab-content {
             display: none;
             background: white;
             border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            margin-bottom: 25px;
+            padding: 2rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         
         .tab-content.active {
             display: block;
         }
         
-        /* Form styling consistent with dashboard */
         .form-section {
-            margin-bottom: 25px;
-            padding: 20px 0;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        
-        .form-section:last-child {
-            border-bottom: none;
+            margin-bottom: 2rem;
         }
         
         .form-section h3 {
-            margin: 0 0 15px 0;
-            color: #333;
+            margin-bottom: 1rem;
+            color: #374151;
             font-weight: 600;
-            font-size: 1.2rem;
         }
         
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 1.5rem;
         }
         
         .form-group label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 0.5rem;
             font-weight: 600;
-            color: #333;
-            font-size: 0.9rem;
+            color: #374151;
         }
         
         .form-control {
             width: 100%;
-            padding: 12px 15px;
+            padding: 0.75rem;
             border: 2px solid #e5e7eb;
             border-radius: 8px;
             font-size: 1rem;
-            transition: all 0.3s ease;
-            background-color: #fff;
+            transition: border-color 0.3s ease;
+            box-sizing: border-box;
         }
         
         .form-control:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
         }
         
         .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            gap: 1rem;
         }
         
-        /* Class targeting section */
         .class-targeting {
-            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
+            background-color: #f0fdf4;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
             border: 2px solid #bbf7d0;
         }
         
         .class-selector {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
         }
         
         .class-option {
             display: flex;
             align-items: center;
-            padding: 15px;
+            padding: 1rem;
             background: white;
-            border-radius: 10px;
+            border-radius: 8px;
             border: 2px solid transparent;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
         
         .class-option:hover {
-            border-color: #667eea;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: #10b981;
         }
         
         .class-option.selected {
-            border-color: #667eea;
-            background: linear-gradient(135deg, #f0f4ff 0%, #e0e7ff 100%);
+            border-color: #10b981;
+            background-color: #ecfdf5;
         }
         
         .class-option input[type="checkbox"] {
-            margin-right: 15px;
-            transform: scale(1.2);
-            accent-color: #667eea;
+            margin-right: 1rem;
         }
         
         .class-info {
@@ -374,32 +305,28 @@ $user_name = $_SESSION['full_name'] ?? 'Teacher';
         
         .class-name {
             font-weight: 600;
-            color: #333;
-            margin-bottom: 5px;
+            color: #374151;
         }
         
         .section-name {
-            font-size: 0.85rem;
-            color: #666;
-            line-height: 1.4;
+            font-size: 0.875rem;
+            color: #6b7280;
         }
         
-        /* Priority selector */
         .priority-selector {
             display: flex;
-            gap: 15px;
+            gap: 1rem;
             flex-wrap: wrap;
         }
         
         .priority-option {
-            padding: 12px 20px;
+            padding: 0.75rem 1.5rem;
             border: 2px solid #e5e7eb;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
             background: white;
             font-weight: 600;
-            font-size: 0.9rem;
         }
         
         .priority-option.normal {
@@ -420,33 +347,28 @@ $user_name = $_SESSION['full_name'] ?? 'Teacher';
         .priority-option.selected {
             background-color: currentColor;
             color: white;
-            transform: scale(1.05);
         }
         
-        /* Button styling consistent with dashboard */
         .btn {
-            padding: 12px 20px;
+            padding: 0.75rem 1.5rem;
             border: none;
             border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 0.5rem;
             transition: all 0.3s ease;
             text-decoration: none;
-            font-size: 0.9rem;
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background-color: #10b981;
             color: white;
-            box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
         }
         
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            background-color: #059669;
         }
         
         .btn-secondary {
@@ -456,25 +378,22 @@ $user_name = $_SESSION['full_name'] ?? 'Teacher';
         
         .btn-secondary:hover {
             background-color: #4b5563;
-            transform: translateY(-2px);
         }
         
-        /* Notification list styling */
         .notification-list {
             background: white;
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
         
         .notification-item {
-            padding: 20px;
-            border-bottom: 1px solid #f0f0f0;
-            transition: all 0.3s ease;
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            transition: background-color 0.3s ease;
         }
         
         .notification-item:hover {
-            background-color: #f8f9fa;
+            background-color: #f9fafb;
         }
         
         .notification-item:last-child {
@@ -485,94 +404,71 @@ $user_name = $_SESSION['full_name'] ?? 'Teacher';
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 15px;
+            margin-bottom: 1rem;
         }
         
         .notification-title {
             font-weight: 600;
-            color: #333;
-            margin-bottom: 8px;
-            font-size: 1.1rem;
+            color: #111827;
+            margin-bottom: 0.5rem;
         }
         
         .notification-meta {
             display: flex;
-            gap: 15px;
-            font-size: 0.8rem;
-            color: #666;
+            gap: 1rem;
+            font-size: 0.875rem;
+            color: #6b7280;
             flex-wrap: wrap;
         }
         
         .notification-content {
-            color: #555;
+            color: #374151;
             line-height: 1.6;
-            margin-bottom: 15px;
         }
         
-        /* Alert styling */
         .alert {
-            padding: 15px 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            border-left: 4px solid;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
         }
         
         .alert-success {
             background-color: #ecfdf5;
             color: #065f46;
-            border-left-color: #10b981;
+            border: 1px solid #bbf7d0;
         }
         
         .alert-error {
             background-color: #fef2f2;
             color: #991b1b;
-            border-left-color: #ef4444;
+            border: 1px solid #fecaca;
         }
         
-        /* Loading states */
         .loading {
             text-align: center;
-            padding: 40px 20px;
-            color: #666;
-            font-style: italic;
+            padding: 2rem;
+            color: #6b7280;
         }
         
-        .no-classes {
-            color: #666;
-            font-style: italic;
-            padding: 20px 0;
-            text-align: center;
-            background: #f8f9fa;
-            border-radius: 8px;
-            margin: 10px 0;
+        /* Responsive optimizations */
+        @media (max-width: 1024px) {
+            .main-content {
+                margin-left: 0;
+                padding: 1.5rem;
+            }
         }
         
-        /* Responsive improvements */
         @media (max-width: 768px) {
-            .header-left {
-                flex-direction: column;
-                gap: 10px;
-                text-align: center;
+            .main-content {
+                padding: 1rem;
             }
             
-            .school-logo {
-                width: 40px;
-                height: 40px;
+            .header-section {
+                padding: 1.5rem;
             }
             
-            .header-title {
-                font-size: 1.4rem;
-            }
-            
-            .user-welcome {
-                flex-direction: column;
-                text-align: center;
-                gap: 15px;
-            }
-            
-            .quick-stats {
-                grid-template-columns: 1fr;
-                gap: 15px;
+            .header-section h1 {
+                font-size: 1.5rem;
             }
             
             .form-row {
@@ -592,37 +488,34 @@ $user_name = $_SESSION['full_name'] ?? 'Teacher';
             }
             
             .tab-button {
-                border-radius: 0;
+                padding: 0.75rem 1rem;
+            }
+            
+            .tab-content {
+                padding: 1.5rem;
+            }
+            
+            .notification-meta {
+                flex-direction: column;
+                gap: 0.5rem;
             }
         }
         
         @media (max-width: 480px) {
-            .dashboard-header {
-                flex-direction: column;
-                gap: 15px;
-                text-align: center;
+            .main-content {
+                padding: 0.5rem;
             }
             
-            .header-left {
-                flex-direction: row;
-                gap: 10px;
-            }
-            
-            .school-logo {
-                width: 35px;
-                height: 35px;
-            }
-            
-            .header-title {
-                font-size: 1.2rem;
+            .header-section {
+                padding: 1rem;
             }
             
             .tab-content {
-                padding: 15px;
+                padding: 1rem;
             }
         }
         
-        /* Summernote editor styling */
+        /* Summernote editor optimizations */
         .note-editor {
             border: 2px solid #e5e7eb !important;
             border-radius: 8px !important;
@@ -632,84 +525,51 @@ $user_name = $_SESSION['full_name'] ?? 'Teacher';
             padding: 15px !important;
         }
         
-        .note-editor.note-frame {
-            border: 2px solid #e5e7eb !important;
-        }
-        
         .note-editor.note-frame:focus-within {
-            border-color: #667eea !important;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+            border-color: #10b981 !important;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
         }
         
-        /* Select2 styling */
+        /* Select2 optimizations */
         .select2-container--default .select2-selection--single {
             border: 2px solid #e5e7eb !important;
             border-radius: 8px !important;
             height: 48px !important;
-            padding: 8px 12px !important;
         }
         
         .select2-container--default .select2-selection--single:focus {
-            border-color: #667eea !important;
+            border-color: #10b981 !important;
         }
         
-        /* Flatpickr styling */
+        /* Flatpickr optimizations */
         .flatpickr-input {
             border: 2px solid #e5e7eb !important;
             border-radius: 8px !important;
         }
         
         .flatpickr-input:focus {
-            border-color: #667eea !important;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+            border-color: #10b981 !important;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
         }
     </style>
 </head>
 
 <body>
-<div class="sidebar-overlay"></div>
-<button class="hamburger-btn" type="button" onclick="toggleSidebar()">
-    <svg xmlns="http://www.w3.org/2000/svg" class="hamburger-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" pointer-events="none">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-    </svg>
-</button>
+    <!-- Mobile hamburger button -->
+    <button class="hamburger-btn" onclick="toggleSidebar()">
+        <svg class="hamburger-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+    </button>
+    
+    <!-- Sidebar overlay for mobile -->
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-<div class="dashboard-container">
-    <header class="dashboard-header">
-        <div class="header-left">
-            <img src="../../assets/images/school-logo.png" alt="VES School Logo" class="school-logo">
-            <h1 class="header-title">Teacher Notifications</h1>
-        </div>
-        <span class="header-date"><?php echo date('F j, Y'); ?></span>
-    </header>
-
-    <main class="dashboard-content">
-        <!-- User Welcome Section -->
-        <div class="user-welcome">
-            <div class="welcome-text">
-                <h2>Welcome back, <?php echo htmlspecialchars($user_name); ?>!</h2>
-                <p>Manage your notifications and communicate with students effectively</p>
-            </div>
-            <div class="date-time">
-                <div class="time" id="current-time">00:00:00</div>
-                <div class="date"><?php echo date('l, F j, Y'); ?></div>
-            </div>
-        </div>
-
-        <!-- Quick Stats -->
-        <div class="quick-stats">
-            <div class="stat-card classes">
-                <div class="stat-number" id="totalClassesCount"><?php echo count($teacher_classes); ?></div>
-                <div class="stat-label">Assigned Classes</div>
-            </div>
-            <div class="stat-card sent">
-                <div class="stat-number" id="sentNotificationsCount">0</div>
-                <div class="stat-label">Sent This Week</div>
-            </div>
-            <div class="stat-card received">
-                <div class="stat-number" id="unreadNotificationsCount">0</div>
-                <div class="stat-label">Unread Messages</div>
-            </div>
+    <div class="main-content">
+        <!-- Header Section -->
+        <div class="header-section">
+            <h1>Teacher Notifications</h1>
+            <p>Communicate with your students and manage class announcements</p>
         </div>
 
         <!-- Action Tabs -->
@@ -781,7 +641,7 @@ $user_name = $_SESSION['full_name'] ?? 'Teacher';
                                     <div class="class-name"><?php echo htmlspecialchars($class['class_name']); ?></div>
                                     <div class="section-name">
                                         Section: <?php echo htmlspecialchars($class['section_name']); ?>
-                                        <span style="color: #667eea; font-size: 0.75rem; margin-left: 0.5rem;">
+                                        <span style="color: #10b981; font-size: 0.75rem; margin-left: 0.5rem;">
                                             (<?php echo htmlspecialchars($class['assignment_type']); ?>)
                                         </span>
                                     </div>
@@ -790,7 +650,7 @@ $user_name = $_SESSION['full_name'] ?? 'Teacher';
                             <?php endforeach; ?>
                             
                             <?php if (empty($teacher_classes)): ?>
-                            <div class="no-classes">
+                            <div style="text-align: center; padding: 2rem; color: #6b7280;">
                                 <p>No classes assigned yet.</p>
                                 <p style="font-size: 0.875rem;">Contact the admin to get assigned to classes or timetable periods.</p>
                             </div>
@@ -816,7 +676,7 @@ $user_name = $_SESSION['full_name'] ?? 'Teacher';
                     
                     <div class="form-group">
                         <label>
-                            <input type="checkbox" name="requires_acknowledgment" value="1" style="margin-right: 8px;">
+                            <input type="checkbox" name="requires_acknowledgment" value="1">
                             Require acknowledgment from recipients
                         </label>
                     </div>
@@ -830,7 +690,7 @@ $user_name = $_SESSION['full_name'] ?? 'Teacher';
                         </svg>
                         Send Notification
                     </button>
-                    <button type="button" class="btn btn-secondary" onclick="resetForm()" style="margin-left: 10px;">Reset</button>
+                    <button type="button" class="btn btn-secondary" onclick="resetForm()">Reset</button>
                 </div>
             </form>
         </div>
@@ -852,497 +712,371 @@ $user_name = $_SESSION['full_name'] ?? 'Teacher';
                     Loading received messages...
                 </div>
                 <div id="received-notifications-list"></div>
-           </div>
-       </div>
-   </main>
-</div>
+            </div>
+        </div>
+    </div>
 
-<!-- Scripts -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-<script>
-   // Global variables
-   let currentTab = 'create';
-   let selectedPriority = 'normal';
+    <script>
+        // Global variables
+        let currentTab = 'create';
+        let selectedPriority = 'normal';
 
-   // Initialize the page
-   $(document).ready(function() {
-       initializePage();
-       loadNotificationCounts();
-       updateTime();
-       setInterval(updateTime, 1000);
-   });
+        // Initialize the page
+        $(document).ready(function() {
+            initializePage();
+            loadNotificationCounts();
+        });
 
-   // Update current time with smooth animation (consistent with dashboard)
-   function updateTime() {
-       const currentTimeElement = document.getElementById('current-time');
-       const now = new Date();
-       const hours = String(now.getHours()).padStart(2, '0');
-       const minutes = String(now.getMinutes()).padStart(2, '0');
-       const seconds = String(now.getSeconds()).padStart(2, '0');
-       
-       const newTime = `${hours}:${minutes}:${seconds}`;
-       
-       if (currentTimeElement && currentTimeElement.textContent !== newTime) {
-           currentTimeElement.style.opacity = '0.7';
-           setTimeout(() => {
-               currentTimeElement.textContent = newTime;
-               currentTimeElement.style.opacity = '1';
-           }, 100);
-       }
-   }
+        // Sidebar toggle function
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.querySelector('.sidebar-overlay');
+            
+            if (sidebar && overlay) {
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
+            }
+        }
 
-   function initializePage() {
-       // Initialize rich text editor
-       $('#notification-message').summernote({
-           height: 150,
-           toolbar: [
-               ['style', ['style']],
-               ['font', ['bold', 'underline', 'clear']],
-               ['color', ['color']],
-               ['para', ['ul', 'ol', 'paragraph']],
-               ['table', ['table']],
-               ['insert', ['link']],
-               ['view', ['fullscreen', 'help']]
-           ],
-           callbacks: {
-               onInit: function() {
-                   // Apply consistent styling to summernote
-                   $('.note-editor').addClass('form-control-editor');
-               }
-           }
-       });
+        function initializePage() {
+            // Initialize rich text editor
+            $('#notification-message').summernote({
+                height: 150,
+                toolbar: [
+                    ['style', ['style']],
+                    ['font', ['bold', 'underline', 'clear']],
+                    ['color', ['color']],
+                    ['para', ['ul', 'ol', 'paragraph']],
+                    ['table', ['table']],
+                    ['insert', ['link']],
+                    ['view', ['fullscreen', 'help']]
+                ]
+            });
 
-       // Initialize date pickers with consistent styling
-       flatpickr("#expires-at", {
-           enableTime: true,
-           dateFormat: "Y-m-d H:i",
-           minDate: "today",
-           theme: "light"
-       });
+            // Initialize date pickers
+            flatpickr("#expires-at", {
+                enableTime: true,
+                dateFormat: "Y-m-d H:i",
+                minDate: "today"
+            });
 
-       flatpickr("#scheduled-for", {
-           enableTime: true,
-           dateFormat: "Y-m-d H:i",
-           minDate: "today",
-           theme: "light"
-       });
+            flatpickr("#scheduled-for", {
+                enableTime: true,
+                dateFormat: "Y-m-d H:i",
+                minDate: "today"
+            });
 
-       // Form submission handler
-       $('#create-notification-form').on('submit', handleFormSubmission);
+            // Form submission handler
+            $('#create-notification-form').on('submit', handleFormSubmission);
 
-       // Priority selector handlers
-       $('.priority-option').on('click', function() {
-           $('.priority-option').removeClass('selected');
-           $(this).addClass('selected');
-           selectedPriority = $(this).data('priority');
-       });
+            // Priority selector handlers
+            $('.priority-option').on('click', function() {
+                $('.priority-option').removeClass('selected');
+                $(this).addClass('selected');
+                selectedPriority = $(this).data('priority');
+            });
+        }
 
-       // Add smooth animations to form elements
-       $('.form-control').on('focus', function() {
-           $(this).parent().addClass('focused');
-       }).on('blur', function() {
-           $(this).parent().removeClass('focused');
-       });
-   }
+        function switchTab(tab) {
+            // Update tab buttons
+            $('.tab-button').removeClass('active');
+            $(`.tab-button:contains(${tab.charAt(0).toUpperCase() + tab.slice(1)})`).addClass('active');
 
-   function switchTab(tab) {
-       // Update tab buttons with smooth animation
-       $('.tab-button').removeClass('active');
-       $('.tab-button').each(function() {
-           if ($(this).text().toLowerCase().includes(tab)) {
-               $(this).addClass('active');
-           }
-       });
+            // Update tab content
+            $('.tab-content').removeClass('active');
+            $(`#${tab}-tab`).addClass('active');
 
-       // Update tab content with fade effect
-       $('.tab-content').removeClass('active').hide();
-       $(`#${tab}-tab`).addClass('active').fadeIn(300);
+            currentTab = tab;
 
-       currentTab = tab;
+            // Load data for the selected tab
+            if (tab === 'sent') {
+                loadSentNotifications();
+            } else if (tab === 'received') {
+                loadReceivedNotifications();
+            }
+        }
 
-       // Load data for the selected tab
-       if (tab === 'sent') {
-           loadSentNotifications();
-       } else if (tab === 'received') {
-           loadReceivedNotifications();
-       }
-   }
+        function toggleClassSelection(element) {
+            const checkbox = $(element).find('input[type="checkbox"]');
+            const isChecked = !checkbox.prop('checked');
+            
+            checkbox.prop('checked', isChecked);
+            
+            if (isChecked) {
+                $(element).addClass('selected');
+            } else {
+                $(element).removeClass('selected');
+            }
+        }
 
-   function toggleClassSelection(element) {
-       const checkbox = $(element).find('input[type="checkbox"]');
-       const isChecked = !checkbox.prop('checked');
-       
-       checkbox.prop('checked', isChecked);
-       
-       // Add smooth animation
-       if (isChecked) {
-           $(element).addClass('selected');
-           $(element).css('transform', 'scale(1.02)');
-           setTimeout(() => {
-               $(element).css('transform', 'scale(1)');
-           }, 150);
-       } else {
-           $(element).removeClass('selected');
-       }
-   }
+        function handleFormSubmission(e) {
+            e.preventDefault();
+            
+            // Validate form
+            const title = $('#notification-title').val().trim();
+            const message = $('#notification-message').summernote('code').trim();
+            const selectedClasses = $('input[name="target_classes[]"]:checked');
 
-   function handleFormSubmission(e) {
-       e.preventDefault();
-       
-       // Show loading state
-       const submitBtn = $(e.target).find('button[type="submit"]');
-       const originalText = submitBtn.html();
-       submitBtn.html('<svg class="animate-spin" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 16c-4.418 0-8-3.582-8-8s3.582-8 8-8c1.074 0 2.09.215 3.018.602l-.708 1.857C9.688 2.162 8.875 2 8 2c-3.309 0-6 2.691-6 6s2.691 6 6 6 6-2.691 6-6h2c0 4.418-3.582 8-8 8z"/></svg> Sending...').prop('disabled', true);
-       
-       // Validate form
-       const title = $('#notification-title').val().trim();
-       const message = $('#notification-message').summernote('code').trim();
-       const selectedClasses = $('input[name="target_classes[]"]:checked');
+            if (!title) {
+                showAlert('Please enter a notification title', 'error');
+                return;
+            }
 
-       if (!title) {
-           showAlert('Please enter a notification title', 'error');
-           resetSubmitButton(submitBtn, originalText);
-           return;
-       }
+            if (!message || message === '<p><br></p>') {
+                showAlert('Please enter a notification message', 'error');
+                return;
+            }
 
-       if (!message || message === '<p><br></p>') {
-           showAlert('Please enter a notification message', 'error');
-           resetSubmitButton(submitBtn, originalText);
-           return;
-       }
+            if (selectedClasses.length === 0) {
+                showAlert('Please select at least one class to notify', 'error');
+                return;
+            }
 
-       if (selectedClasses.length === 0) {
-           showAlert('Please select at least one class to notify', 'error');
-           resetSubmitButton(submitBtn, originalText);
-           return;
-       }
+            // Prepare form data
+            const formData = {
+                title: title,
+                message: message,
+                type: $('#notification-type').val(),
+                priority: selectedPriority,
+                target_type: 'multiple_classes',
+                target_value: Array.from(selectedClasses).map(el => el.value).join(','),
+                expires_at: $('#expires-at').val() || null,
+                scheduled_for: $('#scheduled-for').val() || null,
+                requires_acknowledgment: $('input[name="requires_acknowledgment"]').is(':checked') ? 1 : 0
+            };
 
-       // Prepare form data
-       const formData = {
-           title: title,
-           message: message,
-           type: $('#notification-type').val(),
-           priority: selectedPriority,
-           target_type: 'multiple_classes',
-           target_value: Array.from(selectedClasses).map(el => el.value).join(','),
-           expires_at: $('#expires-at').val() || null,
-           scheduled_for: $('#scheduled-for').val() || null,
-           requires_acknowledgment: $('input[name="requires_acknowledgment"]').is(':checked') ? 1 : 0
-       };
+            // Send to API
+            $.ajax({
+                url: '/erp/backend/api/notifications?action=create',
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify(formData),
+                success: function(response) {
+                    if (response.success) {
+                        showAlert('Notification sent successfully!', 'success');
+                        resetForm();
+                        loadNotificationCounts();
+                    } else {
+                        showAlert(response.message || 'Failed to send notification', 'error');
+                    }
+                },
+                error: function() {
+                    showAlert('Network error. Please try again.', 'error');
+                }
+            });
+        }
 
-       // Send to API
-       $.ajax({
-           url: '/erp/backend/api/notifications?action=create',
-           method: 'POST',
-           headers: {
-               'Content-Type': 'application/json'
-           },
-           data: JSON.stringify(formData),
-           success: function(response) {
-               resetSubmitButton(submitBtn, originalText);
-               if (response.success) {
-                   showAlert('Notification sent successfully!', 'success');
-                   resetForm();
-                   loadNotificationCounts();
-               } else {
-                   showAlert(response.message || 'Failed to send notification', 'error');
-               }
-           },
-           error: function() {
-               resetSubmitButton(submitBtn, originalText);
-               showAlert('Network error. Please try again.', 'error');
-           }
-       });
-   }
+        function loadNotificationCounts() {
+            $.ajax({
+                url: '/erp/backend/api/notifications?action=count',
+                method: 'GET',
+                success: function(response) {
+                    if (response.success) {
+                        $('#unreadNotificationsCount').text(response.data.unread || 0);
+                    }
+                }
+            });
 
-   function resetSubmitButton(btn, originalText) {
-       btn.html(originalText).prop('disabled', false);
-   }
+            // Load sent notifications count for this week
+            $.ajax({
+                url: '/erp/backend/api/notifications?action=list&limit=100',
+                method: 'GET',
+                success: function(response) {
+                    if (response.success) {
+                        const thisWeek = response.data.filter(notif => {
+                            const notifDate = new Date(notif.created_at);
+                            const weekAgo = new Date();
+                            weekAgo.setDate(weekAgo.getDate() - 7);
+                            return notifDate >= weekAgo && notif.created_by == <?php echo $user_id; ?>;
+                        });
+                        $('#sentNotificationsCount').text(thisWeek.length);
+                    }
+                }
+            });
 
-   function loadNotificationCounts() {
-       $.ajax({
-           url: '/erp/backend/api/notifications?action=count',
-           method: 'GET',
-           success: function(response) {
-               if (response.success) {
-                   animateNumber('#unreadNotificationsCount', response.data.unread || 0);
-               }
-           }
-       });
+}
 
-       // Load sent notifications count for this week
-       $.ajax({
-           url: '/erp/backend/api/notifications?action=list&limit=100',
-           method: 'GET',
-           success: function(response) {
-               if (response.success) {
-                   const thisWeek = response.data.filter(notif => {
-                       const notifDate = new Date(notif.created_at);
-                       const weekAgo = new Date();
-                       weekAgo.setDate(weekAgo.getDate() - 7);
-                       return notifDate >= weekAgo && notif.created_by == <?php echo $user_id; ?>;
-                   });
-                   animateNumber('#sentNotificationsCount', thisWeek.length);
-               }
-           }
-       });
-   }
+       function loadSentNotifications() {
+           $('#sent-notifications-loading').show();
+           $('#sent-notifications-list').empty();
 
-   function animateNumber(selector, targetValue) {
-       const element = $(selector);
-       const currentValue = parseInt(element.text()) || 0;
-       
-       if (currentValue !== targetValue) {
-           $({ value: currentValue }).animate({ value: targetValue }, {
-               duration: 1000,
-               step: function() {
-                   element.text(Math.floor(this.value));
+           $.ajax({
+               url: '/erp/backend/api/notifications?action=list&limit=50',
+               method: 'GET',
+               success: function(response) {
+                   $('#sent-notifications-loading').hide();
+                   
+                   if (response.success) {
+                       const sentNotifications = response.data.filter(notif => 
+                           notif.created_by == <?php echo $user_id; ?>
+                       );
+                       
+                       if (sentNotifications.length === 0) {
+                           $('#sent-notifications-list').html('<p class="loading">No sent notifications found.</p>');
+                           return;
+                       }
+
+                       let html = '';
+                       sentNotifications.forEach(function(notification) {
+                           html += buildNotificationItem(notification, true);
+                       });
+                       
+                       $('#sent-notifications-list').html(html);
+                   } else {
+                       $('#sent-notifications-list').html('<p class="loading">Error loading notifications.</p>');
+                   }
                },
-               complete: function() {
-                   element.text(targetValue);
+               error: function() {
+                   $('#sent-notifications-loading').hide();
+                   $('#sent-notifications-list').html('<p class="loading">Network error loading notifications.</p>');
                }
            });
        }
-   }
 
-   function loadSentNotifications() {
-       $('#sent-notifications-loading').show();
-       $('#sent-notifications-list').empty();
+       function loadReceivedNotifications() {
+           $('#received-notifications-loading').show();
+           $('#received-notifications-list').empty();
 
-       $.ajax({
-           url: '/erp/backend/api/notifications?action=list&limit=50',
-           method: 'GET',
-           success: function(response) {
-               $('#sent-notifications-loading').hide();
-               
-               if (response.success) {
-                   const sentNotifications = response.data.filter(notif => 
-                       notif.created_by == <?php echo $user_id; ?>
-                   );
+           $.ajax({
+               url: '/erp/backend/api/notifications?action=list&limit=50',
+               method: 'GET',
+               success: function(response) {
+                   $('#received-notifications-loading').hide();
                    
-                   if (sentNotifications.length === 0) {
-                       $('#sent-notifications-list').html('<div class="loading">No sent notifications found.</div>');
-                       return;
+                   if (response.success) {
+                       const receivedNotifications = response.data.filter(notif => 
+                           notif.created_by != <?php echo $user_id; ?>
+                       );
+                       
+                       if (receivedNotifications.length === 0) {
+                           $('#received-notifications-list').html('<p class="loading">No received notifications found.</p>');
+                           return;
+                       }
+
+                       let html = '';
+                       receivedNotifications.forEach(function(notification) {
+                           html += buildNotificationItem(notification, false);
+                       });
+                       
+                       $('#received-notifications-list').html(html);
+                   } else {
+                       $('#received-notifications-list').html('<p class="loading">Error loading notifications.</p>');
                    }
-
-                   let html = '';
-                   sentNotifications.forEach(function(notification) {
-                       html += buildNotificationItem(notification, true);
-                   });
-                   
-                   $('#sent-notifications-list').html(html);
-               } else {
-                   $('#sent-notifications-list').html('<div class="loading">Error loading notifications.</div>');
+               },
+               error: function() {
+                   $('#received-notifications-loading').hide();
+                   $('#received-notifications-list').html('<p class="loading">Network error loading notifications.</p>');
                }
-           },
-           error: function() {
-               $('#sent-notifications-loading').hide();
-               $('#sent-notifications-list').html('<div class="loading">Network error loading notifications.</div>');
-           }
-       });
-   }
+           });
+       }
 
-   function loadReceivedNotifications() {
-       $('#received-notifications-loading').show();
-       $('#received-notifications-list').empty();
+       function buildNotificationItem(notification, isSent) {
+           const priorityClass = notification.priority || 'normal';
+           const priorityColor = {
+               'normal': '#10b981',
+               'important': '#f59e0b',
+               'urgent': '#ef4444'
+           }[priorityClass];
 
-       $.ajax({
-           url: '/erp/backend/api/notifications?action=list&limit=50',
-           method: 'GET',
-           success: function(response) {
-               $('#received-notifications-loading').hide();
-               
-               if (response.success) {
-                   const receivedNotifications = response.data.filter(notif => 
-                       notif.created_by != <?php echo $user_id; ?>
-                   );
-                   
-                   if (receivedNotifications.length === 0) {
-                       $('#received-notifications-list').html('<div class="loading">No received notifications found.</div>');
-                       return;
-                   }
+           const date = new Date(notification.created_at).toLocaleDateString();
+           const time = new Date(notification.created_at).toLocaleTimeString();
 
-                   let html = '';
-                   receivedNotifications.forEach(function(notification) {
-                       html += buildNotificationItem(notification, false);
-                   });
-                   
-                   $('#received-notifications-list').html(html);
-               } else {
-                   $('#received-notifications-list').html('<div class="loading">Error loading notifications.</div>');
-               }
-           },
-           error: function() {
-               $('#received-notifications-loading').hide();
-               $('#received-notifications-list').html('<div class="loading">Network error loading notifications.</div>');
-           }
-       });
-   }
-
-   function buildNotificationItem(notification, isSent) {
-       const priorityClass = notification.priority || 'normal';
-       const priorityColor = {
-           'normal': '#667eea',
-           'important': '#f59e0b',
-           'urgent': '#ef4444'
-       }[priorityClass];
-
-       const date = new Date(notification.created_at).toLocaleDateString();
-       const time = new Date(notification.created_at).toLocaleTimeString();
-
-       return `
-           <div class="notification-item" style="opacity: 0; transform: translateY(20px);" onload="$(this).animate({opacity: 1, transform: 'translateY(0)'}, 300)">
-               <div class="notification-header">
-                   <div>
-                       <div class="notification-title" style="border-left: 4px solid ${priorityColor}; padding-left: 15px;">
-                           ${notification.title}
-                       </div>
-                       <div class="notification-meta">
-                           <span><strong>Type:</strong> ${notification.type}</span>
-                           <span><strong>Priority:</strong> ${notification.priority}</span>
-                           <span><strong>Date:</strong> ${date} at ${time}</span>
-                           ${isSent ? `<span><strong>To:</strong> Multiple Classes</span>` : `<span><strong>From:</strong> ${notification.created_by_name || 'System'}</span>`}
+           return `
+               <div class="notification-item">
+                   <div class="notification-header">
+                       <div>
+                           <div class="notification-title" style="border-left: 4px solid ${priorityColor}; padding-left: 1rem;">
+                               ${notification.title}
+                           </div>
+                           <div class="notification-meta">
+                               <span>Type: ${notification.type}</span>
+                               <span>Priority: ${notification.priority}</span>
+                               <span>${date} at ${time}</span>
+                               ${isSent ? `<span>To: Multiple Classes</span>` : `<span>From: ${notification.created_by_name || 'System'}</span>`}
+                           </div>
                        </div>
                    </div>
-               </div>
-               <div class="notification-content">
-                   ${notification.message}
-               </div>
-               ${!isSent && !notification.is_read ? `
-                   <div style="margin-top: 15px;">
-                       <button class="btn btn-primary" onclick="markAsRead(${notification.id})" style="font-size: 0.8rem; padding: 8px 16px;">
-                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                               <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
-                           </svg>
-                           Mark as Read
-                       </button>
+                   <div class="notification-content">
+                       ${notification.message}
                    </div>
-               ` : ''}
-           </div>
-       `;
-   }
+                   ${!isSent && !notification.is_read ? `
+                       <div style="margin-top: 1rem;">
+                           <button class="btn btn-primary" onclick="markAsRead(${notification.id})">
+                               Mark as Read
+                           </button>
+                       </div>
+                   ` : ''}
+               </div>
+           `;
+       }
 
-   function markAsRead(notificationId) {
-       $.ajax({
-           url: '/erp/backend/api/notifications?action=mark_read',
-           method: 'POST',
-           headers: {
-               'Content-Type': 'application/json'
-           },
-           data: JSON.stringify({ notification_id: notificationId }),
-           success: function(response) {
-               if (response.success) {
-                   loadReceivedNotifications();
-                   loadNotificationCounts();
-                   showAlert('Marked as read successfully', 'success');
+       function markAsRead(notificationId) {
+           $.ajax({
+               url: '/erp/backend/api/notifications?action=mark_read',
+               method: 'POST',
+               headers: {
+                   'Content-Type': 'application/json'
+               },
+               data: JSON.stringify({ notification_id: notificationId }),
+               success: function(response) {
+                   if (response.success) {
+                       loadReceivedNotifications();
+                       loadNotificationCounts();
+                   }
                }
-           },
-           error: function() {
-               showAlert('Failed to mark as read', 'error');
-           }
-       });
-   }
+           });
+       }
 
-   function resetForm() {
-       $('#create-notification-form')[0].reset();
-       $('#notification-message').summernote('code', '');
-       $('.class-option').removeClass('selected');
-       $('.class-option input[type="checkbox"]').prop('checked', false);
-       $('.priority-option').removeClass('selected');
-       $('.priority-option[data-priority="normal"]').addClass('selected');
-       selectedPriority = 'normal';
-       
-       // Add animation to reset
-       $('.form-control').each(function(index) {
+       function resetForm() {
+           $('#create-notification-form')[0].reset();
+           $('#notification-message').summernote('code', '');
+           $('.class-option').removeClass('selected');
+           $('.class-option input[type="checkbox"]').prop('checked', false);
+           $('.priority-option').removeClass('selected');
+           $('.priority-option[data-priority="normal"]').addClass('selected');
+           selectedPriority = 'normal';
+       }
+
+       function showAlert(message, type) {
+           const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+           const alertHtml = `
+               <div class="alert ${alertClass}">
+                   ${message}
+               </div>
+           `;
+           
+           $('#notification-alert').html(alertHtml);
+           
            setTimeout(() => {
-               $(this).css('transform', 'scale(1.02)');
-               setTimeout(() => {
-                   $(this).css('transform', 'scale(1)');
-               }, 100);
-           }, index * 50);
-       });
-   }
-
-   function showAlert(message, type) {
-       const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
-       const alertHtml = `
-           <div class="alert ${alertClass}" style="opacity: 0; transform: translateY(-10px);">
-               ${message}
-           </div>
-       `;
-       
-       $('#notification-alert').html(alertHtml);
-       
-       // Animate in
-       $('#notification-alert .alert').animate({
-           opacity: 1,
-           transform: 'translateY(0)'
-       }, 300);
-       
-       // Auto hide after 5 seconds
-       setTimeout(() => {
-           $('#notification-alert .alert').animate({
-               opacity: 0,
-               transform: 'translateY(-10px)'
-           }, 300, function() {
                $('#notification-alert').empty();
-           });
-       }, 5000);
-   }
-
-   // Sidebar toggle function (consistent with dashboard)
-   function toggleSidebar() {
-       const sidebar = document.querySelector('.sidebar');
-       const overlay = document.querySelector('.sidebar-overlay');
-       
-       if (sidebar && overlay) {
-           sidebar.classList.toggle('active');
-           overlay.classList.toggle('active');
+           }, 5000);
        }
-   }
 
-   // Add intersection observer for smooth animations
-   const observerOptions = {
-       threshold: 0.1,
-       rootMargin: '0px 0px -50px 0px'
-   };
-   
-   const observer = new IntersectionObserver((entries) => {
-       entries.forEach(entry => {
-           if (entry.isIntersecting) {
-               entry.target.style.opacity = '1';
-               entry.target.style.transform = 'translateY(0)';
+       // Handle window resize for sidebar responsiveness
+       $(window).resize(function() {
+           if ($(window).width() > 768) {
+               $('.sidebar-overlay').removeClass('active');
+               $('.sidebar').removeClass('active');
            }
        });
-   }, observerOptions);
-   
-   // Observe cards for animation when they come into view
-   document.addEventListener('DOMContentLoaded', function() {
-       document.querySelectorAll('.stat-card, .tab-content, .class-option').forEach(card => {
-           card.style.opacity = '0';
-           card.style.transform = 'translateY(20px)';
-           card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-           observer.observe(card);
+
+       // Close sidebar when clicking outside on mobile
+       $(document).click(function(e) {
+           if ($(window).width() <= 768) {
+               if (!$(e.target).closest('.sidebar, .hamburger-btn').length) {
+                   $('.sidebar').removeClass('active');
+                   $('.sidebar-overlay').removeClass('active');
+               }
+           }
        });
-   });
-
-   // Add loading states for better UX
-   $(document).ajaxStart(function() {
-       $('body').addClass('loading');
-   }).ajaxStop(function() {
-       $('body').removeClass('loading');
-   });
-
-   // Auto-refresh notification counts every 2 minutes
-   setInterval(() => {
-       if (!document.hidden) {
-           loadNotificationCounts();
-       }
-   }, 120000);
-</script>
+   </script>
 </body>
 </html>
