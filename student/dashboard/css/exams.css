@@ -502,6 +502,197 @@
             flex-shrink: 0;
         }
 
+        /* FA/SA Assessment Specific Styles */
+        .assessment-type-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .quiz-type {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .assignment-type {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .project-type {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .presentation-type {
+            background: #fce7f3;
+            color: #be185d;
+        }
+
+        .assessment-type {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .fa-icon, .sa-icon {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+
+        .fa-icon {
+            background: #10b981;
+        }
+
+        .sa-icon {
+            background: #3b82f6;
+        }
+
+        .fa-marker {
+            background: #10b981 !important;
+            color: white !important;
+        }
+
+        .assessment-types-info {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #e5e7eb;
+        }
+
+        .assessment-types-info h3 {
+            margin: 0 0 1rem 0;
+            color: #1a1a1a;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .assessment-types-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .assessment-type-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 1rem;
+            background: #f9fafb;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .type-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .type-name {
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 0.25rem;
+        }
+
+        .type-description {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .marks-column {
+            text-align: center;
+        }
+
+        .total-marks {
+            font-weight: 600;
+            color: #059669;
+        }
+
+        .notes-btn {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.875rem;
+            color: #374151;
+        }
+
+        .notes-btn:hover {
+            background: #e5e7eb;
+            transform: translateY(-1px);
+        }
+
+        .notes-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .type-column {
+            text-align: center;
+        }
+
+        .duration-column {
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .grade-scale-info {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #e5e7eb;
+        }
+
+        .grade-scale-info h3 {
+            margin: 0 0 1rem 0;
+            color: #1a1a1a;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .grade-scale-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .grade-scale-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: #f9fafb;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .grade {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .grade-description {
+            color: #4b5563;
+            font-size: 0.875rem;
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .dashboard-container {

@@ -159,21 +159,39 @@ if (isset($_SESSION['user_id'])) {
         <span>Class Notice Board</span>
     </a>
 
-    <!-- Student Results -->
-    <a href="results.php" class="nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'results.php' ? 'active' : ''; ?>">
-        <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-        </svg>
-        <span>Student Results</span>
-    </a>
+    <!-- SA Assessments -->
+    <div class="nav-group">
+        <button class="nav-group-toggle">
+            <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <span>SA (Summative Assessment)</span>
+            <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+        </button>
+        <div class="nav-group-content">
+            <a href="sa_results.php" class="nav-subitem <?php echo basename($_SERVER['PHP_SELF']) == 'sa_results.php' ? 'active' : ''; ?>">SA Results</a>
+            <a href="sa_timetable.php" class="nav-subitem <?php echo basename($_SERVER['PHP_SELF']) == 'sa_timetable.php' ? 'active' : ''; ?>">SA Timetable</a>
+        </div>
+    </div>
 
-    <!-- Test/Exam Timetable -->
-    <a href="exams.php" class="nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'exams_timetable.php' ? 'active' : ''; ?>">
-        <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m-6-8h6M9 20h6M7 20h10a2 2 0 002-2V6a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
-        <span>Exam Timetable</span>
-    </a>
+    <!-- FA Assessments -->
+    <div class="nav-group">
+        <button class="nav-group-toggle">
+            <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+            <span>FA (Formative Assessment)</span>
+            <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+        </button>
+        <div class="nav-group-content">
+            <a href="fa_results.php" class="nav-subitem <?php echo basename($_SERVER['PHP_SELF']) == 'fa_results.php' ? 'active' : ''; ?>">FA Results</a>
+            <a href="fa_timetable.php" class="nav-subitem <?php echo basename($_SERVER['PHP_SELF']) == 'fa_timetable.php' ? 'active' : ''; ?>">FA Timetable</a>
+        </div>
+    </div>
 
     <!-- Fees Tracking -->
     <a href="fees.php" class="nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'fees.php' ? 'active' : ''; ?>">

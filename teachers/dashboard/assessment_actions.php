@@ -52,15 +52,15 @@ function createAssessment($data) {
     try {
         $conn->begin_transaction();
         
-        // Insert into assessments table (now with subject_id)
-        $stmt = $conn->prepare("INSERT INTO assessments (class_id, section_id, teacher_user_id, title, type, total_marks, date, subject_id) 
+        // Insert into assessments table (now with subject_id and assessment_type)
+        $stmt = $conn->prepare("INSERT INTO assessments (class_id, section_id, teacher_user_id, title, assessment_type, total_marks, date, subject_id) 
                                VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->bind_param("iiissssi", 
             $data['class_id'], 
             $data['section_id'], 
             $teacher_id,
             $data['title'],
-            $data['type'],
+            $data['assessment_type'], // Changed from 'type' to 'assessment_type'
             $data['total_marks'],
             $data['date'],
             $data['subject_id']

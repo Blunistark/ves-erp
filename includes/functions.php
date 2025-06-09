@@ -206,7 +206,7 @@ function authenticateUser($email, $password, $role = null) {
 function logLoginAttempt($user_id, $success) {
     $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
     
-    // If user_id is an email (login failed before ID was obtained)
+    // If user_id is not numeric or doesn't exist in users table
     if (!is_numeric($user_id)) {
         $sql = "INSERT INTO login_attempts (user_id, attempt_time, ip_address, success) 
                 VALUES (NULL, CURRENT_TIMESTAMP, ?, ?)";
@@ -214,7 +214,17 @@ function logLoginAttempt($user_id, $success) {
         return;
     }
     
-    // Log with user ID
+    // Verify user exists before logging
+    $user_check = executeQuery("SELECT id FROM users WHERE id = ?", "i", [(int)$user_id]);
+    if (empty($user_check)) {
+        // User doesn't exist, log with NULL user_id
+        $sql = "INSERT INTO login_attempts (user_id, attempt_time, ip_address, success) 
+                VALUES (NULL, CURRENT_TIMESTAMP, ?, ?)";
+        executeQuery($sql, "si", [$ip, $success ? 1 : 0]);
+        return;
+    }
+    
+    // Log with valid user ID
     $sql = "INSERT INTO login_attempts (user_id, attempt_time, ip_address, success) 
             VALUES (?, CURRENT_TIMESTAMP, ?, ?)";
     executeQuery($sql, "isi", [(int)$user_id, $ip, $success ? 1 : 0]);

@@ -1,54 +1,50 @@
 <?php include 'sidebar.php'; ?>
 <?php include 'con.php';
+require_once '../../includes/grading_functions.php';
 
 // Get teacher user id
 $teacher_user_id = $_SESSION['user_id'] ?? 0;
 
 // Handle marks saving
 $save_message = '';
-// 1. Fetch all grades and their boundaries before the marks saving loop
-$grade_boundaries = [];
-$res = $conn->query("SELECT code, min_percentage FROM grades ORDER BY min_percentage DESC");
-while ($row = $res->fetch_assoc()) {
-    $grade_boundaries[] = $row;
-}
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assessment_id']) && isset($_POST['marks'])) {
     $assessment_id = intval($_POST['assessment_id']);
     $marks_arr = $_POST['marks'];
     $remarks_arr = $_POST['remark'] ?? [];
     $success = true;
-    // Fetch subject_id and total_marks for this assessment
+    
+    // Fetch subject_id, total_marks, and assessment_type for this assessment
     $subject_id = null;
     $total_marks = null;
-    $stmt = $conn->prepare("SELECT subject_id, total_marks FROM assessments WHERE id = ?");
+    $assessment_type = null;
+    $stmt = $conn->prepare("SELECT subject_id, total_marks, assessment_type FROM assessments WHERE id = ?");
     $stmt->bind_param("i", $assessment_id);
     $stmt->execute();
-    $stmt->bind_result($subject_id, $total_marks);
+    $stmt->bind_result($subject_id, $total_marks, $assessment_type);
     $stmt->fetch();
     $stmt->close();
-    if (!$subject_id || !$total_marks) {
-        $save_message = '<div class="alert alert-danger">Subject or total marks not found for this assessment.</div>';
+    
+    if (!$subject_id || !$total_marks || !$assessment_type) {
+        $save_message = '<div class="alert alert-danger">Subject, total marks, or assessment type not found for this assessment.</div>';
     } else {
         foreach ($marks_arr as $student_user_id => $marks_obtained) {
             $student_user_id = intval($student_user_id);
             $marks_obtained = is_numeric($marks_obtained) ? floatval($marks_obtained) : null;
             $remark = trim($remarks_arr[$student_user_id] ?? '');
+            
             if ($marks_obtained === null) continue;
-            // Calculate percentage and grade code automatically
-            $percent = ($total_marks > 0) ? ($marks_obtained / $total_marks) * 100 : 0;
-            $grade_code = '';
-            foreach ($grade_boundaries as $grade) {
-                if ($percent >= $grade['min_percentage']) {
-                    $grade_code = $grade['code'];
-                    break;
-                }
-            }
+            
+            // Calculate grade using dual grading system
+            $grade_info = calculateGrade($marks_obtained, $total_marks, $assessment_type);
+            $grade_code = $grade_info['code'];
+            
             // Check if record exists
             $checkSql = "SELECT id FROM exam_results WHERE assessment_id = ? AND student_user_id = ?";
             $checkStmt = $conn->prepare($checkSql);
             $checkStmt->bind_param('ii', $assessment_id, $student_user_id);
             $checkStmt->execute();
             $checkStmt->store_result();
+            
             if ($checkStmt->num_rows > 0) {
                 // Update
                 $updateSql = "UPDATE exam_results SET marks_obtained=?, grade_code=?, remark=?, subject_id=?, updated_at=NOW() WHERE assessment_id=? AND student_user_id=?";
@@ -66,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assessment_id']) && i
             }
             $checkStmt->close();
         }
-        $save_message = $success ? '<div class="alert alert-success">Marks saved successfully!</div>' : '<div class="alert alert-danger">Error saving marks. Please try again.</div>';
+        $save_message = $success ? '<div class="alert alert-success">Marks saved successfully using ' . $assessment_type . ' grading system!</div>' : '<div class="alert alert-danger">Error saving marks. Please try again.</div>';
     }
 }
 
@@ -86,7 +82,13 @@ while ($row = $classSectionResult->fetch_assoc()) {
 }
 
 // Fetch all assessments created by this teacher (across all class-sections)
-$allAssessmentsQuery = "SELECT a.*, c.name as class_name, s.name as section_name FROM assessments a JOIN classes c ON a.class_id = c.id JOIN sections s ON a.section_id = s.id WHERE a.teacher_user_id = $teacher_user_id ORDER BY a.date DESC";
+$assessment_type_filter = $_GET['assessment_type'] ?? '';
+$type_condition = '';
+if ($assessment_type_filter && in_array($assessment_type_filter, ['SA', 'FA'])) {
+    $type_condition = " AND a.assessment_type = '$assessment_type_filter'";
+}
+
+$allAssessmentsQuery = "SELECT a.*, c.name as class_name, s.name as section_name FROM assessments a JOIN classes c ON a.class_id = c.id JOIN sections s ON a.section_id = s.id WHERE a.teacher_user_id = $teacher_user_id $type_condition ORDER BY a.date DESC";
 $allAssessmentsResult = $conn->query($allAssessmentsQuery);
 $allAssessments = [];
 foreach ($allAssessmentsResult as $row) {
@@ -391,6 +393,20 @@ if ($selected_class_id && $selected_section_id && $selected_assessment_id) {
             <form method="get" id="filterForm">
                 <div class="filter-group">
                     <div class="select-container">
+                        <select class="filter-select" name="assessment_type" id="assessmentTypeSelect" onchange="document.getElementById('filterForm').submit()">
+                            <option value="">All Assessment Types</option>
+                            <option value="SA" <?php if ($assessment_type_filter === 'SA') echo 'selected'; ?>>
+                                <span class="sa-icon">📊</span> SA (Summative Assessment)
+                            </option>
+                            <option value="FA" <?php if ($assessment_type_filter === 'FA') echo 'selected'; ?>>
+                                <span class="fa-icon">📝</span> FA (Formative Assessment)
+                            </option>
+                        </select>
+                        <svg class="select-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
+                    <div class="select-container">
                         <select class="filter-select" name="class_id" id="classSelect" onchange="document.getElementById('filterForm').submit()">
                             <?php foreach ($classSections as $cs): ?>
                                 <option value="<?php echo $cs['class_id']; ?>" data-section="<?php echo $cs['section_id']; ?>" <?php if ($selected_class_id == $cs['class_id'] && $selected_section_id == $cs['section_id']) echo 'selected'; ?>>
@@ -405,8 +421,15 @@ if ($selected_class_id && $selected_section_id && $selected_assessment_id) {
                     <div class="select-container">
                         <select class="filter-select" name="assessment_id" id="assessmentSelect" onchange="document.getElementById('filterForm').submit()">
                             <?php foreach ($allAssessments as $a): ?>
-                                <option value="<?php echo $a['id']; ?>" data-class="<?php echo $a['class_id']; ?>" data-section="<?php echo $a['section_id']; ?>" <?php if ($selected_assessment_id == $a['id']) echo 'selected'; ?>>
-                                    <?php echo htmlspecialchars($a['title'] . ' (' . $a['class_name'] . ' - ' . $a['section_name'] . ', ' . date('M d, Y', strtotime($a['date'])) . ')'); ?>
+                                <option value="<?php echo $a['id']; ?>" data-class="<?php echo $a['class_id']; ?>" data-section="<?php echo $a['section_id']; ?>" data-type="<?php echo $a['assessment_type'] ?? ''; ?>" <?php if ($selected_assessment_id == $a['id']) echo 'selected'; ?>>
+                                    <?php 
+                                    $type_badge = '';
+                                    if (isset($a['assessment_type'])) {
+                                        $type_badge = $a['assessment_type'] === 'SA' ? '📊 SA' : '📝 FA';
+                                        $type_badge = "[$type_badge] ";
+                                    }
+                                    echo htmlspecialchars($type_badge . $a['title'] . ' (' . $a['class_name'] . ' - ' . $a['section_name'] . ', ' . date('M d, Y', strtotime($a['date'])) . ')'); 
+                                    ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
@@ -415,6 +438,8 @@ if ($selected_class_id && $selected_section_id && $selected_assessment_id) {
                         </svg>
                     </div>
                 </div>
+                <!-- Hidden inputs to preserve other filter values -->
+                <input type="hidden" name="section_id" value="<?php echo $selected_section_id; ?>">
             </form>
         </section>
 
@@ -435,7 +460,20 @@ if ($selected_class_id && $selected_section_id && $selected_assessment_id) {
                             $a = array_filter($allAssessments, function($x) use ($selected_assessment_id) { return $x['id'] == $selected_assessment_id; });
                             $a = array_values($a);
                             if (isset($a[0])) {
-                                echo htmlspecialchars($a[0]['title']) . ' (' . date('M d, Y', strtotime($a[0]['date'])) . ')';
+                                $type_badge = '';
+                                $grading_info = '';
+                                if (isset($a[0]['assessment_type'])) {
+                                    $type = $a[0]['assessment_type'];
+                                    $type_badge = $type === 'SA' ? '<span class="assessment-type-badge sa-badge">📊 SA</span>' : '<span class="assessment-type-badge fa-badge">📝 FA</span>';
+                                    
+                                    if ($type === 'SA') {
+                                        $grading_info = '<div class="grading-info">SA Grading: A+ (92%+), A (75%+), B (60%+), C (50%+), D (<50%)</div>';
+                                    } else {
+                                        $grading_info = '<div class="grading-info">FA Grading: A+ (19+/25), A (16+/25), B (13+/25), C (10+/25), D (<10/25)</div>';
+                                    }
+                                }
+                                echo $type_badge . ' ' . htmlspecialchars($a[0]['title']) . ' (' . date('M d, Y', strtotime($a[0]['date'])) . ')';
+                                echo $grading_info;
                             }
                         } else {
                             echo 'Select an assessment';
@@ -455,18 +493,27 @@ if ($selected_class_id && $selected_section_id && $selected_assessment_id) {
                                         <th>Student Name</th>
                                         <th>Roll No.</th>
                                         <th>Marks (<?php echo $a[0]['total_marks']; ?>)</th>
+                                        <th>Grade</th>
                                         <th>Remarks</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach ($students as $student): 
                                         $m = $marks[$student['user_id']] ?? null;
+                                        $current_grade = '';
+                                        if ($m && isset($a[0]['assessment_type']) && $m['marks_obtained'] !== null) {
+                                            $grade_info = calculateGrade($m['marks_obtained'], $a[0]['total_marks'], $a[0]['assessment_type']);
+                                            $current_grade = $grade_info['code'] . ' (' . $grade_info['description'] . ')';
+                                        }
                                     ?>
                                     <tr>
                                         <td><?php echo htmlspecialchars($student['full_name']); ?></td>
                                         <td><?php echo htmlspecialchars($student['roll_number']); ?></td>
                                         <td>
-                                            <input type="number" name="marks[<?php echo $student['user_id']; ?>]" min="0" max="<?php echo $a[0]['total_marks']; ?>" value="<?php echo $m['marks_obtained'] ?? ''; ?>" style="width:80px;">
+                                            <input type="number" name="marks[<?php echo $student['user_id']; ?>]" min="0" max="<?php echo $a[0]['total_marks']; ?>" value="<?php echo $m['marks_obtained'] ?? ''; ?>" style="width:80px;" onchange="updateGrade(this, <?php echo $a[0]['total_marks']; ?>, '<?php echo $a[0]['assessment_type'] ?? 'SA'; ?>')">
+                                        </td>
+                                        <td class="grade-display" id="grade_<?php echo $student['user_id']; ?>">
+                                            <?php echo $current_grade; ?>
                                         </td>
                                         <td>
                                             <input type="text" name="remark[<?php echo $student['user_id']; ?>]" value="<?php echo htmlspecialchars($m['remark'] ?? ''); ?>" style="width:150px;">
@@ -919,6 +966,63 @@ if ($selected_class_id && $selected_section_id && $selected_assessment_id) {
             }
         });
     });
+    
+    // Function to update grade display in real-time
+    function updateGrade(input, totalMarks, assessmentType) {
+        const marks = parseFloat(input.value) || 0;
+        const row = input.closest('tr');
+        const gradeCell = row.querySelector('.grade-display');
+        
+        if (marks === 0) {
+            gradeCell.textContent = '';
+            return;
+        }
+        
+        let grade = '';
+        let description = '';
+        
+        if (assessmentType === 'SA') {
+            const percentage = (marks / totalMarks) * 100;
+            if (percentage >= 92) {
+                grade = 'A+';
+                description = 'Excellent (92-100%)';
+            } else if (percentage >= 75) {
+                grade = 'A';
+                description = 'Very Good (75-91%)';
+            } else if (percentage >= 60) {
+                grade = 'B';
+                description = 'Good (60-74%)';
+            } else if (percentage >= 50) {
+                grade = 'C';
+                description = 'Average (50-59%)';
+            } else {
+                grade = 'D';
+                description = 'Below Average (0-49%)';
+            }
+        } else {
+            // FA grading based on marks out of 25
+            const normalizedMarks = (marks / totalMarks) * 25;
+            if (normalizedMarks >= 19) {
+                grade = 'A+';
+                description = 'Excellent (19-25)';
+            } else if (normalizedMarks >= 16) {
+                grade = 'A';
+                description = 'Very Good (16-18)';
+            } else if (normalizedMarks >= 13) {
+                grade = 'B';
+                description = 'Good (13-15)';
+            } else if (normalizedMarks >= 10) {
+                grade = 'C';
+                description = 'Average (10-12)';
+            } else {
+                grade = 'D';
+                description = 'Below Average (0-9)';
+            }
+        }
+        
+        gradeCell.textContent = grade + ' (' + description + ')';
+        gradeCell.className = 'grade-display grade-' + grade.toLowerCase().replace('+', 'plus');
+    }
     
     // Add page transition animations
     document.addEventListener('DOMContentLoaded', function() {

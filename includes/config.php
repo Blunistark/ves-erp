@@ -4,6 +4,24 @@
  * Contains database connection parameters and utility functions
  */
 
+// Development environment - enable error reporting for debugging
+// In production, set ENVIRONMENT to 'production' or remove these lines
+if (!defined('ENVIRONMENT')) {
+    define('ENVIRONMENT', 'development'); // Change to 'production' for live server
+}
+
+if (ENVIRONMENT === 'development') {
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+    ini_set('log_errors', 1);
+    error_log('Debug mode enabled in config.php - Development environment');
+} else {
+    error_reporting(0);
+    ini_set('display_errors', 0);
+    ini_set('log_errors', 1); // Still log errors in production
+}
+
 // Include timezone utilities
 require_once __DIR__ . '/timezone_fix.php';
 
@@ -67,7 +85,11 @@ function executeQuery($sql, $types = "", $params = []) {
     
     // Execute statement
     if (!$stmt->execute()) {
-        logError("Query execution failed: " . $stmt->error . " for query: " . $sql);
+        $error_msg = "Query execution failed: " . $stmt->error . " for query: " . $sql;
+        if (!empty($params)) {
+            $error_msg .= " with parameters: " . json_encode($params);
+        }
+        logError($error_msg);
         $stmt->close();
         $conn->close();
         return false;
