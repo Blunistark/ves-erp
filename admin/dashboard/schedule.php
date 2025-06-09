@@ -1,4 +1,3 @@
-
 <?php include 'sidebar.php'; ?>
 
 <!DOCTYPE html>
@@ -12,6 +11,45 @@
     <link rel="stylesheet" href="css/schedule.css">
 </head>
 <body>
+    <!-- Scroll Progress Bar -->
+    <div class="scroll-progress"></div>
+    
+    <!-- Quick Navigation Panel -->
+    <div class="quick-nav" id="quickNav">
+        <div class="quick-nav-item" data-tooltip="Search & Filters" onclick="scrollToSection('action-bar')">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+        </div>
+        <div class="quick-nav-item" data-tooltip="Add New Exam" onclick="scrollToSection('form-container')">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+        </div>
+        <div class="quick-nav-item" data-tooltip="Exam Calendar" onclick="scrollToSection('calendar-container')">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+        </div>
+        <div class="quick-nav-item" data-tooltip="Exam Table" onclick="scrollToSection('table-container')">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+            </svg>
+        </div>
+    </div>
+    
+    <!-- Scroll to Top Button -->
+    <button class="scroll-to-top" id="scrollToTop" onclick="scrollToTop()">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+        </svg>
+    </button>
+    
+    <!-- Keyboard Hints -->
+    <div class="keyboard-hint" id="keyboardHint">
+        Press Ctrl+Home for top, Ctrl+End for bottom
+    </div>
+
     <div class="sidebar-overlay"></div>
     
     <button class="hamburger-btn" type="button" onclick="toggleSidebar()">
@@ -59,15 +97,12 @@
             <!-- Filter Panel -->
             <div class="filter-panel" id="filterPanel" style="display: none;">
                 <h3 class="filter-title">Filter Exams</h3>
-                <form class="filter-form">
-                    <div class="filter-group">
-                        <label class="filter-label">Exam Type</label>
+                <form class="filter-form">                    <div class="filter-group">
+                        <label class="filter-label">Assessment Type</label>
                         <select class="filter-select" id="examTypeFilter">
                             <option value="">All Types</option>
-                            <option value="midterm">Midterm Exam</option>
-                            <option value="final">Final Exam</option>
-                            <option value="quiz">Quiz</option>
-                            <option value="practical">Practical Exam</option>
+                            <option value="FA">FA (Formative Assessment)</option>
+                            <option value="SA">SA (Summative Assessment)</option>
                         </select>
                     </div>
                     <div class="filter-group">
@@ -115,20 +150,13 @@
             <!-- Create/Edit Exam Form -->
             <div class="exam-form-container" id="examForm" style="display: none;">
                 <h2 class="form-title">Schedule New Exam</h2>
-                <form id="createExamForm">
-                    <div class="form-row">
+                <form id="createExamForm">                    <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label" for="examName">Exam Name</label>
-                            <input type="text" class="form-input" id="examName" name="examName" placeholder="e.g. Midterm Mathematics Exam">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="examType">Exam Type</label>
+                            <label class="form-label" for="examType">Assessment Type</label>
                             <select class="form-select" id="examType" name="examType">
-                                <option value="">Select Exam Type</option>
-                                <option value="midterm">Midterm Exam</option>
-                                <option value="final">Final Exam</option>
-                                <option value="quiz">Quiz</option>
-                                <option value="practical">Practical Exam</option>
+                                <option value="">Select Assessment Type</option>
+                                <option value="FA">FA (Formative Assessment)</option>
+                                <option value="SA">SA (Summative Assessment)</option>
                             </select>
                         </div>
                     </div>
@@ -182,23 +210,6 @@
                         </div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label" for="examRoom">Exam Room</label>
-                            <select class="form-select" id="examRoom" name="examRoom">
-                                <option value="">Select Room</option>
-                                <option value="101">Room 101</option>
-                                <option value="102">Room 102</option>
-                                <option value="103">Room 103</option>
-                                <option value="104">Room 104</option>
-                                <option value="105">Room 105</option>
-                                <option value="201">Room 201</option>
-                                <option value="202">Room 202</option>
-                                <option value="hall1">Examination Hall 1</option>
-                                <option value="hall2">Examination Hall 2</option>
-                                <option value="lab1">Science Lab 1</option>
-                                <option value="lab2">Computer Lab</option>
-                            </select>
-                        </div>
                         <div class="form-group">
                             <label class="form-label" for="examProctor">Proctor</label>
                             <select class="form-select" id="examProctor" name="examProctor">
@@ -611,18 +622,17 @@
                     <div class="exam-timeline">
                         <div>
                             <h4 class="timeline-date">Today (March 15, 2025)</h4>
-                            <div class="timeline-exams">
-                                <div class="timeline-exam-card">
+                            <div class="timeline-exams">                                <div class="timeline-exam-card">
                                     <div class="exam-card-header">
-                                        <h5 class="exam-card-title">Geography Midterm</h5>
-                                        <span class="exam-card-badge badge-midterm">Midterm</span>
+                                        <h5 class="exam-card-title">FA - Geography Assessment</h5>
+                                        <span class="exam-card-badge badge-fa">FA</span>
                                     </div>
                                     <div class="exam-card-details">
                                         <div class="exam-card-detail">
                                             <svg class="detail-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path d="M12 14l9-5-9-5-9 5 9 5z" />
                                                 <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                                             </svg>
                                             <span>Grade 9B</span>
                                         </div>
@@ -630,14 +640,7 @@
                                             <svg class="detail-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
-                                            <span>10:00 AM - 11:30 AM (90 min)</span>
-                                        </div>
-                                        <div class="exam-card-detail">
-                                            <svg class="detail-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                            </svg>
-                                            <span>Room 103</span>
-                                        </div>
+                                            <span>10:00 AM - 11:30 AM (90 min)</span>                                        </div>
                                         <div class="exam-card-detail">
                                             <svg class="detail-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -655,11 +658,10 @@
                         
                         <div>
                             <h4 class="timeline-date">March 17, 2025</h4>
-                            <div class="timeline-exams">
-                                <div class="timeline-exam-card">
+                            <div class="timeline-exams">                                <div class="timeline-exam-card">
                                     <div class="exam-card-header">
-                                        <h5 class="exam-card-title">Math Quiz</h5>
-                                        <span class="exam-card-badge badge-quiz">Quiz</span>
+                                        <h5 class="exam-card-title">FA - Math Assessment</h5>
+                                        <span class="exam-card-badge badge-fa">FA</span>
                                     </div>
                                     <div class="exam-card-details">
                                         <div class="exam-card-detail">
@@ -675,14 +677,7 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
                                             <span>9:00 AM - 9:45 AM (45 min)</span>
-                                        </div>
-                                        <div class="exam-card-detail">
-                                            <svg class="detail-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                            </svg>
-                                            <span>Room 101</span>
-                                        </div>
-                                        <div class="exam-card-detail">
+                                        </div>                                        <div class="exam-card-detail">
                                             <svg class="detail-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                             </svg>
@@ -699,11 +694,10 @@
                         
                         <div>
                             <h4 class="timeline-date">March 18, 2025</h4>
-                            <div class="timeline-exams">
-                                <div class="timeline-exam-card">
+                            <div class="timeline-exams">                                <div class="timeline-exam-card">
                                     <div class="exam-card-header">
-                                        <h5 class="exam-card-title">English Quiz</h5>
-                                        <span class="exam-card-badge badge-quiz">Quiz</span>
+                                        <h5 class="exam-card-title">FA - English Assessment</h5>
+                                        <span class="exam-card-badge badge-fa">FA</span>
                                     </div>
                                     <div class="exam-card-details">
                                         <div class="exam-card-detail">
@@ -720,14 +714,7 @@
                                             </svg>
                                             <span>10:00 AM - 10:45 AM (45 min)</span>
                                         </div>
-                                        <div class="exam-card-detail">
-                                            <svg class="detail-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                            </svg>
-                                            <span>Room 102</span>
-                                        </div>
-                                        <div class="exam-card-detail">
-                                            <svg class="detail-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <div class="exam-card-detail">                                            <svg class="detail-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                             </svg>
                                             <span>Proctor: Robert Johnson</span>
@@ -743,11 +730,10 @@
                         
                         <div>
                             <h4 class="timeline-date">March 19, 2025</h4>
-                            <div class="timeline-exams">
-                                <div class="timeline-exam-card">
+                            <div class="timeline-exams">                                <div class="timeline-exam-card">
                                     <div class="exam-card-header">
-                                        <h5 class="exam-card-title">Physics Final Exam</h5>
-                                        <span class="exam-card-badge badge-final">Final</span>
+                                        <h5 class="exam-card-title">SA - Physics Assessment</h5>
+                                        <span class="exam-card-badge badge-sa">SA</span>
                                     </div>
                                     <div class="exam-card-details">
                                         <div class="exam-card-detail">
@@ -791,32 +777,26 @@
             <!-- Table View Tab -->
             <div class="tab-content" id="table-tab">
                 <div class="table-view">
-                    <table class="exams-table">
-                        <thead>
+                    <table class="exams-table">                        <thead>
                             <tr>
-                                <th>Exam</th>
+                                <th>Assessment</th>
                                 <th>Date & Time</th>
-                                <th>Class</th>
-                                <th>Room</th>
-                                <th>Proctor</th>
+                                <th>Class</th>                                <th>Proctor</th>
                                 <th>Type</th>
                                 <th>Duration</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr>
+                        <tbody>                            <tr>
                                 <td>
                                     <div class="exam-info">
-                                        <span class="exam-name">Geography Midterm</span>
+                                        <span class="exam-name">FA - Geography Assessment</span>
                                         <span class="exam-subject">Geography</span>
                                     </div>
                                 </td>
                                 <td>Mar 15, 2025<br>10:00 AM - 11:30 AM</td>
-                                <td>Grade 9B</td>
-                                <td>Room 103</td>
-                                <td>Sarah Parker</td>
-                                <td><span class="exam-badge badge-midterm">Midterm</span></td>
+                                <td>Grade 9B</td>                                <td>Sarah Parker</td>
+                                <td><span class="exam-badge badge-fa">FA</span></td>
                                 <td>90 min</td>
                                 <td class="exam-actions">
                                     <button class="action-btn" title="View Details">
@@ -836,19 +816,16 @@
                                         </svg>
                                     </button>
                                 </td>
-                            </tr>
-                            <tr>
+                            </tr>                            <tr>
                                 <td>
                                     <div class="exam-info">
-                                        <span class="exam-name">Math Quiz</span>
+                                        <span class="exam-name">FA - Math Assessment</span>
                                         <span class="exam-subject">Mathematics</span>
-                                    </div>
-                                </td>
+                                    </div>                                </td>
                                 <td>Mar 17, 2025<br>9:00 AM - 9:45 AM</td>
                                 <td>Grade 8A</td>
-                                <td>Room 101</td>
                                 <td>John Davis</td>
-                                <td><span class="exam-badge badge-quiz">Quiz</span></td>
+                                <td><span class="exam-badge badge-fa">FA</span></td>
                                 <td>45 min</td>
                                 <td class="exam-actions">
                                     <button class="action-btn" title="View Details">
@@ -868,19 +845,16 @@
                                         </svg>
                                     </button>
                                 </td>
-                            </tr>
-                            <tr>
+                            </tr>                            <tr>
                                 <td>
                                     <div class="exam-info">
-                                        <span class="exam-name">English Quiz</span>
+                                        <span class="exam-name">FA - English Assessment</span>
                                         <span class="exam-subject">English</span>
-                                    </div>
-                                </td>
+                                    </div>                                </td>
                                 <td>Mar 18, 2025<br>10:00 AM - 10:45 AM</td>
                                 <td>Grade 7A</td>
-                                <td>Room 102</td>
                                 <td>Robert Johnson</td>
-                                <td><span class="exam-badge badge-quiz">Quiz</span></td>
+                                <td><span class="exam-badge badge-fa">FA</span></td>
                                 <td>45 min</td>
                                 <td class="exam-actions">
                                     <button class="action-btn" title="View Details">
@@ -900,11 +874,10 @@
                                         </svg>
                                     </button>
                                 </td>
-                            </tr>
-                            <tr>
+                            </tr>                            <tr>
                                 <td>
                                     <div class="exam-info">
-                                        <span class="exam-name">Physics Final Exam</span>
+                                        <span class="exam-name">SA - Physics Assessment</span>
                                         <span class="exam-subject">Physics</span>
                                     </div>
                                 </td>
@@ -912,7 +885,7 @@
                                 <td>Grade 12A</td>
                                 <td>Examination Hall 1</td>
                                 <td>Sarah Parker</td>
-                                <td><span class="exam-badge badge-final">Final</span></td>
+                                <td><span class="exam-badge badge-sa">SA</span></td>
                                 <td>120 min</td>
                                 <td class="exam-actions">
                                     <button class="action-btn" title="View Details">
@@ -923,7 +896,7 @@
                                     </button>
                                     <button class="action-btn" title="Edit">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                         </svg>
                                     </button>
                                     <button class="action-btn" title="Delete">
@@ -955,7 +928,7 @@
                                     </button>
                                     <button class="action-btn" title="Edit">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                         </svg>
                                     </button>
                                     <button class="action-btn" title="Delete">
@@ -998,15 +971,18 @@
             const sidebar = document.getElementById('sidebar');
             const overlay = document.querySelector('.sidebar-overlay');
             sidebar.classList.toggle('show');
-            document.body.classList.toggle('sidebar-open');
-
-            overlay.addEventListener('click', () => {
+            document.body.classList.toggle('sidebar-open');            overlay.addEventListener('click', () => {
                 sidebar.classList.remove('show');
                 document.body.classList.remove('sidebar-open');
             });
         }
-
+        
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize the page
+            initializePage();
+            loadExamSessions();
+            loadScheduleData();
+            
             // Tab Switching
             const tabs = document.querySelectorAll('.exam-tab');
             const tabContents = document.querySelectorAll('.tab-content');
@@ -1023,6 +999,9 @@
                     // Show corresponding content
                     const tabId = this.getAttribute('data-tab');
                     document.getElementById(`${tabId}-tab`).classList.add('active');
+                    
+                    // Reload data for the selected tab
+                    loadScheduleData(tabId);
                 });
             });
             
@@ -1045,6 +1024,9 @@
                 document.querySelector('.form-title').textContent = 'Schedule New Exam';
                 document.querySelector('.form-actions .btn-primary').textContent = 'Schedule Exam';
                 
+                // Load dynamic dropdown data
+                loadDropdownData();
+                
                 // Show form
                 examForm.style.display = 'block';
                 
@@ -1058,42 +1040,75 @@
             
             // Form Submission
             const createExamForm = document.getElementById('createExamForm');
-            
-            createExamForm.addEventListener('submit', function(e) {
+              createExamForm.addEventListener('submit', function(e) {
                 e.preventDefault();
                 
-                // Get form values
-                const examName = document.getElementById('examName').value;
-                const examType = document.getElementById('examType').value;
-                const examSubject = document.getElementById('examSubject').value;
-                const examClass = document.getElementById('examClass').value;
-                const examDate = document.getElementById('examDate').value;
-                const examStartTime = document.getElementById('examStartTime').value;
-                const examEndTime = document.getElementById('examEndTime').value;
-                const examRoom = document.getElementById('examRoom').value;
-                const examProctor = document.getElementById('examProctor').value;
-                const examDuration = document.getElementById('examDuration').value;
+                // Show loading state
+                const submitBtn = this.querySelector('.btn-primary');
+                const originalText = submitBtn.textContent;
+                submitBtn.textContent = 'Saving...';
+                submitBtn.disabled = true;
                 
-                // Validate form fields
-                if (!examName || !examType || !examSubject || !examClass || !examDate || 
-                    !examStartTime || !examEndTime || !examRoom || !examProctor || !examDuration) {
-                    alert('Please fill in all required fields');
-                    return;
+                // Get form data
+                const formData = new FormData(this);
+                
+                // Check if this is an update operation
+                const examId = this.getAttribute('data-exam-id');
+                if (examId) {
+                    formData.append('action', 'update_exam_schedule');
+                    formData.append('exam_id', examId);
+                } else {
+                    formData.append('action', 'create_exam_schedule');
+                }                  // Validate form fields
+                const requiredFields = ['examType', 'examSubject', 'examClass', 'examDate', 
+                    'examStartTime', 'examEndTime', 'examProctor', 'examDuration'];
+                
+                for (let field of requiredFields) {
+                    if (!formData.get(field)) {
+                        alert('Please fill in all required fields');
+                        submitBtn.textContent = originalText;
+                        submitBtn.disabled = false;
+                        return;
+                    }
                 }
                 
                 // Check if start time is before end time
-                if (examStartTime >= examEndTime) {
+                const startTime = formData.get('examStartTime');
+                const endTime = formData.get('examEndTime');
+                if (startTime >= endTime) {
                     alert('Start time must be before end time');
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
                     return;
                 }
                 
-                // Here you would typically submit the form via AJAX or redirect
-                alert('Exam scheduled successfully!');
-                
-                // Hide form
-                examForm.style.display = 'none';
+                // Submit form via AJAX
+                fetch('schedule_handler.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const action = examId ? 'updated' : 'scheduled';
+                        alert(`Exam ${action} successfully!`);
+                        examForm.style.display = 'none';
+                        this.reset();
+                        this.removeAttribute('data-exam-id');
+                        loadScheduleData(); // Reload the schedule data
+                    } else {
+                        alert('Error: ' + (data.message || 'Failed to save exam'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while saving the exam');
+                })
+                .finally(() => {
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                });
             });
-            
             // Calendar Navigation
             const calendarNavBtns = document.querySelectorAll('.calendar-nav-btn');
             const calendarMonthSelect = document.querySelector('.calendar-month-select');
@@ -1119,197 +1134,439 @@
             calendarMonthSelect.addEventListener('change', function() {
                 const selectedMonth = this.options[this.selectedIndex].text;
                 document.querySelector('.calendar-title').textContent = selectedMonth;
-                // Here you would update the calendar with new month data
-            });
-            
-            // Calendar Events
-            const calendarEvents = document.querySelectorAll('.calendar-event');
-            
-            calendarEvents.forEach(event => {
-                event.addEventListener('click', function() {
-                    const eventTitle = this.getAttribute('title');
-                    alert(`Event Details: ${eventTitle}`);
-                    // Here you could show a modal with full event details
-                });
-            });
-            
-            // Action Buttons
-            const viewButtons = document.querySelectorAll('.action-btn[title="View Details"]');
-            const editButtons = document.querySelectorAll('.action-btn[title="Edit"], .card-action-btn.action-edit');
-            const deleteButtons = document.querySelectorAll('.action-btn[title="Delete"], .card-action-btn.action-delete');
-            
-            viewButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const examName = this.closest('tr').querySelector('.exam-name').textContent;
-                    alert(`Viewing details for: ${examName}`);
-                });
-            });
-            
-            editButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    let examName;
-                    
-                    // Handle both table and card edit buttons
-                    if (this.closest('tr')) {
-                        examName = this.closest('tr').querySelector('.exam-name').textContent;
-                    } else {
-                        examName = this.closest('.timeline-exam-card').querySelector('.exam-card-title').textContent;
-                    }
-                    
-                    // In a real implementation, this would load the exam data into the form
-                    
-                    // Change form title and button text
-                    document.querySelector('.form-title').textContent = `Edit Exam: ${examName}`;
-                    document.querySelector('.form-actions .btn-primary').textContent = 'Update Exam';
-                    
-                    // Show form
-                    examForm.style.display = 'block';
-                    examForm.scrollIntoView({ behavior: 'smooth' });
-                });
-            });
-            
-            deleteButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    let examName;
-                    
-                    // Handle both table and card delete buttons
-                    if (this.closest('tr')) {
-                        examName = this.closest('tr').querySelector('.exam-name').textContent;
-                    } else {
-                        examName = this.closest('.timeline-exam-card').querySelector('.exam-card-title').textContent;
-                    }
-                    
-                    if (confirm(`Are you sure you want to cancel ${examName}?`)) {
-                        // Here you would send a delete request to the server
-                        
-                        // For demonstration purposes, hide the row or card
-                        if (this.closest('tr')) {
-                            this.closest('tr').style.display = 'none';
-                        } else {
-                            this.closest('.timeline-exam-card').style.display = 'none';
-                        }
-                        
-                        alert(`${examName} has been cancelled.`);
-                    }
-                });
+                loadCalendarEvents(this.value);
             });
             
             // Search functionality
             const searchInput = document.getElementById('examSearch');
-            const tableRows = document.querySelectorAll('.exams-table tbody tr');
-            const examCards = document.querySelectorAll('.timeline-exam-card');
-            const calendarDays = document.querySelectorAll('.calendar-day');
-            
             searchInput.addEventListener('input', function() {
                 const searchTerm = this.value.toLowerCase();
-                
-                // Search in table
-                if (tableRows.length > 0) {
-                    tableRows.forEach(row => {
-                        const examName = row.querySelector('.exam-name').textContent.toLowerCase();
-                        const examSubject = row.querySelector('.exam-subject').textContent.toLowerCase();
-                        const examClass = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
-                        
-                        const matchFound = 
-                            examName.includes(searchTerm) || 
-                            examSubject.includes(searchTerm) || 
-                            examClass.includes(searchTerm);
-                        
-                        row.style.display = matchFound ? '' : 'none';
-                    });
-                }
-                
-                // Search in cards
-                if (examCards.length > 0) {
-                    examCards.forEach(card => {
-                        const examTitle = card.querySelector('.exam-card-title').textContent.toLowerCase();
-                        const examDetails = card.querySelector('.exam-card-details').textContent.toLowerCase();
-                        
-                        const matchFound = 
-                            examTitle.includes(searchTerm) || 
-                            examDetails.includes(searchTerm);
-                        
-                        card.style.display = matchFound ? '' : 'none';
-                    });
-                }
-                
-                // Search in calendar (only show days with matching events)
-                if (calendarDays.length > 0 && searchTerm) {
-                    calendarDays.forEach(day => {
-                        const events = day.querySelectorAll('.calendar-event');
-                        let dayHasMatch = false;
-                        
-                        events.forEach(event => {
-                            const eventTitle = event.getAttribute('title').toLowerCase();
-                            const eventText = event.textContent.toLowerCase();
-                            
-                            if (eventTitle.includes(searchTerm) || eventText.includes(searchTerm)) {
-                                dayHasMatch = true;
-                                event.style.background = '#ffff00';
-                                event.style.color = '#000000';
-                            } else {
-                                event.style.background = '';
-                                event.style.color = '';
-                            }
-                        });
-                    });
-                } else if (calendarDays.length > 0) {
-                    // Reset calendar events to original colors
-                    document.querySelectorAll('.calendar-event').forEach(event => {
-                        event.style.background = '';
-                        event.style.color = '';
-                    });
-                }
+                filterScheduleData(searchTerm);
             });
             
             // Filter functionality
-            const filterForm = document.querySelector('.filter-form');
             const filterApplyBtn = document.querySelector('.filter-btn-apply');
             const filterResetBtn = document.querySelector('.filter-btn-reset');
             
-            filterApplyBtn.addEventListener('click', function() {
-                // Get filter values
-                const examTypeFilter = document.getElementById('examTypeFilter').value;
-                const classFilter = document.getElementById('classFilter').value;
-                const subjectFilter = document.getElementById('subjectFilter').value;
-                const startDateFilter = document.getElementById('startDateFilter').value;
-                const endDateFilter = document.getElementById('endDateFilter').value;
-                
-                // In a real implementation, this would update the view based on the filters
-                
-                // For this demo, just show an alert with the selected filters
-                let filterMessage = 'Applied filters:\n';
-                filterMessage += examTypeFilter ? `Exam Type: ${examTypeFilter}\n` : 'Exam Type: All\n';
-                filterMessage += classFilter ? `Class: Grade ${classFilter}\n` : 'Class: All\n';
-                filterMessage += subjectFilter ? `Subject: ${subjectFilter}\n` : 'Subject: All\n';
-                filterMessage += startDateFilter ? `Start Date: ${startDateFilter}\n` : 'Start Date: -\n';
-                filterMessage += endDateFilter ? `End Date: ${endDateFilter}\n` : 'End Date: -\n';
-                
-                alert(filterMessage);
-                
-                // Hide the filter panel
-                filterPanel.style.display = 'none';
-            });
-            
-            filterResetBtn.addEventListener('click', function() {
-                filterForm.reset();
-            });
-            
-            // Pagination
-            const pageButtons = document.querySelectorAll('.page-btn:not(:first-child):not(:last-child)');
-            
-            pageButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    pageButtons.forEach(btn => btn.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    // In a real implementation, this would load the next page of data
-                    if (this.textContent !== '1') {
-                        alert(`Loading page ${this.textContent} of exams...`);
-                    }
-                });
-            });
+            filterApplyBtn.addEventListener('click', applyFilters);
+            filterResetBtn.addEventListener('click', resetFilters);
         });
+        
+        // Dynamic action button handling using event delegation
+        document.addEventListener('click', function(e) {
+            // Handle view details buttons
+            if (e.target.closest('.action-btn[title="View Details"]')) {
+                const button = e.target.closest('.action-btn[title="View Details"]');
+                const examId = button.getAttribute('data-exam-id');
+                if (examId) {
+                    showExamDetails(examId);
+                }
+            }
+            
+            // Handle edit buttons
+            if (e.target.closest('.action-btn[title="Edit"], .card-action-btn.action-edit')) {
+                const button = e.target.closest('.action-btn[title="Edit"], .card-action-btn.action-edit');
+                const examId = button.getAttribute('data-exam-id');
+                if (examId) {
+                    editExam(examId);
+                }
+            }
+            
+            // Handle delete buttons
+            if (e.target.closest('.action-btn[title="Delete"], .card-action-btn.action-delete')) {
+                const button = e.target.closest('.action-btn[title="Delete"], .card-action-btn.action-delete');
+                const examId = button.getAttribute('data-exam-id');
+                const examName = button.getAttribute('data-exam-name') || 'this exam';
+                if (examId) {
+                    deleteExam(examId, examName);
+                }
+            }
+            
+            // Handle calendar event clicks
+            if (e.target.closest('.calendar-event')) {
+                const event = e.target.closest('.calendar-event');
+                const examId = event.getAttribute('data-exam-id');
+                if (examId) {
+                    showExamDetails(examId);
+                }
+            }
+        });
+        
+        // Helper Functions
+        function initializePage() {
+            // Set up initial page state
+            const currentDate = new Date();
+            const currentMonth = currentDate.getMonth() + 1;
+            const currentYear = currentDate.getFullYear();
+            
+            // Set default date inputs
+            document.getElementById('examDate').setAttribute('min', new Date().toISOString().split('T')[0]);
+        }
+        
+        function loadExamSessions() {
+            fetch('schedule_handler.php?action=get_exam_sessions')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.sessions) {
+                        populateExamSessionDropdown(data.sessions);
+                    }
+                })
+                .catch(error => console.error('Error loading exam sessions:', error));
+        }
+        
+        function loadScheduleData(view = 'calendar') {
+            const params = new URLSearchParams({
+                action: 'get_schedule_data',
+                view: view,
+                month: document.querySelector('.calendar-month_select')?.value || new Date().getMonth() + 1,
+                year: new Date().getFullYear()
+            });
+            
+            fetch(`schedule_handler.php?${params}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        if (view === 'calendar') {
+                            updateCalendarView(data.events);
+                        } else if (view === 'list') {
+                            updateListView(data.events);
+                        } else if (view === 'table') {
+                            updateTableView(data.events);
+                        }
+                    }
+                })
+                .catch(error => console.error('Error loading schedule data:', error));
+        }
+                   function loadDropdownData() {
+            // Load classes, subjects, and proctors from the database
+            Promise.all([
+                fetch('schedule_handler.php?action=get_classes'),
+                fetch('schedule_handler.php?action=get_subjects'),
+                fetch('schedule_handler.php?action=get_proctors')
+            ])
+            .then(responses => Promise.all(responses.map(r => r.json())))
+            .then(data => {
+                populateDropdowns(data);
+            })
+            .catch(error => console.error('Error loading dropdown data:', error));
+        }
+          function populateDropdowns(data) {
+            const [classes, subjects, proctors] = data;
+            
+            if (classes.success) {
+                populateSelect('examClass', classes.data, 'class_id', 'class_name');
+            }
+            if (subjects.success) {
+                populateSelect('examSubject', subjects.data, 'subject_id', 'subject_name');
+            }
+            if (proctors.success) {
+                populateSelect('examProctor', proctors.data, 'teacher_id', 'full_name');
+            }
+        }
+        
+        function populateSelect(selectId, data, valueField, textField) {
+            const select = document.getElementById(selectId);
+            const defaultOption = select.querySelector('option[value=""]');
+            select.innerHTML = '';
+            if (defaultOption) {
+                select.appendChild(defaultOption);
+            }
+            
+            data.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item[valueField];
+                option.textContent = item[textField];
+                select.appendChild(option);
+            });
+        }
+        
+        function updateCalendarView(events) {
+            // Clear existing events
+            document.querySelectorAll('.calendar-event').forEach(event => event.remove());
+            
+            // Add new events to calendar
+            events.forEach(event => {
+                const eventDate = new Date(event.exam_date);
+                const dayElement = findCalendarDay(eventDate.getDate());
+                  if (dayElement) {
+                    const eventElement = document.createElement('div');
+                    eventElement.className = `calendar-event exam-${event.exam_type}`;
+                    eventElement.textContent = `${event.exam_type} - ${event.subject_name}`;
+                    eventElement.setAttribute('title', `${event.exam_type} - ${event.subject_name} Assessment (${event.class_name})`);
+                    eventElement.setAttribute('data-exam-id', event.id);
+                    
+                    eventElement.addEventListener('click', () => showExamDetails(event.id));
+                    
+                    dayElement.querySelector('.calendar-day-events').appendChild(eventElement);
+                }
+            });
+        }
+        
+        function findCalendarDay(dayNumber) {
+            const calendarDays = document.querySelectorAll('.calendar-day:not(.calendar-day-other-month)');
+            return Array.from(calendarDays).find(day => {
+                const dayNum = day.querySelector('.calendar-day-number');
+                return dayNum && parseInt(dayNum.textContent) === dayNumber;
+            });
+        }
+        
+        function showExamDetails(examId) {
+            fetch(`schedule_handler.php?action=get_exam_details&id=${examId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayExamDetails(data.exam);
+                    } else {
+                        alert('Error loading exam details');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error loading exam details');
+                });
+        }        function displayExamDetails(exam) {
+            const details = `
+                Assessment: ${exam.exam_type} - ${exam.subject_name} Assessment
+                Subject: ${exam.subject_name}
+                Class: ${exam.class_name}
+                Date: ${exam.exam_date}
+                Time: ${exam.start_time} - ${exam.end_time}
+                Duration: ${exam.duration} minutes
+                Max Marks: ${exam.max_marks}
+                Proctor: ${exam.proctor_name}
+            `;
+            alert(details);
+        }
+        
+        function editExam(examId) {
+            fetch(`schedule_handler.php?action=get_exam_details&id=${examId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        populateEditForm(data.exam);
+                        document.getElementById('examForm').style.display = 'block';
+                        document.getElementById('examForm').scrollIntoView({ behavior: 'smooth' });
+                    } else {
+                        alert('Error loading exam details for editing');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error loading exam details');
+                });
+        }        function populateEditForm(exam) {
+            document.getElementById('examType').value = exam.exam_type;
+            document.getElementById('examSubject').value = exam.subject_id;
+            document.getElementById('examClass').value = exam.class_id;
+            document.getElementById('examDate').value = exam.exam_date;
+            document.getElementById('examStartTime').value = exam.start_time;
+            document.getElementById('examEndTime').value = exam.end_time;
+            document.getElementById('examProctor').value = exam.teacher_id;
+            document.getElementById('examDuration').value = exam.duration;
+            document.getElementById('maxMarks').value = exam.max_marks;
+            document.getElementById('examInstructions').value = exam.instructions;
+            
+            // Update form title and button
+            document.querySelector('.form-title').textContent = `Edit ${exam.exam_type} Assessment`;
+            document.querySelector('.form-actions .btn-primary').textContent = 'Update Exam';
+            
+            // Store exam ID for update
+            document.getElementById('createExamForm').setAttribute('data-exam-id', exam.id);
+        }
+        
+        function deleteExam(examId, examName) {
+            if (confirm(`Are you sure you want to cancel ${examName}?`)) {
+                const formData = new FormData();
+                formData.append('action', 'delete_exam_schedule');
+                formData.append('exam_id', examId);
+                
+                fetch('schedule_handler.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`${examName} has been cancelled.`);
+                        loadScheduleData(); // Reload the schedule
+                    } else {
+                        alert('Error: ' + (data.message || 'Failed to cancel exam'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while cancelling the exam');
+                });
+            }
+        }
+        
+        function filterScheduleData(searchTerm) {
+            const tableRows = document.querySelectorAll('.exams-table tbody tr');
+            const examCards = document.querySelectorAll('.timeline-exam-card');
+            const calendarEvents = document.querySelectorAll('.calendar-event');
+            
+            // Filter table rows
+            tableRows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+            
+            // Filter exam cards
+            examCards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                card.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+            
+            // Highlight calendar events
+            calendarEvents.forEach(event => {
+                const text = event.textContent.toLowerCase();
+                if (searchTerm && text.includes(searchTerm)) {
+                    event.style.background = '#ffff00';
+                    event.style.color = '#000000';
+                } else {
+                    event.style.background = '';
+                    event.style.color = '';
+                }
+            });
+        }
+        
+        function applyFilters() {
+            const filters = {
+                examType: document.getElementById('examTypeFilter').value,
+                class: document.getElementById('classFilter').value,
+                subject: document.getElementById('subjectFilter').value,
+                startDate: document.getElementById('startDateFilter').value,
+                endDate: document.getElementById('endDateFilter').value
+            };
+            
+            const params = new URLSearchParams({
+                action: 'get_schedule_data',
+                ...filters
+            });
+            
+            fetch(`schedule_handler.php?${params}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const activeTab = document.querySelector('.exam-tab.active').getAttribute('data-tab');
+                        if (activeTab === 'calendar') {
+                            updateCalendarView(data.events);
+                        } else if (activeTab === 'list') {
+                            updateListView(data.events);
+                        } else if (activeTab === 'table') {
+                            updateTableView(data.events);
+                        }
+                    }
+                })
+                .catch(error => console.error('Error applying filters:', error));
+            
+            // Hide filter panel
+            document.getElementById('filterPanel').style.display = 'none';
+        }
+          function resetFilters() {
+            document.querySelector('.filter-form').reset();
+            loadScheduleData();
+        }
+        
+        function updateListView(events) {
+            const listContainer = document.getElementById('list-tab');
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                    </button>
+                                    <button class="card-action-btn action-delete" data-exam-id="${event.id}" data-exam-name="${event.exam_type} - ${event.subject_name} Assessment" title="Delete">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="exam-card-details">
+                                <div class="exam-detail">
+                                    <span class="exam-detail-label">Subject:</span>
+                                    <span class="exam-detail-value">${event.subject_name}</span>
+                                </div>
+                                <div class="exam-detail">
+                                    <span class="exam-detail-label">Class:</span>
+                                    <span class="exam-detail-value">${event.class_name}</span>
+                                </div>                                <div class="exam-detail">
+                                    <span class="exam-detail-label">Time:</span>
+                                    <span class="exam-detail-value">${event.start_time} - ${event.end_time}</span>
+                                </div>
+                                <div class="exam-detail">
+                                    <span class="exam-detail-label">Duration:</span>
+                                    <span class="exam-detail-value">${event.duration} minutes</span>
+                                </div>
+                            </div>
+                        </div>`;
+                    });
+                    
+                    html += '</div></div>';
+                });
+            }
+            
+            html += '</div></div>';
+            listContainer.innerHTML = html;
+        }
+        
+        function updateTableView(events) {
+            const tableContainer = document.getElementById('table-tab');
+            if (!tableContainer) return;
+            
+            let html = `
+            <div class="table-view">
+                <table class="exams-table">
+                    <thead>                        <tr>
+                            <th>Assessment</th>
+                            <th>Subject</th>
+                            <th>Class</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Duration</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+              if (events.length === 0) {
+                html += '<tr><td colspan="7" style="text-align: center; padding: 2rem;">No exams scheduled</td></tr>';
+            } else {
+                events.forEach(event => {
+                    const formattedDate = new Date(event.exam_date).toLocaleDateString();
+                    html += `                    <tr>
+                        <td class="exam-name">${event.exam_type} - ${event.subject_name} Assessment</td>
+                        <td class="exam-subject">${event.subject_name}</td>
+                        <td>${event.class_name}</td>
+                        <td>${formattedDate}</td>
+                        <td>${event.start_time} - ${event.end_time}</td>
+                        <td>${event.duration} min</td>
+                        <td class="actions">
+                            <button class="action-btn" data-exam-id="${event.id}" title="View Details">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            </button>
+                            <button class="action-btn" data-exam-id="${event.id}" title="Edit">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                            </button>
+                            <button class="action-btn" data-exam-id="${event.id}" data-exam-name="${event.exam_type} - ${event.subject_name} Assessment" title="Delete">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>                        </td>
+                    </tr>`;
+                });
+            }
+            
+            html += `
+                    </tbody>
+                </table>
+            </div>`;
+            
+            tableContainer.innerHTML = html;
+        }
     </script>
 </body>
 </html>

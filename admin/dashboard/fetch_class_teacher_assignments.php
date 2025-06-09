@@ -27,13 +27,12 @@ try {
                 s.class_teacher_user_id,
                 COUNT(st.id) as student_count,
                 CASE 
-                    WHEN s.class_teacher_user_id IS NOT NULL THEN 'assigned'
-                    ELSE 'unassigned'
+                    WHEN s.class_teacher_user_id IS NOT NULL THEN 'assigned'                ELSE 'unassigned'
                 END as status
             FROM sections s
             INNER JOIN classes c ON s.class_id = c.id
             LEFT JOIN users u ON s.class_teacher_user_id = u.id AND u.role = 'teacher'
-            LEFT JOIN students st ON st.section_id = s.id AND st.status = 'active'
+            LEFT JOIN students st ON st.section_id = s.id
             GROUP BY s.id, s.name, c.name, s.capacity, u.full_name, s.class_teacher_user_id
             ORDER BY c.id ASC, s.name ASC";
     

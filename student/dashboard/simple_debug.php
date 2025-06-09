@@ -6,7 +6,7 @@ echo "1. PHP is working\n";
 
 // 2. Test error reporting
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
+ini_set('display_errors',   1);
 echo "2. Error reporting enabled\n";
 
 // 3. Test file includes

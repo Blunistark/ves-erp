@@ -201,9 +201,13 @@ if (isset($_SESSION['user_id'])) {
             </svg>
         </button>
         <div class="nav-group-content">
-            <a href="schedule.php" class="nav-subitem">Create Schedule</a>
-            <a href="results.php" class="nav-subitem">Input Results</a>
-            <a href="reports.php" class="nav-subitem">Generate Reports</a>
+            <a href="schedule.php" class="nav-subitem <?php echo basename($_SERVER['PHP_SELF']) == 'schedule.php' ? 'active' : ''; ?>">Create Schedule</a>
+            <a href="exam_session_management.php" class="nav-subitem <?php echo basename($_SERVER['PHP_SELF']) == 'exam_session_management.php' ? 'active' : ''; ?>">Manage Exam Sessions</a>
+            <a href="manage_exam_subjects.php" class="nav-subitem <?php echo basename($_SERVER['PHP_SELF']) == 'manage_exam_subjects.php' ? 'active' : ''; ?>">Manage Exam Subjects</a>
+            <a href="view_exam_marks.php" class="nav-subitem <?php echo basename($_SERVER['PHP_SELF']) == 'view_exam_marks.php' ? 'active' : ''; ?>">View Exam Marks</a>
+            <a href="exam_report.php" class="nav-subitem <?php echo basename($_SERVER['PHP_SELF']) == 'exam_report.php' ? 'active' : ''; ?>">Exam Reports</a>
+            <a href="results.php" class="nav-subitem <?php echo basename($_SERVER['PHP_SELF']) == 'results.php' ? 'active' : ''; ?>">Input Results</a>
+            <a href="reports.php" class="nav-subitem <?php echo basename($_SERVER['PHP_SELF']) == 'reports.php' ? 'active' : ''; ?>">Generate Reports</a>
         </div>
     </div>
 

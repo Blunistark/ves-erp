@@ -151,3 +151,20 @@ function getGradeColorClass($grade_code) {
             return 'grade-default';
     }
 }
+
+/**
+ * Get grade points for a grade code
+ * @param string $grade_code The grade code (A+, A, B, C, D)
+ * @return float Grade points
+ */
+function getGradePoints($grade_code) {
+    $grade_points = [
+        'A+' => 4.0,
+        'A' => 3.5,
+        'B' => 3.0,
+        'C' => 2.5,
+        'D' => 2.0,
+        'F' => 0.0
+    ];
+    return $grade_points[$grade_code] ?? 0.0;
+}
