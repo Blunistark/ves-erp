@@ -1,18 +1,19 @@
-<?php include 'con.php'; ?>
 <?php include 'sidebar.php'; ?>
+<?php include 'con.php'; ?>
+
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
-
+// Check if user is logged in and is a student
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'student') {
+    header('Location: ../index.php');
+    exit();
+}
 
 // Get comprehensive student details
 $student_id = $_SESSION['user_id'];
 $query = "SELECT s.*, u.email, u.full_name as user_full_name, u.created_at as join_date, 
             u.last_login, u.status as user_status,
             c.name as class_name, sec.name as section_name, 
-            g.label as gender_name, b.label as blood_group_name,
+            g.name as gender_name, b.name as blood_group_name,
             ay.name as academic_year,
             COALESCE(t.full_name, 'Not Assigned') as class_teacher_name
           FROM students s
@@ -83,12 +84,21 @@ if (!empty($student['dob']) && $student['dob'] != '0000-00-00') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>My Profile - <?php echo isset($student['full_name']) ? safeDisplay($student['full_name']) : 'Student Profile'; ?></title>
+    <title>My Profile - <?php echo safeDisplay($student['full_name']); ?></title>
     
     <link rel="stylesheet" href="css/sidebar.css">
     <link rel="stylesheet" href="css/profile.css">
     <style>
-       
+        /* Read-only profile specific styles */
+        .readonly-badge {
+            background: #e0f2fe;
+            color: #0277bd;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
         
         .info-grid {
             display: grid;
@@ -214,45 +224,6 @@ if (!empty($student['dob']) && $student['dob'] != '0000-00-00') {
             background: #475569;
         }
         
-        /* Sidebar and Layout adjustments */
-        .dashboard-container {
-            padding: 2rem 1.5rem;
-            margin-left: 280px;
-            width: calc(100% - 280px);
-            transition: all 0.3s ease;
-        }
-        
-        .sidebar-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 40;
-        }
-        
-        .hamburger-btn {
-            display: none;
-            position: fixed;
-            left: 1rem;
-            top: 1rem;
-            z-index: 60;
-            background: white;
-            border: 1px solid #e5e7eb;
-            padding: 0.5rem;
-            border-radius: 0.375rem;
-            cursor: pointer;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-        
-        .hamburger-icon {
-            width: 1.5rem;
-            height: 1.5rem;
-            color: #4b5563;
-        }
-        
         @media (max-width: 768px) {
             .info-grid {
                 grid-template-columns: 1fr;
@@ -275,31 +246,6 @@ if (!empty($student['dob']) && $student['dob'] != '0000-00-00') {
             .quick-actions {
                 flex-direction: column;
             }
-            
-            .dashboard-container {
-                margin-left: 0;
-                width: 100%;
-            }
-            
-            .hamburger-btn {
-                display: block;
-            }
-            
-            .sidebar {
-                transform: translateX(-100%);
-            }
-            
-            .sidebar.active {
-                transform: translateX(0);
-            }
-            
-            .sidebar-overlay {
-                display: none;
-            }
-            
-            .sidebar-overlay.active {
-                display: block;
-            }
         }
     </style>
 </head>
@@ -312,21 +258,21 @@ if (!empty($student['dob']) && $student['dob'] != '0000-00-00') {
 </button>
 
 <?php if (isset($error_message)): ?>
-    <!-- Error message display -->
-    <div class="dashboard-container">
-        <div style="text-align: center; padding: 2rem; color: #dc2626;">
-            <h2><?php echo $error_message; ?></h2>
-        </div>
+<div class="dashboard-container">
+    <div style="text-align: center; padding: 2rem; color: #dc2626;">
+        <h2><?php echo $error_message; ?></h2>
     </div>
+</div>
 <?php else: ?>
-    <!-- Main profile content -->
-    <div class="dashboard-container">
-        <header class="dashboard-header">
-            <h1 class="header-title">
-                Student Profile 
-            </h1>
-            <span class="header-subtitle">Complete profile information</span>
-        </header>
+
+<div class="dashboard-container">
+    <header class="dashboard-header">
+        <h1 class="header-title">
+            Student Profile 
+            <span class="readonly-badge">Read Only</span>
+        </h1>
+        <span class="header-subtitle">Complete profile information</span>
+    </header>
 
     <main class="dashboard-content">
         <!-- Profile Header Card -->
@@ -520,7 +466,8 @@ if (!empty($student['dob']) && $student['dob'] != '0000-00-00') {
                 <div class="info-row">
                     <span class="info-label">Medical Conditions</span>
                     <span class="info-value"><?php echo safeDisplay($student['medical_conditions'], 'None reported'); ?></span>
-                </div>                <div class="info-row">
+                </div>
+                <div class="info-row">
                     <span class="info-label">Emergency Contact</span>
                     <span class="info-value"><?php echo safeDisplay($student['mobile']); ?></span>
                 </div>
@@ -528,6 +475,7 @@ if (!empty($student['dob']) && $student['dob'] != '0000-00-00') {
         </div>
     </main>
 </div>
+
 <?php endif; ?>
 
 <script>
@@ -549,7 +497,9 @@ if (!empty($student['dob']) && $student['dob'] != '0000-00-00') {
         window.print = function() {
             window.print();
         };
-    });    // Sidebar toggle function (if not defined elsewhere)
+    });
+
+    // Sidebar toggle function (if not defined elsewhere)
     function toggleSidebar() {
         const sidebar = document.querySelector('.sidebar');
         const overlay = document.querySelector('.sidebar-overlay');

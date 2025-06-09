@@ -1,6 +1,12 @@
 <?php 
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 include 'sidebar.php';
 include 'con.php';
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
 // Check if user is logged in and is a student
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'student') {
@@ -9,7 +15,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'student') {
 }
 
 // Fetch announcements for students (either target_audience = 'all' or 'students')
-$query = "SELECT a.*, u.name as created_by_name 
+$query = "SELECT a.*, u.full_name as created_by_name 
           FROM announcements a 
           JOIN users u ON a.created_by = u.id 
           WHERE (a.target_audience = 'all' OR a.target_audience = 'students') 

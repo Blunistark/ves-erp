@@ -1,14 +1,23 @@
 <?php 
-include 'sidebar.php'; 
-include 'con.php';
+// Start session if not already started
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
 
-// Check if user is logged in and is a teacher
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'teacher') {
-    header('Location: ../index.php');
+// Check if user is logged in and is a teacher (or headmaster)
+// Adjusted the role check to allow 'headmaster' as well, since headmasters are also teachers
+if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['teacher', 'headmaster'])) {
+    header('Location: ../index.php'); // Redirect if not a teacher or headmaster
     exit();
 }
 
-$user_id = $_SESSION['user_id'];
+// Define $is_headmaster based on session role
+$is_headmaster = (isset($_SESSION['role']) && $_SESSION['role'] === 'headmaster');
+$user_id = $_SESSION['user_id']; // Define user_id after successful auth
+
+// Now include files that might output HTML or use session variables
+include 'sidebar.php'; 
+include 'con.php'; // Assuming con.php doesn't output HTML or try to set headers
 
 // Get teacher's assigned classes for notification targeting
 // This includes both class teacher assignments and subject teaching assignments

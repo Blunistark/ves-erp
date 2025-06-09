@@ -19,10 +19,10 @@ $user_id = $_SESSION['user_id'];
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>My Notifications</title> {/* Changed title */}
+    <title>My Notifications</title>
     
     <link rel="stylesheet" href="css/sidebar.css">
-    <link rel="stylesheet" href="css/notifications.css"> {/* Changed CSS file */}
+    <link rel="stylesheet" href="css/notifications.css"> 
     
     <style>
         /* Styles from the original teacher's file, potentially to be merged or overridden by notifications.css */
@@ -49,6 +49,17 @@ $user_id = $_SESSION['user_id'];
         
         .notification-item.unread { /* Adjusted class name */
             border-left: 4px solid #3b82f6; /* Blue for unread */
+        }
+
+        .notification-actions {
+            display: flex;
+            justify-content: flex-end; /* Aligns button(s) to the right */
+            margin-top: 0.75rem; /* Adds a bit of space above the actions area */
+        }
+
+        .btn-mark-read {
+            padding: 0.4rem 0.8rem; /* Reduced padding */
+            font-size: 0.875rem;   /* Slightly smaller font */
         }
         
         .notification-header {
@@ -193,33 +204,33 @@ $user_id = $_SESSION['user_id'];
 
 <div class="dashboard-container">
     <header class="dashboard-header">
-        <h1 class="header-title">My Notifications</h1> {/* Changed title */}
+        <h1 class="header-title">My Notifications</h1> 
         <span class="header-date"><?php echo date('F j, Y'); ?></span>
     </header>
 
     <main class="dashboard-content">
-        <div class="notification-filters"> {/* Changed class name */}
+        <div class="notification-filters"> 
             <div class="filter-item active" data-filter="all">All Notifications</div>
             <div class="filter-item" data-filter="unread">Unread</div>
-            <div class="filter-item" data-filter="school">School Announcements</div> {/* Added/Updated filter */}
-            <div class="filter-item" data-filter="teacher">Teacher Messages</div> {/* Added/Updated filter */}
+            <div class="filter-item" data-filter="school">School Announcements</div>
+            <div class="filter-item" data-filter="teacher">Teacher Messages</div>
             <div class="filter-item" data-filter="urgent">Urgent</div>
-            {/* <div class="filter-item" data-filter="important">Important</div> */}
+            <div class="filter-item" data-filter="important">Important</div> 
         </div>
 
-        {/* Featured Announcement section removed */}
+        
 
         <div class="card">
-            <h2 class="card-title">All Notifications</h2> {/* Changed title */}
+            <h2 class="card-title">All Notifications</h2>
             
-            <div class="notification-list" id="notifications-container"> {/* Changed class name */}
+            <div class="notification-list" id="notifications-container">
                 <div class="loading" id="loading-indicator">
                     <div>Loading notifications...</div>
                 </div>
             </div>
             
-            {/* Pagination - kept for now, will need JS logic if API supports pagination */}
-            <div class="pagination" id="pagination-controls" style="display: none;">
+            
+            <div class="pagination" id="pagination-controls">
                 <button class="page-arrow" id="prev-page" disabled>
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -265,7 +276,7 @@ $user_id = $_SESSION['user_id'];
         try {
             // Construct URL with parameters for student view
             // The API will need to be updated to handle 'source_type' and 'role=student' implicitly or explicitly
-            let url = `${API_URL}?action=list_student&filter_type=${filter}&page=${page}&limit=${notificationsPerPage}`;
+            let url = `${API_URL}?action=list&filter_type=${filter}&page=${page}&limit=${notificationsPerPage}`;
             if (unreadOnly) {
                 url += '&unread_only=true';
             }
@@ -365,7 +376,6 @@ $user_id = $_SESSION['user_id'];
             
             <div class="notification-actions">
                 ${!notification.is_read ? `<button class="btn btn-mark-read" onclick="markAsRead(${notification.id}, this)">Mark as Read</button>` : ''}
-                <button class="btn btn-secondary" onclick="deleteNotification(${notification.id}, this)">Delete</button>
             </div>
         `;
         return div;
@@ -374,7 +384,7 @@ $user_id = $_SESSION['user_id'];
     // Mark notification as read
     async function markAsRead(notificationId, buttonElement) {
         try {
-            const response = await fetch(`${API_URL}?action=mark_read_student`, { // API needs this action
+            const response = await fetch(`${API_URL}?action=mark_read`, { // API needs this action
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: { 'Content-Type': 'application/json' },

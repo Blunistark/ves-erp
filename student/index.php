@@ -227,17 +227,13 @@ $csrf_token = generateCSRFToken();
             background: white;
             box-shadow: 0 0 0 3px rgba(253, 93, 93, 0.1);
             transform: translateY(-2px);
-        }
-
-        .remember-forgot {
+        }        .remember-forgot {
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-start;
             align-items: center;
             margin-bottom: 2rem;
             font-size: 0.9rem;
-        }
-
-        .remember-me {
+        }        .remember-me {
             display: flex;
             align-items: center;
             cursor: pointer;
@@ -247,17 +243,6 @@ $csrf_token = generateCSRFToken();
         .remember-me input {
             margin-right: 0.5rem;
             width: auto;
-        }
-
-        .forgot-password {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.3s ease;
-        }
-
-        .forgot-password:hover {
-            color: #e64545;
         }
 
         .login-btn {
@@ -643,12 +628,7 @@ $csrf_token = generateCSRFToken();
             .input-group input {
                 padding: 0.875rem 1rem;
                 font-size: 1rem;
-            }
-
-            .remember-forgot {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 0.75rem;
+            }            .remember-forgot {
                 margin-bottom: 1.5rem;
             }
 
@@ -802,14 +782,11 @@ $csrf_token = generateCSRFToken();
                         <input type="date" id="dob" name="dob" required 
                                title="Select your date of birth"
                                autocomplete="bday">
-                    </div>
-
-                    <div class="remember-forgot">
+                    </div>                    <div class="remember-forgot">
                         <label class="remember-me">
                             <input type="checkbox" name="remember" id="remember">
                             Remember Me
                         </label>
-                        <a href="forgot-password.php" class="forgot-password">Need help?</a>
                     </div>
 
                     <button type="submit" class="login-btn">Sign In</button>

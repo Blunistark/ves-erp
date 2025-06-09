@@ -1,4 +1,16 @@
-<?php include 'sidebar.php'; ?>
+<?php
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Check if user is logged in and is a teacher
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'teacher') {
+    header('Location: ../index.php');
+    exit();
+}
+
+include 'sidebar.php'; 
+?>
 
 <div class="dashboard-container">
     <header class="dashboard-header">
@@ -8,12 +20,6 @@
 
     <main class="dashboard-content">
         <?php
-        // Check if user is logged in and is a teacher
-        if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'teacher') {
-            header('Location: ../index.php');
-            exit();
-        }
-
         // Fetch announcements for teachers (either target_audience = 'all' or 'teachers')
         $query = "SELECT a.*, u.full_name as created_by_name 
                 FROM announcements a 
