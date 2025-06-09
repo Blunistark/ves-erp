@@ -1,16 +1,15 @@
 
-https://vinodhenglishschool.com/erp/teachers/dashboard/notifications.php
 
 <?php 
 include 'sidebar.php'; 
 include 'con.php';
 
 // Check if user is logged in and is a teacher
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'teacher') {
-    header('Location: ../index.php');
-    exit();
-}
-
+//if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'teacher') {
+ //   header('Location: ../index.php');
+  //  exit();
+//}
+// this caused the header issues 
 $user_id = $_SESSION['user_id'];
 
 // Get teacher's assigned classes for notification targeting
