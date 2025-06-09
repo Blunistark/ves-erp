@@ -33,26 +33,32 @@ if (preg_match($pattern, $requestUri, $matches)) {
     // Route to appropriate handler based on endpoint
     switch ($endpoint) {
         case 'timetables':
+        case 'timetables.php':
             require_once __DIR__ . '/timetable.php';
             break;
             
         case 'subjects':
+        case 'subjects.php':
             require_once __DIR__ . '/subjects.php';
             break;
             
         case 'teachers':
+        case 'teachers.php':
             require_once __DIR__ . '/teachers.php';
             break;
             
         case 'academic-years':
+        case 'academic-years.php':
             require_once __DIR__ . '/academic-years.php';
             break;
             
         case 'classes':
+        case 'classes.php':
             require_once __DIR__ . '/classes.php';
             break;
             
         case 'sections':
+        case 'sections.php':
             require_once __DIR__ . '/sections.php';
             break;
             
@@ -61,18 +67,22 @@ if (preg_match($pattern, $requestUri, $matches)) {
             break;
             
         case 'students':
+        case 'students.php':
             require_once __DIR__ . '/students.php';
             break;
             
         case 'student-profile':
+        case 'student-profile.php':
             require_once __DIR__ . '/student-profile.php';
             break;
             
         case 'student-timetable':
+        case 'student-timetable.php':
             require_once __DIR__ . '/student-timetable.php';
             break;
             
         case 'notifications':
+        case 'notifications.php':
             require_once __DIR__ . '/notifications.php';
             break;
             
