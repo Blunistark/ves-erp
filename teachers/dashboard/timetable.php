@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Class Timetable</title>
+    <title>Timetable</title>
     
     <link rel="stylesheet" href="css/sidebar.css">
     
@@ -220,7 +220,7 @@
 
 <div class="dashboard-container">
     <header class="dashboard-header">
-        <h1 class="header-title">Class Timetable</h1>
+        <h1 class="header-title">Timetable</h1>
         <p class="header-subtitle">View and manage your teaching schedule</p>
     </header>
 
@@ -791,19 +791,12 @@
                 if (this.id === 'subjectSelect') { // Only subject filter affects the current view directly
                     filterTimetable();
                 } else if (this.id === 'classSelect') {
-                    // When the class filter changes
+                    // When the class filter changes, find and render the selected timetable
                     const selectedValue = this.value;
-
-                    if (selectedValue === 'all') {
-                        // Handle 'All Classes' case - render aggregated timetable
-                        renderAggregatedTimetable();
-                } else {
-                                     // Find the timetable that matches the initial filter value
-                                    const selectedTimetableId = parseInt(selectedValue);
-                                    if (!isNaN(selectedTimetableId)) {
-                                         selectAndRenderTimetable(selectedTimetableId);
-                                    }
-                                }
+                    const selectedTimetableId = parseInt(selectedValue);
+                    if (!isNaN(selectedTimetableId)) {
+                        selectAndRenderTimetable(selectedTimetableId);
+                    }
                 }
             });
         });
@@ -982,25 +975,23 @@
                             allTimetables = detailedTimetables.filter(t => t !== null); // Store valid detailed timetables
 
                             if (allTimetables.length > 0) {
-                    // Update class and subject filter options based on available data
+                                // Update class and subject filter options based on available data
                                 updateFilterOptions(allTimetables);
 
-                                // Determine which timetable(s) to render initially based on the class filter default value
+                                // Determine which timetable to render initially
                                 const initialClassFilterValue = document.getElementById('classSelect').value;
 
-                                if (initialClassFilterValue === 'all') {
-                                    // If 'All Classes' is selected by default, render the aggregated view
-                                    renderAggregatedTimetable();
-                } else {
-                                     // Find the timetable that matches the initial filter value
-                                    const initialTimetable = allTimetables.find(t => String(t.id) === initialClassFilterValue);
-                                    if (initialTimetable) {
-                                         selectAndRenderTimetable(initialTimetable.id);
-                                    } else {
-                                         // Fallback to the first timetable if the default filter value doesn't match or filter is not 'all'
-                                         selectAndRenderTimetable(allTimetables[0].id);
-                                    }
+                                // Find the timetable that matches the initial filter value
+                                const initialTimetable = allTimetables.find(t => String(t.id) === initialClassFilterValue);
+                                if (initialTimetable) {
+                                    selectAndRenderTimetable(initialTimetable.id);
+                                } else {
+                                    // Fallback to the first timetable if the default filter value doesn't match
+                                    selectAndRenderTimetable(allTimetables[0].id);
                                 }
+                                
+                                // Update upcoming class display after timetable is loaded
+                                setTimeout(updateUpcomingClassDisplay, 1000);
                             } else {
                                 showTimetableError('No detailed timetable data available after fetching details.');
                             }
@@ -1230,15 +1221,15 @@
         // Update class filter options
         const classSelect = document.getElementById('classSelect');
         const currentClassValue = classSelect.value; // Preserve current selection
-        // Keep the "All Classes" option
-        const allClassesOption = classSelect.options[0];
+        
+        // For teachers, don't include "All Classes" option since they should only see their assigned classes
         classSelect.innerHTML = '';
-        classSelect.appendChild(allClassesOption);
         
         // Add classes from the data, sorted by name
         const sortedClassNames = Array.from(classes.keys()).sort();
         console.log('Generated classes map for filter:', classes);
-        sortedClassNames.forEach(classNameSection => {
+        let hasSelection = false;
+        sortedClassNames.forEach((classNameSection, index) => {
             const classInfo = classes.get(classNameSection);
             if (classInfo) {
                 const option = document.createElement('option');
@@ -1248,6 +1239,12 @@
                  // Check if the current selected value matches the timetable_id
                  if (String(classInfo.timetable_id) === currentClassValue) {
                      option.selected = true; // Restore selection
+                     hasSelection = true;
+                 }
+                 // If no previous selection and this is the first option, select it
+                 if (!hasSelection && index === 0) {
+                     option.selected = true;
+                     hasSelection = true;
                  }
                 classSelect.appendChild(option);
             }
@@ -2176,24 +2173,8 @@
         countdownValue.dataset.timerInterval = timerInterval;
     }
 
-    // Modify the existing loadTeacherTimetable function to update the upcoming class display
-    const originalLoadTeacherTimetable = loadTeacherTimetable;
-    loadTeacherTimetable = function() {
-        originalLoadTeacherTimetable();
-        // Add a slight delay to ensure timetable data is loaded
-        setTimeout(updateUpcomingClassDisplay, 1000);
-    };
-
     // Update the display every minute
     setInterval(updateUpcomingClassDisplay, 60000);
-
-    // Add to your existing DOMContentLoaded event listener
-    document.addEventListener('DOMContentLoaded', function() {
-        // Your existing code...
-        
-        // Initial update of upcoming class
-        setTimeout(updateUpcomingClassDisplay, 1000);
-    });
 
 </script>
 </body>

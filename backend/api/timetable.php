@@ -399,6 +399,7 @@ class TimetableApiHandler extends ApiHandler {
         }
         
         // Fetch periods for this timetable
+        // For teachers, only show their own periods
         $sql = "SELECT tp.*, 
                 s.name as subject_name, 
                 t.full_name as teacher_name
@@ -406,10 +407,22 @@ class TimetableApiHandler extends ApiHandler {
                 LEFT JOIN subjects s ON tp.subject_id = s.id
                 LEFT JOIN teachers tc ON tp.teacher_id = tc.user_id
                 LEFT JOIN users t ON tc.user_id = t.id
-                WHERE tp.timetable_id = ?
-                ORDER BY tp.day_of_week, tp.start_time";
+                WHERE tp.timetable_id = ?";
         
-        $periods = executeQuery($sql, "i", [$id]);
+        $params = [$id];
+        $types = "i";
+        
+        // If user is a teacher, only show their periods
+        if (hasRole('teacher')) {
+            $teacher_id = $_SESSION['user_id'];
+            $sql .= " AND tp.teacher_id = ?";
+            $params[] = $teacher_id;
+            $types .= "i";
+        }
+        
+        $sql .= " ORDER BY tp.day_of_week, tp.start_time";
+        
+        $periods = executeQuery($sql, $types, $params);
         
         // Combine timetable and periods
         $result = $timetable[0];
