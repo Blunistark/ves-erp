@@ -287,17 +287,48 @@ $user_role = $_SESSION['role'];
             });
             
             // Form Submission
-            const createSessionForm = document.getElementById('createSessionForm');
-            createSessionForm.addEventListener('submit', function(e) {
+            const createSessionForm = document.getElementById('createSessionForm');            createSessionForm.addEventListener('submit', function(e) {
                 e.preventDefault();
+                
+                // Validate that at least one class is selected
+                const selectedClasses = document.querySelectorAll('input[name="selectedClasses"]:checked');
+                if (selectedClasses.length === 0) {
+                    alert('Please select at least one class for this exam session.');
+                    return;
+                }
                 
                 const submitBtn = this.querySelector('.btn-primary');
                 const originalText = submitBtn.textContent;
                 submitBtn.textContent = 'Saving...';
                 submitBtn.disabled = true;
                 
+                // Collect form data
                 const formData = new FormData(this);
                 formData.append('action', 'create_session');
+                
+                // Collect selected classes and their sections
+                const classesData = [];
+                selectedClasses.forEach(classCheckbox => {
+                    const classId = classCheckbox.value;
+                    const selectedSections = document.querySelectorAll(`input[name="selectedSections"][data-class-id="${classId}"]:checked`);
+                    
+                    if (selectedSections.length > 0) {
+                        selectedSections.forEach(sectionCheckbox => {
+                            classesData.push({
+                                class_id: classId,
+                                section_id: sectionCheckbox.value
+                            });
+                        });
+                    } else {
+                        // No specific sections selected, include the class with all sections
+                        classesData.push({
+                            class_id: classId,
+                            section_id: null
+                        });
+                    }
+                });
+                
+                formData.append('classes_data', JSON.stringify(classesData));
                 
                 fetch('exam_session_actions.php', {
                     method: 'POST',
@@ -309,6 +340,9 @@ $user_role = $_SESSION['role'];
                         alert('Session created successfully!');
                         sessionForm.style.display = 'none';
                         this.reset();
+                        // Reset class selections
+                        document.querySelectorAll('.class-checkbox').forEach(cb => cb.checked = false);
+                        document.querySelectorAll('.sections-for-class').forEach(div => div.style.display = 'none');
                         loadSessionsHierarchy();
                     } else {
                         alert('Error: ' + (data.message || 'Failed to create session'));
