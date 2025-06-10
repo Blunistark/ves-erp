@@ -7,7 +7,7 @@
 // Start session before any output
 session_start();
 
-require_once '../../con.php';
+require_once 'con.php';
 require_once '../../includes/functions.php';
 require_once '../../includes/grading_functions.php';
 
