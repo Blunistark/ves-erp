@@ -23,7 +23,7 @@ $user_role = $_SESSION['role'] ?? 'student';
     <link rel="stylesheet" href="css/sidebar.css">
     <link rel="stylesheet" href="css/index.css">
     <style>
-        .user-welcome {
+       .user-welcome {
             background-color: #f9f9f9;
             border-radius: 8px;
             padding: 20px;
@@ -68,6 +68,65 @@ $user_role = $_SESSION['role'] ?? 'student';
         .date-time .date {
             font-size: 0.9rem;
             color: #666;
+        }
+
+        /* MOBILE RESPONSIVE FOR WELCOME SECTION */
+        @media (max-width: 768px) {
+            .user-welcome {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+                padding: 20px;
+            }
+            
+            .welcome-text h2 {
+                font-size: 1.25rem;
+            }
+            
+            .welcome-text p {
+                font-size: 0.9rem;
+            }
+            
+            .date-time {
+                min-width: auto;
+                width: 100%;
+                max-width: 250px;
+            }
+            
+            .date-time .time {
+                font-size: 1.1rem;
+            }
+            
+            .date-time .date {
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .user-welcome {
+                padding: 15px;
+                gap: 12px;
+            }
+            
+            .welcome-text h2 {
+                font-size: 1.1rem;
+            }
+            
+            .welcome-text p {
+                font-size: 0.85rem;
+            }
+            
+            .date-time {
+                padding: 8px 12px;
+            }
+            
+            .date-time .time {
+                font-size: 1rem;
+            }
+            
+            .date-time .date {
+                font-size: 0.8rem;
+            }
         }
     </style>
 </head>
