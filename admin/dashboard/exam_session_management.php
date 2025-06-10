@@ -111,13 +111,22 @@ $user_role = $_SESSION['role'];
                     </div>
                     <div class="cards-grid" id="classes-grid">
                         <!-- Classes cards will be loaded here -->
+                    </div>                </div>
+
+                <!-- Sections View -->
+                <div id="sectionsView" class="view-container" style="display: none;">
+                    <div class="view-header">
+                        <h1 class="view-title" id="sectionsViewTitle">Sections in Class</h1>
+                    </div>
+                    <div class="cards-grid" id="sections-grid">
+                        <!-- Sections cards will be loaded here -->
                     </div>
                 </div>
 
                 <!-- Subjects View -->
                 <div id="subjectsView" class="view-container" style="display: none;">
                     <div class="view-header">
-                        <h1 class="view-title" id="subjectsViewTitle">Subjects in Class</h1>
+                        <h1 class="view-title" id="subjectsViewTitle">Subjects in Section</h1>
                         <button class="btn btn-primary" onclick="showAddSubjectForm()">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -150,6 +159,12 @@ $user_role = $_SESSION['role'];
                         </div>                        <div class="form-row">
                             <div class="form-group" style="grid-column: 1 / -1;">
                                 <label class="form-label">Select Classes</label>
+                                <div class="classes-header">
+                                    <label class="select-all-label">
+                                        <input type="checkbox" id="selectAllClasses" class="select-all-checkbox">
+                                        <span class="select-all-text">Select All Classes</span>
+                                    </label>
+                                </div>
                                 <div class="classes-selection" id="classesSelection">
                                     <!-- Dynamic class checkboxes will be loaded here -->
                                 </div>
@@ -165,11 +180,13 @@ $user_role = $_SESSION['role'];
                                 <label class="form-label" for="endDate">End Date</label>
                                 <input type="date" class="form-input" id="endDate" name="endDate" required>
                             </div>
-                        </div>
-                        <div class="form-row">
+                        </div>                        <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label" for="academicYear">Academic Year</label>
-                                <input type="text" class="form-input" id="academicYear" name="academicYear" value="2024-25" placeholder="2024-25" required>
+                                <select class="form-select" id="academicYear" name="academicYear" required>
+                                    <option value="">Select Academic Year</option>
+                                    <!-- Options will be loaded dynamically -->
+                                </select>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="status">Status</label>
@@ -236,10 +253,66 @@ $user_role = $_SESSION['role'];
                                 <label class="form-label" for="durationMinutes">Duration (minutes)</label>
                                 <input type="number" class="form-input" id="durationMinutes" name="durationMinutes" min="15" step="15" required>
                             </div>
-                        </div>
-                        <div class="form-actions">
+                        </div>                        <div class="form-actions">
                             <button type="button" class="btn btn-outline" onclick="hideAddSubjectForm()">Cancel</button>
                             <button type="submit" class="btn btn-primary">Add Subject</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Edit Subject Form -->
+                <div class="exam-form-container" id="editSubjectForm" style="display: none;">
+                    <h2 class="form-title">Edit Subject</h2>
+                    <form id="editSubjectFormData">
+                        <input type="hidden" id="editSubjectId" name="subjectId">
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="editSubjectName">Subject</label>
+                                <input type="text" class="form-input" id="editSubjectName" readonly 
+                                       style="background-color: #f5f5f5; cursor: not-allowed;">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="editAssessmentName">Assessment</label>
+                                <input type="text" class="form-input" id="editAssessmentName" readonly 
+                                       style="background-color: #f5f5f5; cursor: not-allowed;">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="editExamDate">Exam Date</label>
+                                <input type="date" class="form-input" id="editExamDate" name="examDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="editExamTime">Exam Time</label>
+                                <input type="time" class="form-input" id="editExamTime" name="examTime" required>
+                            </div>
+                        </div>
+                        <div class="form-row">                            <div class="form-group">
+                                <label class="form-label" for="editTotalMarks">Total Marks</label>
+                                <input type="number" class="form-input" id="editTotalMarks" name="totalMarks" min="1" required
+                                       oninput="validatePassingMarks()">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="editPassingMarks">Passing Marks</label>
+                                <input type="number" class="form-input" id="editPassingMarks" name="passingMarks" min="0" required
+                                       oninput="validatePassingMarks()">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="editDurationMinutes">Duration (minutes)</label>
+                                <input type="number" class="form-input" id="editDurationMinutes" name="durationMinutes" min="15" step="15" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="editInstructions">Instructions</label>
+                                <textarea class="form-textarea" id="editInstructions" name="instructions" 
+                                          placeholder="Enter special instructions for this exam..." rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-outline" onclick="hideEditSubjectForm()">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Update Subject</button>
                         </div>
                     </form>
                 </div>
@@ -269,13 +342,29 @@ $user_role = $_SESSION['role'];
             const newSessionBtn2 = document.getElementById('newSessionBtn2');
             const sessionForm = document.getElementById('sessionForm');
             const cancelSessionBtn = document.getElementById('cancelSessionBtn');
-            
-            [newSessionBtn, newSessionBtn2].forEach(btn => {
+              [newSessionBtn, newSessionBtn2].forEach(btn => {
                 if (btn) {
                     btn.addEventListener('click', function() {
                         document.getElementById('createSessionForm').reset();
                         document.querySelector('.form-title').textContent = 'Create New Exam Session';
                         document.querySelector('.form-actions .btn-primary').textContent = 'Create Session';
+                        
+                        // Reset form mode
+                        const form = document.getElementById('createSessionForm');
+                        delete form.dataset.editMode;
+                        delete form.dataset.sessionId;
+                        
+                        // Reset class selections
+                        document.querySelectorAll('.class-checkbox').forEach(cb => cb.checked = false);
+                        document.querySelectorAll('.sections-for-class').forEach(div => div.style.display = 'none');
+                        
+                        // Reset select all checkbox
+                        const selectAllCheckbox = document.getElementById('selectAllClasses');
+                        if (selectAllCheckbox) {
+                            selectAllCheckbox.checked = false;
+                            selectAllCheckbox.indeterminate = false;
+                        }
+                        
                         sessionForm.style.display = 'block';
                         sessionForm.scrollIntoView({ behavior: 'smooth' });
                     });
@@ -296,15 +385,22 @@ $user_role = $_SESSION['role'];
                     alert('Please select at least one class for this exam session.');
                     return;
                 }
-                
-                const submitBtn = this.querySelector('.btn-primary');
+                  const submitBtn = this.querySelector('.btn-primary');
                 const originalText = submitBtn.textContent;
                 submitBtn.textContent = 'Saving...';
                 submitBtn.disabled = true;
                 
+                // Check if this is edit mode
+                const isEditMode = this.dataset.editMode === 'true';
+                const sessionId = this.dataset.sessionId;
+                
                 // Collect form data
                 const formData = new FormData(this);
-                formData.append('action', 'create_session');
+                formData.append('action', isEditMode ? 'update_session' : 'create_session');
+                
+                if (isEditMode && sessionId) {
+                    formData.append('session_id', sessionId);
+                }
                 
                 // Collect selected classes and their sections
                 const classesData = [];
@@ -334,23 +430,35 @@ $user_role = $_SESSION['role'];
                     method: 'POST',
                     body: formData
                 })
-                .then(response => response.json())
-                .then(data => {
+                .then(response => response.json())                .then(data => {
                     if (data.success) {
-                        alert('Session created successfully!');
+                        alert(isEditMode ? 'Session updated successfully!' : 'Session created successfully!');
                         sessionForm.style.display = 'none';
                         this.reset();
-                        // Reset class selections
+                        // Reset form mode
+                        delete this.dataset.editMode;
+                        delete this.dataset.sessionId;
+                        document.querySelector('.form-title').textContent = 'Create New Exam Session';
+                        submitBtn.textContent = 'Create Session';
+                          // Reset class selections
                         document.querySelectorAll('.class-checkbox').forEach(cb => cb.checked = false);
                         document.querySelectorAll('.sections-for-class').forEach(div => div.style.display = 'none');
+                        
+                        // Reset select all checkbox
+                        const selectAllCheckbox = document.getElementById('selectAllClasses');
+                        if (selectAllCheckbox) {
+                            selectAllCheckbox.checked = false;
+                            selectAllCheckbox.indeterminate = false;
+                        }
+                        
                         loadSessionsHierarchy();
                     } else {
-                        alert('Error: ' + (data.message || 'Failed to create session'));
+                        alert('Error: ' + (data.message || `Failed to ${isEditMode ? 'update' : 'create'} session`));
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('An error occurred while creating the session');
+                    alert(`An error occurred while ${isEditMode ? 'updating' : 'creating'} the session`);
                 })
                 .finally(() => {
                     submitBtn.textContent = originalText;
@@ -395,6 +503,65 @@ $user_role = $_SESSION['role'];
                     .catch(error => {
                         console.error('Error:', error);
                         alert('❌ An error occurred while adding the subject');
+                    })                    .finally(() => {
+                        submitBtn.textContent = originalText;
+                        submitBtn.disabled = false;
+                    });
+                });
+            }
+
+            // Edit Subject Form Submission
+            const editSubjectForm = document.getElementById('editSubjectFormData');
+            if (editSubjectForm) {
+                editSubjectForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const submitBtn = this.querySelector('.btn-primary');
+                    const originalText = submitBtn.textContent;
+                    submitBtn.textContent = 'Updating...';
+                    submitBtn.disabled = true;                    const formData = new FormData(this);
+                    const totalMarks = parseInt(formData.get('totalMarks'));
+                    const passingMarks = parseInt(formData.get('passingMarks'));
+                    
+                    // Validate that passing marks is not greater than total marks
+                    if (passingMarks > totalMarks) {
+                        alert('❌ Passing marks cannot be greater than total marks');
+                        submitBtn.textContent = originalText;
+                        submitBtn.disabled = false;
+                        return;
+                    }
+                    
+                    const data = {
+                        action: 'update_subject',
+                        subjectId: formData.get('subjectId'),
+                        examDate: formData.get('examDate'),
+                        examTime: formData.get('examTime'),
+                        maxMarks: totalMarks,
+                        passingMarks: passingMarks,
+                        durationMinutes: parseInt(formData.get('durationMinutes')),
+                        instructions: formData.get('instructions')
+                    };
+                    
+                    fetch('exam_session_actions.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.success) {
+                            alert('✅ Subject updated successfully!');
+                            hideEditSubjectForm();
+                            showSubjectsInClass(currentClass.id, currentClass.name);
+                        } else {
+                            alert('❌ Error: ' + result.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('❌ An error occurred while updating the subject');
                     })
                     .finally(() => {
                         submitBtn.textContent = originalText;
@@ -411,12 +578,11 @@ $user_role = $_SESSION['role'];
             .then(responses => Promise.all(responses.map(r => r.json())))
             .then(data => {
                 const [classes, years] = data;
-                
-                if (classes.success) {
+                  if (classes.success) {
                     populateClassesSelection(classes.data);
                 }
                 if (years.success) {
-                    populateSelect('academicYear', years.data, 'academic_year_id', 'academic_year_name');
+                    populateAcademicYearDropdown(years.data);
                 }
             })
             .catch(error => console.error('Error loading dropdown data:', error));
@@ -426,23 +592,20 @@ $user_role = $_SESSION['role'];
             const container = document.getElementById('classesSelection');
             if (!container) return;
             
-            let html = '';
-            classes.forEach(classItem => {
+            let html = '';            classes.forEach(classItem => {
                 html += `
                     <div class="class-checkbox-group">
                         <label class="class-checkbox-label">
-                            <input type="checkbox" name="selectedClasses" value="${classItem.class_id}" class="class-checkbox">
-                            <span class="class-name">${classItem.class_name}</span>
+                            <input type="checkbox" name="selectedClasses" value="${classItem.id}" class="class-checkbox">
+                            <span class="class-name">${classItem.name}</span>
                         </label>
-                        <div class="sections-for-class" id="sections-${classItem.class_id}" style="display: none;">
+                        <div class="sections-for-class" id="sections-${classItem.id}" style="display: none;">
                             <!-- Sections will be loaded here -->
                         </div>
                     </div>
                 `;
             });
-            container.innerHTML = html;
-
-            // Add event listeners for class checkboxes
+            container.innerHTML = html;            // Add event listeners for class checkboxes
             container.querySelectorAll('.class-checkbox').forEach(checkbox => {
                 checkbox.addEventListener('change', function() {
                     const classId = this.value;
@@ -456,7 +619,71 @@ $user_role = $_SESSION['role'];
                         // Uncheck all sections for this class
                         sectionsDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
                     }
+                    
+                    // Update select all checkbox state
+                    updateSelectAllState();
                 });
+            });
+            
+            // Add event listener for Select All checkbox
+            const selectAllCheckbox = document.getElementById('selectAllClasses');
+            if (selectAllCheckbox) {
+                selectAllCheckbox.addEventListener('change', function() {
+                    const allClassCheckboxes = document.querySelectorAll('.class-checkbox');
+                    const isChecked = this.checked;
+                    
+                    allClassCheckboxes.forEach(checkbox => {
+                        if (checkbox.checked !== isChecked) {
+                            checkbox.checked = isChecked;
+                            
+                            // Trigger change event for each checkbox
+                            const changeEvent = new Event('change');
+                            checkbox.dispatchEvent(changeEvent);
+                        }
+                    });
+                });
+            }        }
+        
+        function updateSelectAllState() {
+            const selectAllCheckbox = document.getElementById('selectAllClasses');
+            const allClassCheckboxes = document.querySelectorAll('.class-checkbox');
+            const checkedClassCheckboxes = document.querySelectorAll('.class-checkbox:checked');
+            
+            if (selectAllCheckbox && allClassCheckboxes.length > 0) {
+                if (checkedClassCheckboxes.length === 0) {
+                    // No classes selected
+                    selectAllCheckbox.checked = false;
+                    selectAllCheckbox.indeterminate = false;
+                } else if (checkedClassCheckboxes.length === allClassCheckboxes.length) {
+                    // All classes selected
+                    selectAllCheckbox.checked = true;
+                    selectAllCheckbox.indeterminate = false;
+                } else {
+                    // Some classes selected
+                    selectAllCheckbox.checked = false;
+                    selectAllCheckbox.indeterminate = true;
+                }
+            }
+        }
+        
+        function populateAcademicYearDropdown(years) {
+            const select = document.getElementById('academicYear');
+            if (!select) return;
+            
+            // Keep the default option
+            select.innerHTML = '<option value="">Select Academic Year</option>';
+            
+            years.forEach(year => {
+                const option = document.createElement('option');
+                option.value = year.name; // Use the name as value
+                option.textContent = year.name;
+                
+                // Select current year if it exists
+                if (year.is_current) {
+                    option.selected = true;
+                }
+                
+                select.appendChild(option);
             });
         }
 
@@ -732,27 +959,34 @@ $user_role = $_SESSION['role'];
                             </div>
                         </div>
                         <div class="card-footer">
-                            <div class="card-actions">
-                                <button class="btn btn-outline btn-sm" onclick="viewSubjectMarks(${subject.id})">
+                            <div class="card-actions">                                <button class="btn btn-outline btn-sm" onclick="viewSubjectMarks(${subject.id})">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                                     </svg>
                                     View Marks
                                 </button>
+                                <button class="btn btn-outline btn-sm" onclick="editSubject(${subject.id})">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                    Edit
+                                </button>
                                 ${!hasMarks ? `
-                                    <button class="btn btn-outline btn-sm" onclick="editSubject(${subject.id})">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                        </svg>
-                                        Edit
-                                    </button>
                                     <button class="btn btn-outline btn-sm btn-danger" onclick="deleteSubject(${subject.id})">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                         </svg>
                                         Delete
                                     </button>
-                                ` : ''}
+                                ` : `
+                                    <button class="btn btn-outline btn-sm btn-danger" onclick="deleteSubjectWithMarks(${subject.id})" 
+                                            title="This subject has recorded marks. Only admins can delete it.">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                        Delete
+                                    </button>
+                                `}
                             </div>
                         </div>
                     </div>
@@ -839,12 +1073,94 @@ $user_role = $_SESSION['role'];
 
         function viewSubjectMarks(subjectId) {
             window.location.href = `view_exam_marks.php?exam_subject_id=${subjectId}`;
-        }
-
-        function editSession(sessionId) {
-            // Implement edit functionality
-            console.log('Edit session:', sessionId);
-            // Could redirect to edit page or open modal
+        }        function editSession(sessionId) {
+            // Get session data and populate the form
+            fetch(`exam_session_actions.php?action=get_session_data&session_id=${sessionId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const session = data.session;
+                        
+                        // Show the form
+                        document.getElementById('sessionForm').style.display = 'block';
+                        document.querySelector('.form-title').textContent = 'Edit Exam Session';
+                          // Populate form fields
+                        document.getElementById('sessionName').value = session.session_name || '';
+                        document.getElementById('sessionType').value = session.session_type || '';
+                        document.getElementById('startDate').value = session.start_date || '';
+                        document.getElementById('endDate').value = session.end_date || '';
+                        document.getElementById('academicYear').value = session.academic_year || '';
+                        document.getElementById('status').value = session.status || 'draft';
+                        document.getElementById('description').value = session.description || '';
+                        
+                        // Set form to edit mode
+                        const form = document.getElementById('createSessionForm');
+                        form.dataset.editMode = 'true';
+                        form.dataset.sessionId = sessionId;
+                        
+                        // Change button text
+                        const submitBtn = form.querySelector('button[type="submit"]');
+                        submitBtn.textContent = 'Update Session';
+                        
+                        // Load classes and select the ones for this session
+                        loadClassesForEdit(sessionId);
+                        
+                        // Scroll to form
+                        document.getElementById('sessionForm').scrollIntoView({ behavior: 'smooth' });
+                    } else {
+                        alert('Error loading session data: ' + (data.message || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while loading session data');
+                });        }
+          function loadClassesForEdit(sessionId) {
+            // First load all classes
+            fetch('exam_session_actions.php?action=get_classes')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        populateClassesSelection(data.data);
+                        
+                        // Then get the classes assigned to this session and check them
+                        fetch(`exam_session_actions.php?action=get_classes_in_session&session_id=${sessionId}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    const assignedClasses = data.classes;
+                                    
+                                    // Check the assigned classes
+                                    assignedClasses.forEach(classInfo => {
+                                        const checkbox = document.querySelector(`input[name="selectedClasses"][value="${classInfo.class_id}"]`);
+                                        if (checkbox) {
+                                            checkbox.checked = true;
+                                            
+                                            // Trigger change event to load sections
+                                            const changeEvent = new Event('change');
+                                            checkbox.dispatchEvent(changeEvent);
+                                            
+                                            // After sections load, check the assigned sections
+                                            setTimeout(() => {
+                                                if (classInfo.section_id) {
+                                                    const sectionCheckbox = document.querySelector(`input[name="selectedSections"][value="${classInfo.section_id}"][data-class-id="${classInfo.class_id}"]`);
+                                                    if (sectionCheckbox) {
+                                                        sectionCheckbox.checked = true;
+                                                    }
+                                                }
+                                            }, 500);                                        }
+                                    });
+                                    
+                                    // Update select all checkbox state after loading assigned classes
+                                    setTimeout(() => {
+                                        updateSelectAllState();
+                                    }, 1000);
+                                }
+                            })
+                            .catch(error => console.error('Error loading assigned classes:', error));
+                    }
+                })
+                .catch(error => console.error('Error loading classes:', error));
         }
 
         function deleteSession(sessionId) {
@@ -871,26 +1187,74 @@ $user_role = $_SESSION['role'];
                     alert('An error occurred while deleting the session');
                 });
             }
+        }        function editSubject(subjectId) {
+            // First, fetch the current subject data
+            fetch(`exam_session_actions.php?action=get_subject_data&subjectId=${subjectId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Populate the edit form with current data
+                        document.getElementById('editSubjectId').value = subjectId;
+                        document.getElementById('editSubjectName').value = data.data.subject_name;
+                        document.getElementById('editAssessmentName').value = data.data.assessment_name;
+                        document.getElementById('editExamDate').value = data.data.exam_date;
+                        document.getElementById('editExamTime').value = data.data.exam_time || '';
+                        document.getElementById('editTotalMarks').value = data.data.total_marks;
+                        document.getElementById('editPassingMarks').value = data.data.passing_marks;
+                        document.getElementById('editDurationMinutes').value = data.data.duration_minutes || 60;
+                        document.getElementById('editInstructions').value = data.data.instructions || '';
+                        
+                        // Show the edit form
+                        showEditSubjectForm();
+                    } else {
+                        alert('❌ Error loading subject data: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('❌ An error occurred while loading subject data');
+                });
         }
 
-        function editSubject(subjectId) {
-            const newMaxMarks = prompt('Enter new maximum marks:');
-            if (newMaxMarks && !isNaN(newMaxMarks) && newMaxMarks > 0) {
+        function showEditSubjectForm() {
+            document.getElementById('editSubjectForm').style.display = 'block';
+            document.getElementById('sessionsView').style.display = 'none';
+            document.getElementById('classesView').style.display = 'none';
+            document.getElementById('subjectsView').style.display = 'none';
+        }        function hideEditSubjectForm() {
+            document.getElementById('editSubjectForm').style.display = 'none';
+            document.getElementById('subjectsView').style.display = 'block';
+        }
+
+        function validatePassingMarks() {
+            const totalMarksInput = document.getElementById('editTotalMarks');
+            const passingMarksInput = document.getElementById('editPassingMarks');
+            const totalMarks = parseInt(totalMarksInput.value) || 0;
+            const passingMarks = parseInt(passingMarksInput.value) || 0;
+            
+            if (passingMarks > totalMarks && totalMarks > 0) {
+                passingMarksInput.setCustomValidity('Passing marks cannot be greater than total marks');
+                passingMarksInput.setAttribute('max', totalMarks);
+            } else {
+                passingMarksInput.setCustomValidity('');
+                passingMarksInput.setAttribute('max', totalMarks || 999);
+            }
+        }        function deleteSubject(subjectId) {
+            if (confirm('Are you sure you want to delete this subject from the exam session? This action cannot be undone.')) {
                 fetch('exam_session_actions.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        action: 'update_subject',
-                        subjectId: subjectId,
-                        maxMarks: parseInt(newMaxMarks)
+                        action: 'delete_subject',
+                        subjectId: subjectId
                     })
                 })
                 .then(response => response.json())
                 .then(result => {
                     if (result.success) {
-                        alert('✅ Subject updated successfully!');
+                        alert('✅ Subject deleted successfully!');
                         showSubjectsInClass(currentClass.id, currentClass.name);
                     } else {
                         alert('❌ Error: ' + result.message);
@@ -898,13 +1262,21 @@ $user_role = $_SESSION['role'];
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('❌ An error occurred while updating the subject');
+                    alert('❌ An error occurred while deleting the subject');
                 });
             }
         }
 
-        function deleteSubject(subjectId) {
-            if (confirm('Are you sure you want to delete this subject from the exam session? This action cannot be undone.')) {
+        function deleteSubjectWithMarks(subjectId) {
+            const message = 'This subject has recorded marks. Are you sure you want to delete it?\n\n' +
+                          'WARNING: This action will permanently delete:\n' +
+                          '• The subject from the exam session\n' +
+                          '• All recorded marks for this subject\n' +
+                          '• All associated data\n\n' +
+                          'This action cannot be undone.\n\n' +
+                          'Only proceed if you have administrative permission.';
+            
+            if (confirm(message)) {
                 fetch('exam_session_actions.php', {
                     method: 'POST',
                     headers: {
@@ -1217,11 +1589,135 @@ $user_role = $_SESSION['role'];
                 gap: 0.75rem;
                 align-items: flex-start;
             }
-            
-            .card-actions {
+                  .card-actions {
                 width: 100%;
                 justify-content: flex-start;
             }
+        }        /* Class Selection Styles */
+        .classes-header {
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .select-all-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            color: #374151;
+            padding: 0.5rem;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+        
+        .select-all-label:hover {
+            background-color: #f3f4f6;
+        }
+        
+        .select-all-checkbox {
+            width: 1.125rem;
+            height: 1.125rem;
+            accent-color: #3b82f6;
+        }
+        
+        .select-all-text {
+            font-size: 0.9375rem;
+        }
+        
+        .classes-selection {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            padding: 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #f9fafb;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .class-checkbox-group {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 0.75rem;
+            transition: all 0.2s;
+        }
+
+        .class-checkbox-group:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .class-checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .class-checkbox {
+            width: 1rem;
+            height: 1rem;
+            accent-color: #3b82f6;
+        }
+
+        .class-name {
+            font-size: 0.875rem;
+        }
+
+        .sections-for-class {
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .sections-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .section-checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .section-checkbox-label:hover {
+            background: #f3f4f6;
+        }
+
+        .section-checkbox {
+            width: 0.875rem;
+            height: 0.875rem;
+            accent-color: #10b981;
+        }
+
+        .section-name {
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+
+        .no-sections {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            font-style: italic;
+        }
+
+        .form-hint {
+            display: block;
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: #6b7280;
         }
     </style>
 </body>

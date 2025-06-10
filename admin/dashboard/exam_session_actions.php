@@ -101,6 +101,18 @@ try {
             getAllSessions($conn);
             break;
             
+        case 'get_sections':
+            getSections($conn, $input);
+            break;
+            
+        case 'get_classes':
+            getClasses($conn);
+            break;
+            
+        case 'get_academic_years':
+            getAcademicYears($conn);
+            break;
+            
         default:
             http_response_code(400);
             echo json_encode(['success' => false, 'message' => 'Invalid action']);
@@ -122,7 +134,18 @@ function createExamSession($conn, $data, $user_id, $user_role) {
             throw new Exception("Field '{$field}' is required");
         }
     }
-      // Validate session type access
+    
+    // Validate classes data
+    if (empty($data['classes_data'])) {
+        throw new Exception("At least one class must be selected");
+    }
+    
+    $classes_data = json_decode($data['classes_data'], true);
+    if (!$classes_data || !is_array($classes_data)) {
+        throw new Exception("Invalid classes data format");
+    }
+    
+    // Validate session type access
     if ($data['sessionType'] === 'FA' && !hasRole(['admin', 'teacher', 'headmaster'])) {
         throw new Exception("Only admins, teachers and headmasters can create FA assessments");
     }
@@ -134,37 +157,75 @@ function createExamSession($conn, $data, $user_id, $user_role) {
         throw new Exception("End date must be after start date");
     }
     
-    // Insert exam session
-    $sql = "INSERT INTO exam_sessions (
-        session_name, session_type, academic_year, start_date, end_date, 
-        description, status, created_by, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, 'active', ?, NOW())";
+    // Start transaction
+    $conn->begin_transaction();
     
-    $stmt = $conn->prepare($sql);
-    $description = $data['description'] ?? '';
-    
-    $stmt->bind_param('ssssssi', 
-        $data['sessionName'],
-        $data['sessionType'],
-        $data['academicYear'],
-        $start_date,
-        $end_date,
-        $description,
-        $user_id
-    );
-    
-    if ($stmt->execute()) {
+    try {
+        // Insert exam session (without class_id for now, keeping for backward compatibility)
+        $sql = "INSERT INTO exam_sessions (
+            session_name, session_type, academic_year, start_date, end_date, 
+            description, status, class_id, created_by, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+        
+        $stmt = $conn->prepare($sql);
+        $description = $data['description'] ?? '';
+        $status = $data['status'] ?? 'active';
+        $first_class_id = $classes_data[0]['class_id']; // Keep first class for backward compatibility
+        
+        $stmt->bind_param('sssssssii', 
+            $data['sessionName'],
+            $data['sessionType'],
+            $data['academicYear'],
+            $start_date,
+            $end_date,
+            $description,
+            $status,
+            $first_class_id,
+            $user_id
+        );
+        
+        if (!$stmt->execute()) {
+            throw new Exception("Failed to create exam session: " . $conn->error);
+        }
+        
         $session_id = $conn->insert_id;
         
-        // Log the action        logAudit('exam_sessions', $session_id, 'INSERT');
+        // Insert class-session relationships
+        $class_sql = "INSERT INTO exam_session_classes (exam_session_id, class_id, section_id) VALUES (?, ?, ?)";
+        $class_stmt = $conn->prepare($class_sql);
+        
+        foreach ($classes_data as $class_data) {
+            $class_id = $class_data['class_id'];
+            $section_id = isset($class_data['section_id']) && $class_data['section_id'] !== null && $class_data['section_id'] !== 'null' ? (int)$class_data['section_id'] : null;
+            
+            if ($section_id === null) {
+                $class_stmt = $conn->prepare("INSERT INTO exam_session_classes (exam_session_id, class_id, section_id) VALUES (?, ?, NULL)");
+                $class_stmt->bind_param('ii', $session_id, $class_id);
+            } else {
+                $class_stmt = $conn->prepare("INSERT INTO exam_session_classes (exam_session_id, class_id, section_id) VALUES (?, ?, ?)");
+                $class_stmt->bind_param('iii', $session_id, $class_id, $section_id);
+            }
+            
+            if (!$class_stmt->execute()) {
+                throw new Exception("Failed to assign class to session: " . $conn->error);
+            }
+        }
+        
+        // Commit transaction
+        $conn->commit();
+        
+        // Log the action
+        logAudit('exam_sessions', $session_id, 'INSERT');
         
         echo json_encode([
             'success' => true, 
-            'message' => 'Exam session created successfully',
+            'message' => 'Exam session created successfully with selected classes',
             'session_id' => $session_id
         ]);
-    } else {
-        throw new Exception("Failed to create exam session: " . $conn->error);
+        
+    } catch (Exception $e) {
+        $conn->rollback();
+        throw $e;
     }
 }
 
@@ -172,7 +233,7 @@ function createExamSession($conn, $data, $user_id, $user_role) {
  * Update an existing exam session
  */
 function updateExamSession($conn, $data, $user_id, $user_role) {
-    $session_id = $data['sessionId'] ?? 0;
+    $session_id = $data['session_id'] ?? $data['sessionId'] ?? 0;
     if (!$session_id) {
         throw new Exception("Session ID is required");
     }
@@ -193,39 +254,75 @@ function updateExamSession($conn, $data, $user_id, $user_role) {
         throw new Exception("Cannot modify completed exam sessions");
     }
     
-    // Build update query dynamically
-    $update_fields = [];
-    $params = [];
-    $types = '';
+    // Start transaction
+    $conn->begin_transaction();
     
-    $allowed_fields = ['sessionName' => 'session_name', 'description' => 'description', 
-                      'startDate' => 'start_date', 'endDate' => 'end_date', 'status' => 'status'];
-    
-    foreach ($allowed_fields as $input_field => $db_field) {
-        if (isset($data[$input_field])) {
-            $update_fields[] = "{$db_field} = ?";
-            $params[] = $data[$input_field];
-            $types .= 's';
+    try {
+        // Build update query dynamically
+        $update_fields = [];
+        $params = [];
+        $types = '';
+        
+        $allowed_fields = [
+            'sessionName' => 'session_name', 
+            'sessionType' => 'session_type',
+            'academicYear' => 'academic_year',
+            'description' => 'description', 
+            'startDate' => 'start_date', 
+            'endDate' => 'end_date', 
+            'status' => 'status'
+        ];
+        
+        foreach ($allowed_fields as $input_field => $db_field) {
+            if (isset($data[$input_field])) {
+                $update_fields[] = "{$db_field} = ?";
+                $params[] = $data[$input_field];
+                $types .= 's';
+            }
         }
-    }
-    
-    if (empty($update_fields)) {
-        throw new Exception("No fields to update");
-    }
-    
-    $update_fields[] = "updated_at = NOW()";
-    $sql = "UPDATE exam_sessions SET " . implode(', ', $update_fields) . " WHERE id = ?";
-    $params[] = $session_id;
-    $types .= 'i';
-    
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param($types, ...$params);
-    
-    if ($stmt->execute()) {        logAudit('exam_sessions', $session_id, 'UPDATE');
+        
+        if (!empty($update_fields)) {
+            $update_fields[] = "updated_at = NOW()";
+            $sql = "UPDATE exam_sessions SET " . implode(', ', $update_fields) . " WHERE id = ?";
+            $params[] = $session_id;
+            $types .= 'i';
+            
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param($types, ...$params);
+            $stmt->execute();
+        }
+        
+        // Update classes if provided
+        if (isset($data['classes_data'])) {
+            $classes_data = json_decode($data['classes_data'], true);
+            if ($classes_data && is_array($classes_data)) {
+                // Delete existing class assignments
+                $delete_sql = "DELETE FROM exam_session_classes WHERE exam_session_id = ?";
+                $delete_stmt = $conn->prepare($delete_sql);
+                $delete_stmt->bind_param('i', $session_id);
+                $delete_stmt->execute();
+                
+                // Insert new class assignments
+                $insert_sql = "INSERT INTO exam_session_classes (exam_session_id, class_id, section_id) VALUES (?, ?, ?)";
+                $insert_stmt = $conn->prepare($insert_sql);
+                
+                foreach ($classes_data as $class_data) {
+                    $class_id = $class_data['class_id'];
+                    $section_id = $class_data['section_id'] ?: null;
+                    
+                    $insert_stmt->bind_param('iii', $session_id, $class_id, $section_id);
+                    $insert_stmt->execute();
+                }
+            }
+        }
+        
+        $conn->commit();
+        logAudit('exam_sessions', $session_id, 'UPDATE');
         
         echo json_encode(['success' => true, 'message' => 'Exam session updated successfully']);
-    } else {
-        throw new Exception("Failed to update exam session: " . $conn->error);
+    } catch (Exception $e) {
+        $conn->rollback();
+        throw $e;
     }
 }
 
@@ -233,7 +330,7 @@ function updateExamSession($conn, $data, $user_id, $user_role) {
  * Delete an exam session
  */
 function deleteExamSession($conn, $data, $user_id, $user_role) {
-    $session_id = $data['sessionId'] ?? 0;
+    $session_id = $data['session_id'] ?? $data['sessionId'] ?? 0;
     if (!$session_id) {
         throw new Exception("Session ID is required");
     }
@@ -254,16 +351,32 @@ function deleteExamSession($conn, $data, $user_id, $user_role) {
         throw new Exception("Cannot delete exam session with existing subjects. Please remove all subjects first.");
     }
     
-    // Delete the session
-    $sql = "DELETE FROM exam_sessions WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param('i', $session_id);
+    // Start transaction
+    $conn->begin_transaction();
     
-    if ($stmt->execute()) {        logAudit('exam_sessions', $session_id, 'DELETE');
+    try {
+        // Delete from junction table first
+        $junction_sql = "DELETE FROM exam_session_classes WHERE exam_session_id = ?";
+        $junction_stmt = $conn->prepare($junction_sql);
+        $junction_stmt->bind_param('i', $session_id);
+        $junction_stmt->execute();
         
-        echo json_encode(['success' => true, 'message' => 'Exam session deleted successfully']);
-    } else {
-        throw new Exception("Failed to delete exam session: " . $conn->error);
+        // Delete the session
+        $sql = "DELETE FROM exam_sessions WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param('i', $session_id);
+        
+        if ($stmt->execute()) {
+            $conn->commit();
+            logAudit('exam_sessions', $session_id, 'DELETE');
+            
+            echo json_encode(['success' => true, 'message' => 'Exam session deleted successfully']);
+        } else {
+            throw new Exception("Failed to delete exam session: " . $conn->error);
+        }
+    } catch (Exception $e) {
+        $conn->rollback();
+        throw $e;
     }
 }
 
@@ -321,19 +434,24 @@ function addExamSubject($conn, $data, $user_id, $user_role) {
       // Insert exam subject
     $sql = "INSERT INTO exam_subjects (
         exam_session_id, subject_id, assessment_id, exam_date, 
-        total_marks, status, created_by, created_at
-    ) VALUES (?, ?, ?, ?, ?, 'active', ?, NOW())";
+        total_marks, exam_time, duration_minutes, passing_marks
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     
     $max_marks = $data['maxMarks'] ?? 100;
+    $exam_time = $data['examTime'] ?? null;
+    $duration = $data['durationMinutes'] ?? 60;
+    $passing_marks = $data['passingMarks'] ?? ($max_marks * 0.4); // 40% as default passing marks
     
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param('iiisii', 
+    $stmt->bind_param('iiisisii', 
         $data['sessionId'],
         $data['subjectId'],
         $data['assessmentId'],
         $data['examDate'],
         $max_marks,
-        $user_id
+        $exam_time,
+        $duration,
+        $passing_marks
     );
     
     if ($stmt->execute()) {
@@ -370,22 +488,32 @@ function updateExamSubject($conn, $data, $user_id, $user_role) {
         throw new Exception("Exam subject not found");
     }
     
-    // Only allow updates if not completed or user is admin/headmaster
-    if ($subject['status'] === 'completed' && !hasRole(['admin', 'headmaster'])) {
-        throw new Exception("Cannot modify completed exam subjects");
-    }
+    // Note: No status check needed as exam_subjects table doesn't have status column
+    // All exam subjects can be updated by authorized users
     
     // Build update query dynamically
     $update_fields = [];
-    $params = [];    $types = '';
+    $params = [];
+    $types = '';
     
-    $allowed_fields = ['examDate' => 'exam_date', 'maxMarks' => 'total_marks', 'status' => 'status'];
+    $allowed_fields = [
+        'examDate' => 'exam_date', 
+        'maxMarks' => 'total_marks', 
+        'examTime' => 'exam_time',
+        'durationMinutes' => 'duration_minutes',
+        'passingMarks' => 'passing_marks',
+        'instructions' => 'instructions'
+    ];
     
     foreach ($allowed_fields as $input_field => $db_field) {
         if (isset($data[$input_field])) {
             $update_fields[] = "{$db_field} = ?";
             $params[] = $data[$input_field];
-            $types .= $input_field === 'maxMarks' ? 'i' : 's';
+            if ($input_field === 'maxMarks' || $input_field === 'durationMinutes' || $input_field === 'passingMarks') {
+                $types .= 'i';
+            } else {
+                $types .= 's';
+            }
         }
     }
     
@@ -393,7 +521,6 @@ function updateExamSubject($conn, $data, $user_id, $user_role) {
         throw new Exception("No fields to update");
     }
     
-    $update_fields[] = "updated_at = NOW()";
     $sql = "UPDATE exam_subjects SET " . implode(', ', $update_fields) . " WHERE id = ?";
     $params[] = $subject_id;
     $types .= 'i';
@@ -619,7 +746,7 @@ function updateStudentMarks($conn, $data, $user_id, $user_role) {
  * Get session data for editing
  */
 function getSessionData($conn, $data) {
-    $session_id = $data['sessionId'] ?? 0;
+    $session_id = $data['session_id'] ?? $data['sessionId'] ?? 0;
     if (!$session_id) {
         throw new Exception("Session ID is required");
     }
@@ -633,7 +760,8 @@ function getSessionData($conn, $data) {
     if (!$session) {
         throw new Exception("Exam session not found");
     }
-      echo json_encode(['success' => true, 'data' => $session]);
+    
+    echo json_encode(['success' => true, 'session' => $session]);
 }
 
 /**
@@ -671,13 +799,10 @@ function getSessionCounts($conn, $data) {
         throw new Exception("Session ID is required");
     }
     
-    // Get distinct classes in this session
-    $classes_sql = "SELECT COUNT(DISTINCT es.class_id) as classes_count
-                    FROM exam_sessions sess
-                    LEFT JOIN exam_subjects esub ON sess.id = esub.exam_session_id
-                    LEFT JOIN assessments a ON esub.assessment_id = a.id
-                    LEFT JOIN exam_subjects es ON a.id = es.assessment_id AND es.exam_session_id = sess.id
-                    WHERE sess.id = ?";
+    // Get distinct classes in this session using the new junction table
+    $classes_sql = "SELECT COUNT(DISTINCT esc.class_id) as classes_count
+                    FROM exam_session_classes esc
+                    WHERE esc.exam_session_id = ?";
     
     $stmt = $conn->prepare($classes_sql);
     $stmt->bind_param('i', $session_id);
@@ -702,6 +827,29 @@ function getSessionCounts($conn, $data) {
 }
 
 /**
+ * Get sections for a specific class
+ */
+function getSections($conn, $data) {
+    $class_id = $data['class_id'] ?? 0;
+    if (!$class_id) {
+        throw new Exception("Class ID is required");
+    }
+    
+    $sql = "SELECT id, name FROM sections WHERE class_id = ? ORDER BY name";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param('i', $class_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $sections = [];
+    while ($row = $result->fetch_assoc()) {
+        $sections[] = $row;
+    }
+    
+    echo json_encode(['success' => true, 'sections' => $sections]);
+}
+
+/**
  * Get classes in a specific session
  */
 function getClassesInSession($conn, $data) {
@@ -713,18 +861,23 @@ function getClassesInSession($conn, $data) {
     $sql = "SELECT DISTINCT 
                 c.id as class_id,
                 c.name as class_name,
-                s.id as section_id,
+                esc.section_id,
                 s.name as section_name,
                 COUNT(DISTINCT esub.id) as subjects_count,
                 COUNT(DISTINCT st.user_id) as students_count
-            FROM exam_sessions sess
-            JOIN exam_subjects esub ON sess.id = esub.exam_session_id
-            JOIN assessments a ON esub.assessment_id = a.id
-            JOIN classes c ON a.class_id = c.id
-            LEFT JOIN sections s ON a.section_id = s.id
-            LEFT JOIN students st ON c.id = st.class_id AND (s.id IS NULL OR s.id = st.section_id)
-            WHERE sess.id = ?
-            GROUP BY c.id, c.name, s.id, s.name
+            FROM exam_session_classes esc
+            JOIN classes c ON esc.class_id = c.id
+            LEFT JOIN sections s ON esc.section_id = s.id
+            LEFT JOIN exam_subjects esub ON esc.exam_session_id = esub.exam_session_id 
+                AND EXISTS (
+                    SELECT 1 FROM assessments a 
+                    WHERE a.id = esub.assessment_id 
+                    AND a.class_id = c.id 
+                    AND (a.section_id = esc.section_id OR (a.section_id IS NULL AND esc.section_id IS NULL))
+                )
+            LEFT JOIN students st ON c.id = st.class_id AND (esc.section_id IS NULL OR esc.section_id = st.section_id)
+            WHERE esc.exam_session_id = ?
+            GROUP BY c.id, c.name, esc.section_id, s.name
             ORDER BY c.name, s.name";
     
     $stmt = $conn->prepare($sql);
@@ -736,7 +889,7 @@ function getClassesInSession($conn, $data) {
     while ($row = $result->fetch_assoc()) {
         $classes[] = $row;
     }
-    
+
     echo json_encode(['success' => true, 'classes' => $classes]);
 }
 
@@ -785,7 +938,7 @@ function getSubjectsInClass($conn, $data) {
  * Get all available subjects
  */
 function getAllSubjects($conn) {
-    $sql = "SELECT id, name, code, description FROM subjects ORDER BY name";
+    $sql = "SELECT id, name, code FROM subjects ORDER BY name";
     $result = $conn->query($sql);
     
     $subjects = [];
@@ -832,14 +985,14 @@ function getAssessments($conn, $data) {
 function getAllSessions($conn) {
     $sql = "SELECT 
                 es.*,
-                c.name as class_name,
-                s.name as section_name,
+                GROUP_CONCAT(DISTINCT c.name ORDER BY c.name) as class_names,
+                COUNT(DISTINCT esc.class_id) as class_count,
                 COUNT(DISTINCT esub.id) as subject_count,
                 COUNT(DISTINCT er.id) as marks_entered,
                 ROUND(AVG(er.marks_obtained), 2) as avg_marks
             FROM exam_sessions es
-            LEFT JOIN classes c ON es.class_id = c.id
-            LEFT JOIN sections s ON es.section_id = s.id
+            LEFT JOIN exam_session_classes esc ON es.id = esc.exam_session_id
+            LEFT JOIN classes c ON esc.class_id = c.id
             LEFT JOIN exam_subjects esub ON es.id = esub.exam_session_id
             LEFT JOIN assessments a ON esub.assessment_id = a.id
             LEFT JOIN exam_results er ON a.id = er.assessment_id
@@ -854,5 +1007,49 @@ function getAllSessions($conn) {
     }
     
     echo json_encode(['success' => true, 'sessions' => $sessions]);
+}
+
+/**
+ * Get all classes
+ */
+function getClasses($conn) {
+    $sql = "SELECT id, name FROM classes ORDER BY name";
+    $result = $conn->query($sql);
+    
+    $classes = [];
+    while ($row = $result->fetch_assoc()) {
+        $classes[] = $row;
+    }
+    
+    echo json_encode(['success' => true, 'data' => $classes]);
+}
+
+/**
+ * Get academic years
+ */
+function getAcademicYears($conn) {
+    $sql = "SELECT id, name, is_current FROM academic_years ORDER BY name DESC";
+    $result = $conn->query($sql);
+    
+    $years = [];
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            $years[] = [
+                'id' => $row['id'],
+                'name' => $row['name'],
+                'is_current' => $row['is_current']
+            ];
+        }
+    }
+    
+    // If no academic years in table, provide default
+    if (empty($years)) {
+        $years = [
+            ['id' => '2024-25', 'name' => '2024-25', 'is_current' => true],
+            ['id' => '2025-26', 'name' => '2025-26', 'is_current' => false]
+        ];
+    }
+    
+    echo json_encode(['success' => true, 'data' => $years]);
 }
 ?>
