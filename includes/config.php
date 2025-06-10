@@ -60,6 +60,17 @@ function getDbConnection() {
     return $conn;
 }
 
+// Create global database connection
+$conn = getDbConnection();
+if (!$conn) {
+    if (ENVIRONMENT === 'development') {
+        die("Database connection failed. Please check your database configuration.");
+    } else {
+        error_log("Database connection failed in config.php");
+        die("Database connection error. Please try again later.");
+    }
+}
+
 /**
  * Execute a prepared query with parameters
  * @param string $sql SQL query with placeholders
