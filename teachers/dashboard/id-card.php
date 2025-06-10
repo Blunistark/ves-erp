@@ -1,4 +1,64 @@
-<?php include 'sidebar.php'; ?>
+<?php 
+include 'sidebar.php'; 
+require_once 'con.php';
+
+// Get current user's profile data
+$user_id = $_SESSION['user_id'];
+$query = "SELECT u.id, u.email, u.full_name, u.created_at,
+                 t.employee_number, t.joined_date, t.qualification, t.date_of_birth,
+                 t.profile_photo, t.address, t.city, t.phone, t.alt_email,
+                 t.emergency_contact, t.gender, t.state, t.zip_code, t.country,
+                 t.department, t.position, t.experience_years, t.bio
+          FROM users u 
+          LEFT JOIN teachers t ON u.id = t.user_id 
+          WHERE u.id = ?";
+
+$stmt = $conn->prepare($query);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$profile = $result->fetch_assoc();
+
+// Default values for missing data
+$fullName = $profile['full_name'] ?? 'Teacher Name';
+$employeeId = $profile['employee_number'] ?? 'TCH-' . date('Y') . '-' . str_pad($user_id, 4, '0', STR_PAD_LEFT);
+$department = ucfirst($profile['department'] ?? 'General');
+$position = $profile['position'] ?? 'Teacher';
+$joinedDate = $profile['joined_date'] ? date('F j, Y', strtotime($profile['joined_date'])) : 'Not Set';
+$phone = $profile['phone'] ?? 'Not Available';
+$email = $profile['email'] ?? 'Not Available';
+$address = $profile['address'] ? $profile['address'] : 'Not Available';
+$city = $profile['city'] ?? '';
+$state = $profile['state'] ?? '';
+$emergencyContact = $profile['emergency_contact'] ?? 'Not Available';
+
+// Profile photo
+$profilePhoto = !empty($profile['profile_photo']) ? '../../' . $profile['profile_photo'] : 'https://randomuser.me/api/portraits/men/32.jpg';
+
+// Format address
+$fullAddress = trim($address);
+if ($city) $fullAddress .= ($fullAddress ? ', ' : '') . $city;
+if ($state) $fullAddress .= ($fullAddress ? ', ' : '') . $state;
+if (!$fullAddress) $fullAddress = 'Not Available';
+
+// Blood group (would need to be added to database in real implementation)
+$bloodGroup = 'O+'; // Default value
+
+// Emergency contact details (simplified)
+$emergencyName = 'Emergency Contact';
+$emergencyRelation = 'Contact Person';
+if ($emergencyContact && $emergencyContact !== 'Not Available') {
+    // Try to extract name from phone if it's formatted like "Name - Phone"
+    if (strpos($emergencyContact, ' - ') !== false) {
+        $parts = explode(' - ', $emergencyContact, 2);
+        $emergencyName = $parts[0];
+        $emergencyContact = $parts[1];
+    }
+}
+
+// Generate QR code data
+$qrData = urlencode($employeeId . '|' . $fullName . '|' . $department);
+?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -99,29 +159,29 @@
                             </div>
                             <div class="id-card-content">
                                 <div class="teacher-photo-container">
-                                    <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Teacher Photo" class="teacher-photo">
+                                    <img src="<?php echo htmlspecialchars($profilePhoto); ?>" alt="Teacher Photo" class="teacher-photo">
                                 </div>
                                 <div class="teacher-info">
-                                    <h2 class="teacher-name">David Johnson</h2>
-                                    <p class="teacher-role">Science Teacher</p>
+                                    <h2 class="teacher-name"><?php echo htmlspecialchars($fullName); ?></h2>
+                                    <p class="teacher-role"><?php echo htmlspecialchars($position); ?></p>
                                     <div class="info-grid">
                                         <span class="info-label">Employee ID:</span>
-                                        <span class="info-value">TCH-2025-0042</span>
+                                        <span class="info-value"><?php echo htmlspecialchars($employeeId); ?></span>
                                         
                                         <span class="info-label">Department:</span>
-                                        <span class="info-value">Science Department</span>
+                                        <span class="info-value"><?php echo htmlspecialchars($department); ?> Department</span>
                                         
                                         <span class="info-label">Date of Joining:</span>
-                                        <span class="info-value">June 15, 2020</span>
+                                        <span class="info-value"><?php echo htmlspecialchars($joinedDate); ?></span>
                                         
                                         <span class="info-label">Blood Group:</span>
-                                        <span class="info-value">O+</span>
+                                        <span class="info-value"><?php echo htmlspecialchars($bloodGroup); ?></span>
                                     </div>
                                 </div>
                             </div>
                             <div class="id-card-footer">
                                 <div class="qr-code">
-                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=TCH-2025-0042" alt="QR Code" class="qr-code-image">
+                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=<?php echo $qrData; ?>" alt="QR Code" class="qr-code-image">
                                 </div>
                                 <div class="signature-container">
                                     <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAAA1CAYAAACpP+9JAAADu0lEQVR4Xu2aO2tVQRSFV0QhKMQ3GrAQfICFtVraWVhZpBHsFLHTzlew9R9Y2AkBC0HQRrRQFEvFRgVFxQcYfOtaZsydnJy5Z2buObO8Z7OLkDt3z8yeNWvWzDT1XtL1YKFAnRTolfR3j9dPMv3HGLD7eY0BzICd4OMckMQBwmGdIiPPGJgkYkBtM7CMWPJNmURiwJAlYqcvJwhKYPV6veF7C3xAYjhbqXxRQf4xB6p/m0i0Kl9UkH/MifTvhX1qqVwprxPmFPdYcSLZdUoM6k53x8AJ+SHMzsoLrYynJ2n3ViYXyQwUrg8vKmjEiiBiXCjWcXhFZ2jJrQgsslYFVhKIUhmcj9oSt6eSTiYf7wXyXMVVYPB9QTBXkCJFJRk+K+lccn8xh3t+I2k7S/G5Iqvv/2AkPZX0VZLP50MNGXlhZVtNdDzOtY7fj5GFf5ak2znz8vl8JYlnrXg/Tn5Yg6BgwYeKSyW9lvQ8+/FKFv5uWBJ+eo4FLJh3TNKFzCL+mABrp6RPCexKYLHQ55I2Zf8UQv6ehXIjgVY01wI5PN+/rPvpxDiLzrUkAd+8a14LfpcDi9oKuAANmKr0VdLrBPY+a54vLFXLBBbWAaCIdMBUbSZf2VoSdVZh/ZTWCCA5lmUufRdYAJWAiyiYRYxVsKpzrJwzg1oMbwFuKkzXXdDxIVLVLG2SaFkRz3cWzOLFdlSwVnlvhbLAWQBYpLByYk46s8KA4Wwm5oBVSgUADxWsVd9bYUUAijQOoqDEcMGCJSXIqCfprxRYp1u4DspUTKlwcEsLRSClwtvZ7YWwQpuMFEgLEFk++nErD7jSLCY0ypYKcLhfDVxzWOEKrR0Ku7ZcYhbVWQCsQaahS0KLrYbx1cA1D7CmjQnrlgqqAGweYE0bE9YtFVQB2DzAmjYmrFsqqAKweYI1TUxYt1RQFWCnGjU7mmkrVMKKhfOq4JoFWLYM2eQLbxiXbBq21FRg25r0GbMwFyzsBbAGdYR1VXZJBY8kXZT0Kw+sMl/dTcX0zQIEU+2iIiVOAnPk4IrASidmQgBrdASnKQlYrTF6DjTKnpOTKpgfV4EBE9uv1hc2OMk+Vr7dwM/ZBIEEq9zXXDt5+D2KG2Xtaz8X56Z1Y4hBLWAAF5Nj0BnYTgqGnRioZqmA++q8HJsHuRUHi/03cQQrfx3jBStHp0cBVG8KtirAanJkXWeApcuRcf8BqK76YjQpxQMAAAAASUVORK5CYII=" alt="Principal Signature" class="signature-image">
@@ -150,13 +210,13 @@
                                     <h3 class="back-section-title">Contact Information</h3>
                                     <div class="contact-grid">
                                         <span class="info-label">Phone:</span>
-                                        <span class="info-value">+1 (555) 234-5678</span>
+                                        <span class="info-value"><?php echo htmlspecialchars($phone); ?></span>
                                         
                                         <span class="info-label">Email:</span>
-                                        <span class="info-value">d.johnson@victory-edu.org</span>
+                                        <span class="info-value"><?php echo htmlspecialchars($email); ?></span>
                                         
                                         <span class="info-label">Address:</span>
-                                        <span class="info-value">42 Academy Street, Springfield</span>
+                                        <span class="info-value"><?php echo htmlspecialchars($fullAddress); ?></span>
                                     </div>
                                 </div>
                                 
@@ -165,13 +225,13 @@
                                     <div class="emergency-contact">
                                         <div class="contact-grid">
                                             <span class="info-label">Name:</span>
-                                            <span class="info-value">Lisa Johnson</span>
+                                            <span class="info-value"><?php echo htmlspecialchars($emergencyName); ?></span>
                                             
                                             <span class="info-label">Relation:</span>
-                                            <span class="info-value">Spouse</span>
+                                            <span class="info-value"><?php echo htmlspecialchars($emergencyRelation); ?></span>
                                             
                                             <span class="info-label">Phone:</span>
-                                            <span class="info-value">+1 (555) 987-6543</span>
+                                            <span class="info-value"><?php echo htmlspecialchars($emergencyContact); ?></span>
                                         </div>
                                     </div>
                                 </div>

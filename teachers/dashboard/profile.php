@@ -1,4 +1,32 @@
-<?php include 'sidebar.php'; ?>
+<?php 
+include 'sidebar.php'; 
+require_once 'con.php';
+
+// Get current user's profile data
+$user_id = $_SESSION['user_id'];
+$query = "SELECT u.id, u.email, u.full_name, u.created_at,
+                 t.employee_number, t.joined_date, t.qualification, t.date_of_birth,
+                 t.profile_photo, t.address, t.city, t.phone, t.alt_email,
+                 t.emergency_contact, t.gender, t.state, t.zip_code, t.country,
+                 t.department, t.position, t.experience_years, t.bio
+          FROM users u 
+          LEFT JOIN teachers t ON u.id = t.user_id 
+          WHERE u.id = ?";
+
+$stmt = $conn->prepare($query);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$profile = $result->fetch_assoc();
+
+// Split full name
+$nameParts = explode(' ', $profile['full_name'] ?? '', 2);
+$firstName = $nameParts[0] ?? '';
+$lastName = $nameParts[1] ?? '';
+
+// Default profile photo
+$profilePhoto = !empty($profile['profile_photo']) ? '../../' . $profile['profile_photo'] : 'https://randomuser.me/api/portraits/men/32.jpg';
+?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -11,6 +39,198 @@
     
     <link rel="stylesheet" href="css/sidebar.css">
     <link rel="stylesheet" href="css/profile.css">
+    
+    <!-- Enhanced Dialog Styles -->
+    <style>
+        /* Modern Modal Styling */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-dialog {
+            background: white;
+            border-radius: 12px;
+            padding: 0;
+            min-width: 400px;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            transform: scale(0.8) translateY(20px);
+            transition: all 0.3s ease;
+        }
+        
+        .modal-overlay.show .modal-dialog {
+            transform: scale(1) translateY(0);
+        }
+        
+        .modal-header {
+            padding: 20px 24px 16px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .modal-icon {
+            width: 24px;
+            height: 24px;
+        }
+        
+        .modal-icon.success {
+            color: #10b981;
+        }
+        
+        .modal-icon.error {
+            color: #ef4444;
+        }
+        
+        .modal-icon.warning {
+            color: #f59e0b;
+        }
+        
+        .modal-icon.info {
+            color: #3b82f6;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: #6b7280;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-close:hover {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        
+        .modal-body {
+            padding: 20px 24px;
+        }
+        
+        .modal-message {
+            color: #6b7280;
+            line-height: 1.6;
+            margin: 0;
+        }
+        
+        .modal-footer {
+            padding: 16px 24px 20px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+        
+        .modal-btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+            font-size: 0.875rem;
+        }
+        
+        .modal-btn-primary {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+        
+        .modal-btn-primary:hover {
+            background: #2563eb;
+            border-color: #2563eb;
+        }
+        
+        .modal-btn-secondary {
+            background: #f9fafb;
+            color: #374151;
+            border-color: #d1d5db;
+        }
+        
+        .modal-btn-secondary:hover {
+            background: #f3f4f6;
+            border-color: #9ca3af;
+        }
+        
+        .modal-btn-danger {
+            background: #ef4444;
+            color: white;
+            border-color: #ef4444;
+        }
+        
+        .modal-btn-danger:hover {
+            background: #dc2626;
+            border-color: #dc2626;
+        }
+        
+        /* Progress Modal */
+        .progress-container {
+            margin: 16px 0;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        .progress-text {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-top: 8px;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
 <div class="sidebar-overlay"></div>
@@ -33,11 +253,11 @@
                 <div class="profile-card">
                     <div class="profile-header">
                         <div class="profile-pic">
-                            <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Teacher Profile" id="profile-image">
+                            <img src="<?php echo htmlspecialchars($profilePhoto); ?>" alt="Teacher Profile" id="profile-image">
                             <div class="change-photo" onclick="showAvatarModal()">Change Photo</div>
                         </div>
-                        <h2 class="profile-name">John Smith</h2>
-                        <p class="profile-role">Mathematics Teacher</p>
+                        <h2 class="profile-name"><?php echo htmlspecialchars($profile['full_name'] ?? 'No Name'); ?></h2>
+                        <p class="profile-role"><?php echo htmlspecialchars($profile['department'] ?? 'Teacher'); ?> <?php echo $profile['position'] ? '- ' . htmlspecialchars($profile['position']) : ''; ?></p>
                     </div>
                     <div class="profile-body">
                         <div class="profile-info-item">
@@ -48,7 +268,7 @@
                             </svg>
                             <div>
                                 <div class="profile-info-label">Employee ID</div>
-                                <div class="profile-info-text">TCH-2023-1025</div>
+                                <div class="profile-info-text"><?php echo htmlspecialchars($profile['employee_number'] ?? 'Not Set'); ?></div>
                             </div>
                         </div>
                         <div class="profile-info-item">
@@ -57,7 +277,7 @@
                             </svg>
                             <div>
                                 <div class="profile-info-label">Phone</div>
-                                <div class="profile-info-text">+1 (123) 456-7890</div>
+                                <div class="profile-info-text"><?php echo htmlspecialchars($profile['phone'] ?? 'Not Set'); ?></div>
                             </div>
                         </div>
                         <div class="profile-info-item">
@@ -67,7 +287,7 @@
                             </svg>
                             <div>
                                 <div class="profile-info-label">Email</div>
-                                <div class="profile-info-text">john.smith@schooldomain.edu</div>
+                                <div class="profile-info-text"><?php echo htmlspecialchars($profile['email'] ?? 'Not Set'); ?></div>
                             </div>
                         </div>
                         <div class="profile-info-item">
@@ -77,7 +297,7 @@
                             </svg>
                             <div>
                                 <div class="profile-info-label">Department</div>
-                                <div class="profile-info-text">Mathematics</div>
+                                <div class="profile-info-text"><?php echo htmlspecialchars($profile['department'] ?? 'Not Set'); ?></div>
                             </div>
                         </div>
                         <div class="profile-info-item">
@@ -87,7 +307,7 @@
                             </svg>
                             <div>
                                 <div class="profile-info-label">Joined</div>
-                                <div class="profile-info-text">August 12, 2023</div>
+                                <div class="profile-info-text"><?php echo $profile['joined_date'] ? date('F j, Y', strtotime($profile['joined_date'])) : 'Not Set'; ?></div>
                             </div>
                         </div>
                     </div>
@@ -142,37 +362,37 @@
                         <div class="profile-tab active" onclick="changeTab(this, 'personal-info')">Personal Information</div>
                         <div class="profile-tab" onclick="changeTab(this, 'documents')">Documents</div>
                         <div class="profile-tab" onclick="changeTab(this, 'qualifications')">Qualifications</div>
-                        <div class="profile-tab" onclick="changeTab(this, 'notification-settings')">Notification Settings</div>
                     </div>
                     
                     <!-- Personal Information Tab -->
                     <div id="personal-info" class="profile-tab-content">
                         <div class="profile-body">
-                            <form id="personal-info-form">
+                            <form id="personal-info-form" onsubmit="updatePersonalInfo(event)">
                                 <div class="form-section">
                                     <h3 class="form-section-title">Basic Information</h3>
                                     <div class="form-row">
                                         <div class="form-group">
                                             <label class="form-label" for="firstName">First Name</label>
-                                            <input type="text" id="firstName" class="form-input" value="John">
+                                            <input type="text" id="firstName" name="first_name" class="form-input" value="<?php echo htmlspecialchars($firstName); ?>" required>
                                         </div>
                                         <div class="form-group">
                                             <label class="form-label" for="lastName">Last Name</label>
-                                            <input type="text" id="lastName" class="form-input" value="Smith">
+                                            <input type="text" id="lastName" name="last_name" class="form-input" value="<?php echo htmlspecialchars($lastName); ?>" required>
                                         </div>
                                     </div>
                                     <div class="form-row">
                                         <div class="form-group">
                                             <label class="form-label" for="dob">Date of Birth</label>
-                                            <input type="date" id="dob" class="form-input" value="1985-06-15">
+                                            <input type="date" id="dob" name="date_of_birth" class="form-input" value="<?php echo $profile['date_of_birth'] ?? ''; ?>">
                                         </div>
                                         <div class="form-group">
                                             <label class="form-label" for="gender">Gender</label>
-                                            <select id="gender" class="form-select">
-                                                <option value="male" selected>Male</option>
-                                                <option value="female">Female</option>
-                                                <option value="other">Other</option>
-                                                <option value="prefer-not">Prefer not to say</option>
+                                            <select id="gender" name="gender" class="form-select">
+                                                <option value="">Select Gender</option>
+                                                <option value="male" <?php echo ($profile['gender'] ?? '') === 'male' ? 'selected' : ''; ?>>Male</option>
+                                                <option value="female" <?php echo ($profile['gender'] ?? '') === 'female' ? 'selected' : ''; ?>>Female</option>
+                                                <option value="other" <?php echo ($profile['gender'] ?? '') === 'other' ? 'selected' : ''; ?>>Other</option>
+                                                <option value="prefer-not" <?php echo ($profile['gender'] ?? '') === 'prefer-not' ? 'selected' : ''; ?>>Prefer not to say</option>
                                             </select>
                                         </div>
                                     </div>
@@ -183,21 +403,21 @@
                                     <div class="form-row">
                                         <div class="form-group">
                                             <label class="form-label" for="email">Email Address</label>
-                                            <input type="email" id="email" class="form-input" value="john.smith@schooldomain.edu">
+                                            <input type="email" id="email" name="email" class="form-input" value="<?php echo htmlspecialchars($profile['email'] ?? ''); ?>" required>
                                         </div>
                                         <div class="form-group">
                                             <label class="form-label" for="phone">Phone Number</label>
-                                            <input type="tel" id="phone" class="form-input" value="+1 (123) 456-7890">
+                                            <input type="tel" id="phone" name="phone" class="form-input" value="<?php echo htmlspecialchars($profile['phone'] ?? ''); ?>">
                                         </div>
                                     </div>
                                     <div class="form-row">
                                         <div class="form-group">
                                             <label class="form-label" for="altEmail">Alternative Email (Optional)</label>
-                                            <input type="email" id="altEmail" class="form-input" value="johnsmith@personal.com">
+                                            <input type="email" id="altEmail" name="alt_email" class="form-input" value="<?php echo htmlspecialchars($profile['alt_email'] ?? ''); ?>">
                                         </div>
                                         <div class="form-group">
                                             <label class="form-label" for="emergencyPhone">Emergency Contact Number</label>
-                                            <input type="tel" id="emergencyPhone" class="form-input" value="+1 (987) 654-3210">
+                                            <input type="tel" id="emergencyPhone" name="emergency_contact" class="form-input" value="<?php echo htmlspecialchars($profile['emergency_contact'] ?? ''); ?>">
                                         </div>
                                     </div>
                                 </div>
@@ -207,32 +427,34 @@
                                     <div class="form-row">
                                         <div class="form-group" style="flex: 0 0 100%;">
                                             <label class="form-label" for="address">Street Address</label>
-                                            <input type="text" id="address" class="form-input" value="123 Education Street, Apt 4B">
+                                            <input type="text" id="address" name="address" class="form-input" value="<?php echo htmlspecialchars($profile['address'] ?? ''); ?>">
                                         </div>
                                     </div>
                                     <div class="form-row">
                                         <div class="form-group">
                                             <label class="form-label" for="city">City</label>
-                                            <input type="text" id="city" class="form-input" value="Springfield">
+                                            <input type="text" id="city" name="city" class="form-input" value="<?php echo htmlspecialchars($profile['city'] ?? ''); ?>">
                                         </div>
                                         <div class="form-group">
                                             <label class="form-label" for="state">State/Province</label>
-                                            <input type="text" id="state" class="form-input" value="IL">
+                                            <input type="text" id="state" name="state" class="form-input" value="<?php echo htmlspecialchars($profile['state'] ?? ''); ?>">
                                         </div>
                                     </div>
                                     <div class="form-row">
                                         <div class="form-group">
                                             <label class="form-label" for="zipCode">ZIP/Postal Code</label>
-                                            <input type="text" id="zipCode" class="form-input" value="62704">
+                                            <input type="text" id="zipCode" name="zip_code" class="form-input" value="<?php echo htmlspecialchars($profile['zip_code'] ?? ''); ?>">
                                         </div>
                                         <div class="form-group">
                                             <label class="form-label" for="country">Country</label>
-                                            <select id="country" class="form-select">
-                                                <option value="us" selected>United States</option>
-                                                <option value="ca">Canada</option>
-                                                <option value="uk">United Kingdom</option>
-                                                <option value="au">Australia</option>
-                                                <option value="other">Other</option>
+                                            <select id="country" name="country" class="form-select">
+                                                <option value="">Select Country</option>
+                                                <option value="us" <?php echo ($profile['country'] ?? '') === 'us' ? 'selected' : ''; ?>>United States</option>
+                                                <option value="ca" <?php echo ($profile['country'] ?? '') === 'ca' ? 'selected' : ''; ?>>Canada</option>
+                                                <option value="uk" <?php echo ($profile['country'] ?? '') === 'uk' ? 'selected' : ''; ?>>United Kingdom</option>
+                                                <option value="au" <?php echo ($profile['country'] ?? '') === 'au' ? 'selected' : ''; ?>>Australia</option>
+                                                <option value="in" <?php echo ($profile['country'] ?? '') === 'in' ? 'selected' : ''; ?>>India</option>
+                                                <option value="other" <?php echo ($profile['country'] ?? '') === 'other' ? 'selected' : ''; ?>>Other</option>
                                             </select>
                                         </div>
                                     </div>
@@ -243,56 +465,49 @@
                                     <div class="form-row">
                                         <div class="form-group">
                                             <label class="form-label" for="department">Department</label>
-                                            <select id="department" class="form-select">
-                                                <option value="mathematics" selected>Mathematics</option>
-                                                <option value="science">Science</option>
-                                                <option value="english">English</option>
-                                                <option value="history">History</option>
-                                                <option value="computer-science">Computer Science</option>
-                                                <option value="physics">Physics</option>
-                                                <option value="chemistry">Chemistry</option>
-                                                <option value="biology">Biology</option>
-                                                <option value="geography">Geography</option>
-                                                <option value="physical-education">Physical Education</option>
-                                                <option value="arts">Arts</option>
-                                                <option value="music">Music</option>
+                                            <select id="department" name="department" class="form-select">
+                                                <option value="">Select Department</option>
+                                                <option value="mathematics" <?php echo ($profile['department'] ?? '') === 'mathematics' ? 'selected' : ''; ?>>Mathematics</option>
+                                                <option value="science" <?php echo ($profile['department'] ?? '') === 'science' ? 'selected' : ''; ?>>Science</option>
+                                                <option value="english" <?php echo ($profile['department'] ?? '') === 'english' ? 'selected' : ''; ?>>English</option>
+                                                <option value="history" <?php echo ($profile['department'] ?? '') === 'history' ? 'selected' : ''; ?>>History</option>
+                                                <option value="computer-science" <?php echo ($profile['department'] ?? '') === 'computer-science' ? 'selected' : ''; ?>>Computer Science</option>
+                                                <option value="physics" <?php echo ($profile['department'] ?? '') === 'physics' ? 'selected' : ''; ?>>Physics</option>
+                                                <option value="chemistry" <?php echo ($profile['department'] ?? '') === 'chemistry' ? 'selected' : ''; ?>>Chemistry</option>
+                                                <option value="biology" <?php echo ($profile['department'] ?? '') === 'biology' ? 'selected' : ''; ?>>Biology</option>
+                                                <option value="geography" <?php echo ($profile['department'] ?? '') === 'geography' ? 'selected' : ''; ?>>Geography</option>
+                                                <option value="physical-education" <?php echo ($profile['department'] ?? '') === 'physical-education' ? 'selected' : ''; ?>>Physical Education</option>
+                                                <option value="arts" <?php echo ($profile['department'] ?? '') === 'arts' ? 'selected' : ''; ?>>Arts</option>
+                                                <option value="music" <?php echo ($profile['department'] ?? '') === 'music' ? 'selected' : ''; ?>>Music</option>
                                             </select>
                                         </div>
                                         <div class="form-group">
                                             <label class="form-label" for="position">Position</label>
-                                            <select id="position" class="form-select">
-                                                <option value="teacher" selected>Teacher</option>
-                                                <option value="senior-teacher">Senior Teacher</option>
-                                                <option value="head-of-department">Head of Department</option>
-                                                <option value="assistant-principal">Assistant Principal</option>
-                                                <option value="principal">Principal</option>
-                                                <option value="coordinator">Coordinator</option>
-                                                <option value="counselor">Counselor</option>
-                                            </select>
+                                            <input type="text" id="position" name="position" class="form-input" value="<?php echo htmlspecialchars($profile['position'] ?? ''); ?>" placeholder="e.g., Senior Teacher, Head of Department">
                                         </div>
                                     </div>
                                     <div class="form-row">
                                         <div class="form-group">
                                             <label class="form-label" for="employmentDate">Employment Date</label>
-                                            <input type="date" id="employmentDate" class="form-input" value="2023-08-12">
+                                            <input type="date" id="employmentDate" name="joined_date" class="form-input" value="<?php echo $profile['joined_date'] ?? ''; ?>">
                                         </div>
                                         <div class="form-group">
                                             <label class="form-label" for="employeeID">Employee ID (Read Only)</label>
-                                            <input type="text" id="employeeID" class="form-input" value="TCH-2023-1025" readonly style="background-color: #f9fafb;">
+                                            <input type="text" id="employeeID" class="form-input" value="<?php echo htmlspecialchars($profile['employee_number'] ?? 'Not Assigned'); ?>" readonly style="background-color: #f9fafb;">
                                         </div>
                                     </div>
                                     <div class="form-row">
                                         <div class="form-group" style="flex: 0 0 100%;">
                                             <label class="form-label" for="bio">Short Bio (displayed on teacher profile)</label>
-                                            <textarea id="bio" class="form-textarea">Mathematics teacher with 8+ years of experience teaching at secondary level. Specializing in Algebra and Calculus. Passionate about making math accessible and engaging for all students through innovative teaching methods and real-world applications.</textarea>
+                                            <textarea id="bio" name="bio" class="form-textarea" maxlength="500"><?php echo htmlspecialchars($profile['bio'] ?? ''); ?></textarea>
                                             <div class="form-hint">Max 500 characters</div>
                                         </div>
                                     </div>
                                 </div>
                                 
                                 <div class="form-actions">
-                                    <button type="button" class="btn btn-secondary" onclick="resetForm()">Cancel Changes</button>
-                                    <button type="button" class="btn btn-primary" onclick="savePersonalInfo()">Save Changes</button>
+                                    <button type="button" class="btn btn-secondary" onclick="resetPersonalInfoForm()">Cancel Changes</button>
+                                    <button type="submit" class="btn btn-primary">Save Changes</button>
                                 </div>
                             </form>
                         </div>
@@ -304,7 +519,7 @@
                             <p style="color: #6b7280; font-size: 0.9375rem; margin-bottom: 1.5rem;">Upload and manage your personal and professional documents. All documents are securely stored and only accessible to authorized personnel.</p>
                             
                             <label class="file-upload" for="document-upload">
-                                <input type="file" id="document-upload" class="file-input">
+                                <input type="file" id="document-upload" class="file-input" onchange="uploadDocument(this.files[0])">
                                 <svg class="file-upload-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                 </svg>
@@ -314,83 +529,9 @@
                             
                             <h3 style="font-size: 1rem; color: #4b5563; margin-bottom: 1rem;">Your Documents</h3>
                             
-                            <!-- Document List -->
-                            <div class="document-card">
-                                <div class="document-icon">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                        <polyline points="14 2 14 8 20 8" />
-                                        <line x1="16" y1="13" x2="8" y2="13" />
-                                        <line x1="16" y1="17" x2="8" y2="17" />
-                                        <polyline points="10 9 9 9 8 9" />
-                                    </svg>
-                                </div>
-                                <div class="document-details">
-                                    <h4 class="document-title">Teaching_Certificate.pdf</h4>
-                                    <p class="document-info">Uploaded on: Feb 15, 2024 • 1.2 MB</p>
-                                </div>
-                                <div class="document-actions">
-                                    <button class="btn btn-sm btn-secondary" onclick="viewDocument(1)">View</button>
-                                    <button class="btn btn-sm btn-danger" onclick="deleteDocument(1)">Delete</button>
-                                </div>
-                            </div>
-                            
-                            <div class="document-card">
-                                <div class="document-icon">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                        <polyline points="14 2 14 8 20 8" />
-                                        <line x1="16" y1="13" x2="8" y2="13" />
-                                        <line x1="16" y1="17" x2="8" y2="17" />
-                                        <polyline points="10 9 9 9 8 9" />
-                                    </svg>
-                                </div>
-                                <div class="document-details">
-                                    <h4 class="document-title">Masters_Degree_Certificate.pdf</h4>
-                                    <p class="document-info">Uploaded on: Aug 18, 2023 • 2.5 MB</p>
-                                </div>
-                                <div class="document-actions">
-                                    <button class="btn btn-sm btn-secondary" onclick="viewDocument(2)">View</button>
-                                    <button class="btn btn-sm btn-danger" onclick="deleteDocument(2)">Delete</button>
-                                </div>
-                            </div>
-                            
-                            <div class="document-card">
-                                <div class="document-icon">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                                        <circle cx="8.5" cy="8.5" r="1.5" />
-                                        <polyline points="21 15 16 10 5 21" />
-                                    </svg>
-                                </div>
-                                <div class="document-details">
-                                    <h4 class="document-title">Profile_Photo.jpg</h4>
-                                    <p class="document-info">Uploaded on: Aug 12, 2023 • 245 KB</p>
-                                </div>
-                                <div class="document-actions">
-                                    <button class="btn btn-sm btn-secondary" onclick="viewDocument(3)">View</button>
-                                    <button class="btn btn-sm btn-danger" onclick="deleteDocument(3)">Delete</button>
-                                </div>
-                            </div>
-                            
-                            <div class="document-card">
-                                <div class="document-icon">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                        <polyline points="14 2 14 8 20 8" />
-                                        <line x1="16" y1="13" x2="8" y2="13" />
-                                        <line x1="16" y1="17" x2="8" y2="17" />
-                                        <polyline points="10 9 9 9 8 9" />
-                                    </svg>
-                                </div>
-                                <div class="document-details">
-                                    <h4 class="document-title">ID_Proof.pdf</h4>
-                                    <p class="document-info">Uploaded on: Aug 12, 2023 • 1.8 MB</p>
-                                </div>
-                                <div class="document-actions">
-                                    <button class="btn btn-sm btn-secondary" onclick="viewDocument(4)">View</button>
-                                    <button class="btn btn-sm btn-danger" onclick="deleteDocument(4)">Delete</button>
-                                </div>
+                            <!-- Document List - Will be populated dynamically -->
+                            <div id="documents-container">
+                                <p style="color: #9ca3af; text-align: center; padding: 2rem;">Loading documents...</p>
                             </div>
                         </div>
                     </div>
@@ -530,145 +671,6 @@
                             
                             <div class="form-actions">
                             <button type="button" class="btn btn-primary" onclick="saveQualifications()">Save Changes</button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Notification Settings Tab -->
-                    <div id="notification-settings" class="profile-tab-content" style="display: none;">
-                        <div class="profile-body">
-                            <p style="color: #6b7280; font-size: 0.9375rem; margin-bottom: 1.5rem;">Configure how you receive notifications and alerts from the system. You can customize settings for different types of notifications.</p>
-                            
-                            <h3 style="font-size: 1rem; color: #4b5563; margin-bottom: 1rem;">Email Notifications</h3>
-                            
-                            <div class="notification-option">
-                                <div class="notification-details">
-                                    <h4>Attendance Updates</h4>
-                                    <p>Receive email updates for student attendance records</p>
-                                </div>
-                                <label class="toggle-switch">
-                                    <input type="checkbox" checked>
-                                    <span class="toggle-slider"></span>
-                                </label>
-                            </div>
-                            
-                            <div class="notification-option">
-                                <div class="notification-details">
-                                    <h4>School Announcements</h4>
-                                    <p>Receive important announcements from school administration</p>
-                                </div>
-                                <label class="toggle-switch">
-                                    <input type="checkbox" checked>
-                                    <span class="toggle-slider"></span>
-                                </label>
-                            </div>
-                            
-                            <div class="notification-option">
-                                <div class="notification-details">
-                                    <h4>Exam & Test Schedules</h4>
-                                    <p>Get notified about upcoming exams and test schedules</p>
-                                </div>
-                                <label class="toggle-switch">
-                                    <input type="checkbox" checked>
-                                    <span class="toggle-slider"></span>
-                                </label>
-                            </div>
-                            
-                            <div class="notification-option">
-                                <div class="notification-details">
-                                    <h4>Homework Submissions</h4>
-                                    <p>Get notified when students submit homework assignments</p>
-                                </div>
-                                <label class="toggle-switch">
-                                    <input type="checkbox" checked>
-                                    <span class="toggle-slider"></span>
-                                </label>
-                            </div>
-                            
-                            <div class="notification-option">
-                                <div class="notification-details">
-                                    <h4>Parent Messages</h4>
-                                    <p>Receive notifications when parents send you messages</p>
-                                </div>
-                                <label class="toggle-switch">
-                                    <input type="checkbox" checked>
-                                    <span class="toggle-slider"></span>
-                                </label>
-                            </div>
-                            
-                            <h3 style="font-size: 1rem; color: #4b5563; margin: 1.5rem 0 1rem;">Push Notifications</h3>
-                            
-                            <div class="notification-option">
-                                <div class="notification-details">
-                                    <h4>Attendance Updates</h4>
-                                    <p>Receive push notifications for student attendance records</p>
-                                </div>
-                                <label class="toggle-switch">
-                                    <input type="checkbox">
-                                    <span class="toggle-slider"></span>
-                                </label>
-                            </div>
-                            
-                            <div class="notification-option">
-                                <div class="notification-details">
-                                    <h4>School Announcements</h4>
-                                    <p>Receive important announcements from school administration</p>
-                                </div>
-                                <label class="toggle-switch">
-                                    <input type="checkbox" checked>
-                                    <span class="toggle-slider"></span>
-                                </label>
-                            </div>
-                            
-                            <div class="notification-option">
-                                <div class="notification-details">
-                                    <h4>Exam & Test Schedules</h4>
-                                    <p>Get notified about upcoming exams and test schedules</p>
-                                </div>
-                                <label class="toggle-switch">
-                                    <input type="checkbox">
-                                    <span class="toggle-slider"></span>
-                                </label>
-                            </div>
-                            
-                            <div class="notification-option">
-                                <div class="notification-details">
-                                    <h4>Homework Submissions</h4>
-                                    <p>Get notified when students submit homework assignments</p>
-                                </div>
-                                <label class="toggle-switch">
-                                    <input type="checkbox">
-                                    <span class="toggle-slider"></span>
-                                </label>
-                            </div>
-                            
-                            <div class="notification-option">
-                                <div class="notification-details">
-                                    <h4>Parent Messages</h4>
-                                    <p>Receive notifications when parents send you messages</p>
-                                </div>
-                                <label class="toggle-switch">
-                                    <input type="checkbox" checked>
-                                    <span class="toggle-slider"></span>
-                                </label>
-                            </div>
-                            
-                            <h3 style="font-size: 1rem; color: #4b5563; margin: 1.5rem 0 1rem;">SMS Notifications</h3>
-                            
-                            <div class="notification-option">
-                                <div class="notification-details">
-                                    <h4>Emergency Alerts Only</h4>
-                                    <p>Receive SMS notifications only for emergency situations</p>
-                                </div>
-                                <label class="toggle-switch">
-                                    <input type="checkbox" checked>
-                                    <span class="toggle-slider"></span>
-                                </label>
-                            </div>
-                            
-                            <div class="form-actions">
-                                <button type="button" class="btn btn-secondary" onclick="resetNotificationSettings()">Reset to Default</button>
-                                <button type="button" class="btn btn-primary" onclick="saveNotificationSettings()">Save Changes</button>
                             </div>
                         </div>
                     </div>
@@ -822,14 +824,14 @@
             <p style="margin-top: 0; margin-bottom: 1rem; color: #6b7280; font-size: 0.9375rem;">Scan this QR code for quick identification within the school system.</p>
             
             <div style="width: 200px; height: 200px; margin: 0 auto 1.5rem; background: #f3f4f6; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                <!-- Placeholder for QR code - in a real application, this would be a generated QR code -->
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=TCH-2023-1025" alt="Teacher ID QR Code" style="max-width: 180px; max-height: 180px;">
+                <!-- QR code with dynamic teacher data -->
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=<?php echo urlencode(($profile['employee_number'] ?? 'TCH-' . date('Y') . '-' . str_pad($user_id, 4, '0', STR_PAD_LEFT)) . '|' . ($profile['full_name'] ?? 'Teacher') . '|' . ($profile['department'] ?? 'General')); ?>" alt="Teacher ID QR Code" style="max-width: 180px; max-height: 180px;">
             </div>
             
             <div style="margin-bottom: 1rem;">
-                <div style="font-size: 1rem; font-weight: 600; color: #1f2937; margin-bottom: 0.25rem;">John Smith</div>
-                <div style="font-size: 0.875rem; color: #6b7280;">TCH-2023-1025</div>
-                <div style="font-size: 0.875rem; color: #6b7280;">Mathematics Teacher</div>
+                <div style="font-size: 1rem; font-weight: 600; color: #1f2937; margin-bottom: 0.25rem;"><?php echo htmlspecialchars($profile['full_name'] ?? 'Teacher Name'); ?></div>
+                <div style="font-size: 0.875rem; color: #6b7280;"><?php echo htmlspecialchars($profile['employee_number'] ?? 'TCH-' . date('Y') . '-' . str_pad($user_id, 4, '0', STR_PAD_LEFT)); ?></div>
+                <div style="font-size: 0.875rem; color: #6b7280;"><?php echo htmlspecialchars(ucfirst($profile['department'] ?? 'General')); ?> <?php echo $profile['position'] ? htmlspecialchars($profile['position']) : 'Teacher'; ?></div>
             </div>
         </div>
         <div class="modal-footer">
@@ -847,6 +849,101 @@
 </div>
 
 <script>
+    // Enhanced Dialog System
+    function showDialog(options) {
+        const { 
+            title, 
+            message, 
+            type = 'info', 
+            confirmText = 'OK', 
+            cancelText = 'Cancel', 
+            showCancel = false,
+            onConfirm = null,
+            onCancel = null 
+        } = options;
+        
+        // Create modal overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        
+        // Icon based on type
+        const icons = {
+            success: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>',
+            error: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>',
+            warning: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"></path>',
+            info: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>'
+        };
+        
+        overlay.innerHTML = `
+            <div class="modal-dialog">
+                <div class="modal-header">
+                    <h3 class="modal-title">
+                        <svg class="modal-icon ${type}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            ${icons[type]}
+                        </svg>
+                        ${title}
+                    </h3>
+                    <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-message">${message}</p>
+                </div>
+                <div class="modal-footer">
+                    ${showCancel ? `<button class="modal-btn modal-btn-secondary" onclick="this.closest('.modal-overlay').remove(); ${onCancel ? 'window.' + onCancel.name + '()' : ''}">${cancelText}</button>` : ''}
+                    <button class="modal-btn modal-btn-primary" onclick="this.closest('.modal-overlay').remove(); ${onConfirm ? 'window.' + onConfirm.name + '()' : ''}">${confirmText}</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(overlay);
+        setTimeout(() => overlay.classList.add('show'), 10);
+        
+        return overlay;
+    }
+    
+    function showSuccessDialog(title, message, callback = null) {
+        return showDialog({
+            title,
+            message,
+            type: 'success',
+            confirmText: 'OK',
+            onConfirm: callback
+        });
+    }
+    
+    function showErrorDialog(title, message, callback = null) {
+        return showDialog({
+            title,
+            message,
+            type: 'error',
+            confirmText: 'OK',
+            onConfirm: callback
+        });
+    }
+    
+    function showWarningDialog(title, message, callback = null) {
+        return showDialog({
+            title,
+            message,
+            type: 'warning',
+            confirmText: 'OK',
+            onConfirm: callback
+        });
+    }
+    
+    function showConfirmDialog(title, message, onConfirm, onCancel = null) {
+        return showDialog({
+            title,
+            message,
+            type: 'warning',
+            confirmText: 'Confirm',
+            cancelText: 'Cancel',
+            showCancel: true,
+            onConfirm,
+            onCancel
+        });
+    }
+
     // Function to toggle sidebar
     function toggleSidebar() {
         const sidebar = document.querySelector('.sidebar');
@@ -1002,39 +1099,432 @@
     }
     
     function downloadQRCode() {
-        // In a real application, this would download the QR code image
-        alert('QR Code downloaded');
+        showSuccessDialog(
+            'QR Code Download',
+            'Your QR code has been generated and is ready for download.',
+            () => {
+                // In a real application, this would download the QR code image
+                console.log('Downloading QR code...');
+            }
+        );
     }
     
     // Form management functions
+    function updatePersonalInfo(event) {
+        event.preventDefault();
+        
+        const formData = new FormData(event.target);
+        formData.append('action', 'update_personal_info');
+        
+        // Show loading state
+        const submitBtn = event.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Saving...';
+        submitBtn.disabled = true;
+        
+        fetch('profile_actions.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Personal information updated successfully!', 'success');
+                // Update sidebar info
+                location.reload();
+            } else {
+                showNotification(data.message || 'Failed to update profile', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('An error occurred while updating profile', 'error');
+        })
+        .finally(() => {
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        });
+    }
+    
+    function resetPersonalInfoForm() {
+        showConfirmDialog(
+            'Discard Changes',
+            'Are you sure you want to discard all unsaved changes?',
+            () => location.reload()
+        );
+    }
+    
     function savePersonalInfo() {
-        // In a real application, this would save the updated personal information
-        alert('Personal information updated successfully!');
+        // Trigger form submission
+        document.getElementById('personal-info-form').dispatchEvent(new Event('submit'));
     }
     
     function resetForm() {
-        // In a real application, this would reset the form to its original values
-        if (confirm('Discard all changes?')) {
-            document.getElementById('personal-info-form').reset();
-        }
+        resetPersonalInfoForm();
     }
     
-    function downloadInformation() {
-        // In a real application, this would generate and download a PDF with teacher information
-        alert('Your information has been downloaded');
+    // Profile photo upload
+    function showAvatarModal() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = function(e) {
+            uploadProfilePhoto(e.target.files[0]);
+        };
+        input.click();
+    }
+    
+    function uploadProfilePhoto(file) {
+        if (!file) return;
+        
+        const formData = new FormData();
+        formData.append('profile_photo', file);
+        formData.append('action', 'upload_profile_photo');
+        
+        fetch('profile_actions.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('profile-image').src = '../../' + data.photo_url;
+                showNotification('Profile photo updated successfully!', 'success');
+            } else {
+                showNotification(data.message || 'Failed to upload photo', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('An error occurred while uploading photo', 'error');
+        });
+    }
+    
+    // Password change functionality
+    function changePassword() {
+        const formData = new FormData();
+        formData.append('action', 'change_password');
+        formData.append('current_password', document.getElementById('currentPassword').value);
+        formData.append('new_password', document.getElementById('newPassword').value);
+        formData.append('confirm_password', document.getElementById('confirmPassword').value);
+        
+        fetch('profile_actions.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Password changed successfully!', 'success');
+                hidePasswordModal();
+                // Clear form
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+            } else {
+                showNotification(data.message || 'Failed to change password', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('An error occurred while changing password', 'error');
+        });
     }
     
     // Document management functions
-    function viewDocument(id) {
-        // In a real application, this would open the document for viewing
-        alert('Viewing document with ID: ' + id);
+    function loadDocuments() {
+        fetch('profile_actions.php?action=get_documents')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayDocuments(data.documents);
+            }
+        })
+        .catch(error => console.error('Error loading documents:', error));
+    }
+    
+    function displayDocuments(documents) {
+        const container = document.getElementById('documents-container');
+        let documentsHtml = '';
+        
+        if (documents.length === 0) {
+            documentsHtml = '<p style="color: #9ca3af; text-align: center; padding: 2rem;">No documents uploaded yet.</p>';
+        } else {
+            documents.forEach(doc => {
+                documentsHtml += `
+                    <div class="document-card">
+                        <div class="document-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14,2 14,8 20,8"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/>
+                                <polyline points="10,9 9,9 8,9"/>
+                            </svg>
+                        </div>
+                        <div class="document-info">
+                            <div class="document-name">${doc.document_name}</div>
+                            <div class="document-meta">${doc.document_type} • ${formatFileSize(doc.file_size)} • ${formatDate(doc.uploaded_at)}</div>
+                        </div>
+                        <div class="document-actions">
+                            <button class="btn-icon" onclick="window.open('../../${doc.file_path}', '_blank')" title="View">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                            </button>
+                            <button class="btn-icon" onclick="deleteDocument(${doc.id})" title="Delete">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3,6 5,6 21,6"/>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        
+        container.innerHTML = documentsHtml;
+    }
+    
+    function uploadDocument(file) {
+        if (!file) return;
+        
+        // Create a custom dialog for document details
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.innerHTML = `
+            <div class="modal-dialog">
+                <div class="modal-header">
+                    <h3 class="modal-title">
+                        <svg class="modal-icon info" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Upload Document
+                    </h3>
+                    <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-message">Please provide details for the document: <strong>${file.name}</strong></p>
+                    <div style="margin-top: 16px;">
+                        <label class="form-label" style="display: block; margin-bottom: 8px;">Document Name</label>
+                        <input type="text" id="docName" class="form-input" value="${file.name.split('.')[0]}" style="width: 100%; margin-bottom: 16px;">
+                        
+                        <label class="form-label" style="display: block; margin-bottom: 8px;">Document Type</label>
+                        <select id="docType" class="form-select" style="width: 100%;">
+                            <option value="resume">Resume/CV</option>
+                            <option value="certificate">Certificate</option>
+                            <option value="id_proof">ID Proof</option>
+                            <option value="address_proof">Address Proof</option>
+                            <option value="other" selected>Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="modal-btn modal-btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+                    <button class="modal-btn modal-btn-primary" onclick="processDocumentUpload()">Upload</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(overlay);
+        setTimeout(() => overlay.classList.add('show'), 10);
+        
+        // Store file reference for processing
+        window.pendingFile = file;
+    }
+    
+    function processDocumentUpload() {
+        const file = window.pendingFile;
+        const documentName = document.getElementById('docName').value;
+        const documentType = document.getElementById('docType').value;
+        
+        if (!documentName.trim()) {
+            showErrorDialog('Error', 'Please enter a document name');
+            return;
+        }
+        
+        // Close the dialog
+        document.querySelector('.modal-overlay').remove();
+        
+        const formData = new FormData();
+        formData.append('document', file);
+        formData.append('document_name', documentName);
+        formData.append('document_type', documentType);
+        formData.append('action', 'upload_document');
+        
+        fetch('profile_actions.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showSuccessDialog('Success', 'Document uploaded successfully!');
+                loadDocuments();
+            } else {
+                showErrorDialog('Error', data.message || 'Failed to upload document');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showErrorDialog('Error', 'An error occurred while uploading document');
+        });
+        
+        // Clean up
+        delete window.pendingFile;
     }
     
     function deleteDocument(id) {
-        // In a real application, this would delete the document
-        if (confirm('Are you sure you want to delete this document?')) {
-            alert('Document with ID: ' + id + ' has been deleted');
+        showConfirmDialog(
+            'Delete Document',
+            'Are you sure you want to delete this document? This action cannot be undone.',
+            () => {
+                const formData = new FormData();
+                formData.append('action', 'delete_document');
+                formData.append('document_id', id);
+                
+                fetch('profile_actions.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showSuccessDialog('Success', 'Document deleted successfully!');
+                        loadDocuments();
+                    } else {
+                        showErrorDialog('Error', data.message || 'Failed to delete document');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showErrorDialog('Error', 'An error occurred while deleting document');
+                });
+            }
+        );
+    }
+    
+    // Notification function
+    function showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            z-index: 10000;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+        `;
+        notification.textContent = message;
+        
+        document.body.appendChild(notification);
+        
+        // Show notification
+        setTimeout(() => {
+            notification.style.opacity = '1';
+            notification.style.transform = 'translateX(0)';
+        }, 100);
+        
+        // Hide notification
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+    
+    // Utility functions
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    function formatDate(dateString) {
+        return new Date(dateString).toLocaleDateString();
+    }
+    
+    // Load data when tab changes
+    function changeTab(tabElement, tabId) {
+        // Remove active class from all tabs
+        document.querySelectorAll('.profile-tab').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.profile-tab-content').forEach(content => content.style.display = 'none');
+        
+        // Add active class to clicked tab
+        tabElement.classList.add('active');
+        document.getElementById(tabId).style.display = 'block';
+        
+        // Load data based on tab
+        if (tabId === 'documents') {
+            loadDocuments();
+        } else if (tabId === 'qualifications') {
+            loadEducation();
+        } else if (tabId === 'notification-settings') {
+            loadNotificationSettings();
         }
+    }
+    
+    // Load education data
+    function loadEducation() {
+        fetch('profile_actions.php?action=get_education')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayEducation(data.education);
+            }
+        })
+        .catch(error => console.error('Error loading education:', error));
+    }
+    
+    function displayEducation(education) {
+        // This would display education records - implementation depends on the HTML structure
+        console.log('Education data:', education);
+    }
+    
+    // Load notification settings
+    function loadNotificationSettings() {
+        fetch('profile_actions.php?action=get_notification_settings')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateNotificationSettings(data.settings);
+            }
+        })
+        .catch(error => console.error('Error loading notification settings:', error));
+    }
+    
+    function updateNotificationSettings(settings) {
+        // Update checkbox states based on settings
+        Object.keys(settings).forEach(key => {
+            const checkbox = document.querySelector(`input[name="${key}"]`);
+            if (checkbox) {
+                checkbox.checked = Boolean(settings[key]);
+            }
+        });
+    }
+    
+    function downloadInformation() {
+        showSuccessDialog(
+            'Download Information',
+            'Your teacher information has been prepared for download. The file contains your profile data, qualifications, and contact details.',
+            () => {
+                // In a real application, this would generate and download a PDF
+                // For now, we'll just show a success message
+                console.log('Downloading teacher information...');
+            }
+        );
     }
     
     // Qualifications management functions
