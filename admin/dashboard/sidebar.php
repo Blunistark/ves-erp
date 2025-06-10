@@ -440,6 +440,7 @@ if (isset($_SESSION['user_id'])) {
                         <a href="classesmanage.php" class="nav-subitem">Manage Classes</a>
                         <a href="classessections.php" class="nav-subitem">Manage Sections</a>
                         <a href="subject_manage.php" class="nav-subitem">Manage Subjects</a>
+                        <a href="class_subjects.php" class="nav-subitem">Manage Class Subjects</a>
                         <a href="teacher_subject_assign.php" class="nav-subitem">Teacher Subject Assignment</a>
                     </div>
                 </div>

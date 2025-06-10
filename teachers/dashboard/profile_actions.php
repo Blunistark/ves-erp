@@ -44,29 +44,8 @@ try {
         case 'get_documents':
             getDocuments($conn, $user_id);
             break;
-            
-        case 'delete_document':
+              case 'delete_document':
             deleteDocument($conn, $user_id);
-            break;
-            
-        case 'add_education':
-            addEducation($conn, $user_id);
-            break;
-            
-        case 'get_education':
-            getEducation($conn, $user_id);
-            break;
-            
-        case 'delete_education':
-            deleteEducation($conn, $user_id);
-            break;
-            
-        case 'update_notification_settings':
-            updateNotificationSettings($conn, $user_id);
-            break;
-            
-        case 'get_notification_settings':
-            getNotificationSettings($conn, $user_id);
             break;
             
         case 'change_password':
@@ -234,6 +213,17 @@ function uploadDocument($conn, $user_id) {
         throw new Exception('Document name is required');
     }
 
+    // Validate document type against allowed ENUM values
+    $allowed_document_types = [
+        'resume', 'certificate', 'degree', 'id_proof', 'address_proof', 
+        'training', 'license', 'qualification', 'experience_letter', 
+        'recommendation', 'other'
+    ];
+    
+    if (!in_array($document_type, $allowed_document_types)) {
+        $document_type = 'other'; // Default to 'other' if invalid type
+    }
+
     $allowed_types = [
         'application/pdf',
         'image/jpeg',
@@ -329,31 +319,28 @@ function deleteDocument($conn, $user_id) {
 }
 
 function addEducation($conn, $user_id) {
-    $institution = trim($_POST['institution'] ?? '');
-    $degree = trim($_POST['degree'] ?? '');
-    $field = trim($_POST['field'] ?? '');
+    $degree_type = $_POST['degree'] ?? '';
+    $institution_name = $_POST['institution'] ?? '';
     $start_date = $_POST['start_date'] ?? null;
     $end_date = $_POST['end_date'] ?? null;
-    $is_completed = isset($_POST['is_completed']) ? 1 : 0;
-    $grade = floatval($_POST['grade'] ?? 0);
+    $grade_percentage = $_POST['grade'] ?? null;
+    $field_of_study = $_POST['field_of_study'] ?? '';
 
-    if (empty($institution) || empty($degree) || empty($field)) {
-        throw new Exception('Institution, degree, and field of study are required');
+    // Convert grade percentage if it's a text grade
+    if ($grade_percentage && !is_numeric($grade_percentage)) {
+        $grade_percentage = null; // Store as null if it's not numeric
     }
 
-    $query = "INSERT INTO teacher_education (teacher_user_id, institution_name, degree_type, 
-              field_of_study, start_date, end_date, is_completed, grade_percentage) 
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    $query = "INSERT INTO teacher_education (teacher_user_id, degree_type, institution_name, start_date, end_date, grade_percentage, field_of_study) VALUES (?, ?, ?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($query);
-    $stmt->bind_param("isssssid", $user_id, $institution, $degree, $field, 
-                     $start_date, $end_date, $is_completed, $grade);
+    $stmt->bind_param("issssds", $user_id, $degree_type, $institution_name, $start_date, $end_date, $grade_percentage, $field_of_study);
     $stmt->execute();
 
-    echo json_encode(['success' => true, 'message' => 'Education added successfully']);
+    echo json_encode(['success' => true, 'message' => 'Education added successfully', 'id' => $conn->insert_id]);
 }
 
 function getEducation($conn, $user_id) {
-    $query = "SELECT * FROM teacher_education WHERE teacher_user_id = ? ORDER BY end_date DESC";
+    $query = "SELECT id, degree_type as degree, institution_name as institution, start_date, end_date, grade_percentage as grade, field_of_study FROM teacher_education WHERE teacher_user_id = ? ORDER BY end_date DESC";
     $stmt = $conn->prepare($query);
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
@@ -367,8 +354,50 @@ function getEducation($conn, $user_id) {
     echo json_encode(['success' => true, 'education' => $education]);
 }
 
+function updateEducationField($conn, $user_id) {
+    $id = (int)($_POST['id'] ?? 0);
+    $field = $_POST['field'] ?? '';
+    $value = $_POST['value'] ?? '';
+
+    if (!$id || !$field) {
+        throw new Exception('ID and field are required');
+    }
+
+    // Map frontend field names to database field names
+    $field_mapping = [
+        'degree' => 'degree_type',
+        'institution' => 'institution_name',
+        'start_date' => 'start_date',
+        'end_date' => 'end_date',
+        'grade' => 'grade_percentage',
+        'field_of_study' => 'field_of_study'
+    ];
+
+    if (!isset($field_mapping[$field])) {
+        throw new Exception('Invalid field name');
+    }
+
+    $db_field = $field_mapping[$field];
+    
+    // Handle grade field specially
+    if ($field === 'grade' && $value && !is_numeric($value)) {
+        $value = null; // Store as null if it's not numeric
+    }
+
+    $query = "UPDATE teacher_education SET $db_field = ? WHERE id = ? AND teacher_user_id = ?";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("sii", $value, $id, $user_id);
+    $stmt->execute();
+
+    if ($stmt->affected_rows > 0) {
+        echo json_encode(['success' => true, 'message' => 'Education updated successfully']);
+    } else {
+        echo json_encode(['success' => true, 'message' => 'No changes made']);
+    }
+}
+
 function deleteEducation($conn, $user_id) {
-    $education_id = (int)($_POST['education_id'] ?? 0);
+    $education_id = (int)($_POST['id'] ?? 0);
 
     if (!$education_id) {
         throw new Exception('Education ID is required');
@@ -383,6 +412,84 @@ function deleteEducation($conn, $user_id) {
         echo json_encode(['success' => true, 'message' => 'Education record deleted successfully']);
     } else {
         throw new Exception('Education record not found');
+    }
+}
+
+// Certification functions
+function addCertification($conn, $user_id) {
+    $name = $_POST['name'] ?? '';
+    $issuing_organization = $_POST['issuing_organization'] ?? '';
+    $issue_date = $_POST['issue_date'] ?? null;
+    $expiry_date = $_POST['expiry_date'] ?? null;
+    $description = $_POST['description'] ?? '';
+
+    // Note: Assuming we need to create a teacher_certifications table similar to teacher_education
+    $query = "INSERT INTO teacher_certifications (teacher_user_id, name, issuing_organization, issue_date, expiry_date, description) VALUES (?, ?, ?, ?, ?, ?)";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("isssss", $user_id, $name, $issuing_organization, $issue_date, $expiry_date, $description);
+    $stmt->execute();
+
+    echo json_encode(['success' => true, 'message' => 'Certification added successfully', 'id' => $conn->insert_id]);
+}
+
+function getCertifications($conn, $user_id) {
+    $query = "SELECT * FROM teacher_certifications WHERE teacher_user_id = ? ORDER BY issue_date DESC";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $certifications = [];
+    while ($row = $result->fetch_assoc()) {
+        $certifications[] = $row;
+    }
+
+    echo json_encode(['success' => true, 'certifications' => $certifications]);
+}
+
+function updateCertificationField($conn, $user_id) {
+    $id = (int)($_POST['id'] ?? 0);
+    $field = $_POST['field'] ?? '';
+    $value = $_POST['value'] ?? '';
+
+    if (!$id || !$field) {
+        throw new Exception('ID and field are required');
+    }
+
+    // Validate field name for security
+    $allowed_fields = ['name', 'issuing_organization', 'issue_date', 'expiry_date', 'description'];
+    if (!in_array($field, $allowed_fields)) {
+        throw new Exception('Invalid field name');
+    }
+
+    $query = "UPDATE teacher_certifications SET $field = ? WHERE id = ? AND teacher_user_id = ?";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("sii", $value, $id, $user_id);
+    $stmt->execute();
+
+    if ($stmt->affected_rows > 0) {
+        echo json_encode(['success' => true, 'message' => 'Certification updated successfully']);
+    } else {
+        echo json_encode(['success' => true, 'message' => 'No changes made']);
+    }
+}
+
+function deleteCertification($conn, $user_id) {
+    $certification_id = (int)($_POST['id'] ?? 0);
+
+    if (!$certification_id) {
+        throw new Exception('Certification ID is required');
+    }
+
+    $query = "DELETE FROM teacher_certifications WHERE id = ? AND teacher_user_id = ?";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("ii", $certification_id, $user_id);
+    $stmt->execute();
+
+    if ($stmt->affected_rows > 0) {
+        echo json_encode(['success' => true, 'message' => 'Certification deleted successfully']);
+    } else {
+        throw new Exception('Certification not found');
     }
 }
 
