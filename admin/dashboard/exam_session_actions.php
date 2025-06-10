@@ -18,11 +18,16 @@ if (!hasRole(['admin', 'headmaster', 'teacher'])) {
     exit();
 }
 
-// Get JSON input
+// Get JSON input or query parameters
 $input = json_decode(file_get_contents('php://input'), true);
 if (!$input) {
+    // If no JSON input, try to get from GET/POST parameters
+    $input = array_merge($_GET, $_POST);
+}
+
+if (empty($input) || !isset($input['action'])) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Invalid JSON input']);
+    echo json_encode(['success' => false, 'message' => 'No action specified']);
     exit();
 }
 
@@ -70,6 +75,30 @@ try {
             
         case 'get_subject_data':
             getSubjectData($conn, $input);
+            break;
+            
+        case 'get_session_counts':
+            getSessionCounts($conn, $input);
+            break;
+            
+        case 'get_classes_in_session':
+            getClassesInSession($conn, $input);
+            break;
+            
+        case 'get_subjects_in_class':
+            getSubjectsInClass($conn, $input);
+            break;
+            
+        case 'get_all_subjects':
+            getAllSubjects($conn);
+            break;
+            
+        case 'get_assessments':
+            getAssessments($conn, $input);
+            break;
+            
+        case 'get_sessions':
+            getAllSessions($conn);
             break;
             
         default:
@@ -605,5 +634,225 @@ function getSessionData($conn, $data) {
         throw new Exception("Exam session not found");
     }
       echo json_encode(['success' => true, 'data' => $session]);
+}
+
+/**
+ * Get subject data for editing
+ */
+function getSubjectData($conn, $data) {
+    $subject_id = $data['subjectId'] ?? 0;
+    if (!$subject_id) {
+        throw new Exception("Subject ID is required");
+    }
+    
+    $sql = "SELECT es.*, s.name as subject_name, a.title as assessment_name 
+            FROM exam_subjects es
+            JOIN subjects s ON es.subject_id = s.id
+            JOIN assessments a ON es.assessment_id = a.id
+            WHERE es.id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param('i', $subject_id);
+    $stmt->execute();
+    $subject = $stmt->get_result()->fetch_assoc();
+    
+    if (!$subject) {
+        throw new Exception("Exam subject not found");
+    }
+    
+    echo json_encode(['success' => true, 'data' => $subject]);
+}
+
+/**
+ * Get session counts (classes and subjects)
+ */
+function getSessionCounts($conn, $data) {
+    $session_id = $data['session_id'] ?? 0;
+    if (!$session_id) {
+        throw new Exception("Session ID is required");
+    }
+    
+    // Get distinct classes in this session
+    $classes_sql = "SELECT COUNT(DISTINCT es.class_id) as classes_count
+                    FROM exam_sessions sess
+                    LEFT JOIN exam_subjects esub ON sess.id = esub.exam_session_id
+                    LEFT JOIN assessments a ON esub.assessment_id = a.id
+                    LEFT JOIN exam_subjects es ON a.id = es.assessment_id AND es.exam_session_id = sess.id
+                    WHERE sess.id = ?";
+    
+    $stmt = $conn->prepare($classes_sql);
+    $stmt->bind_param('i', $session_id);
+    $stmt->execute();
+    $classes_result = $stmt->get_result()->fetch_assoc();
+    
+    // Get total subjects count
+    $subjects_sql = "SELECT COUNT(*) as subjects_count
+                     FROM exam_subjects 
+                     WHERE exam_session_id = ?";
+    
+    $stmt = $conn->prepare($subjects_sql);
+    $stmt->bind_param('i', $session_id);
+    $stmt->execute();
+    $subjects_result = $stmt->get_result()->fetch_assoc();
+    
+    echo json_encode([
+        'success' => true,
+        'classes_count' => $classes_result['classes_count'] ?? 0,
+        'subjects_count' => $subjects_result['subjects_count'] ?? 0
+    ]);
+}
+
+/**
+ * Get classes in a specific session
+ */
+function getClassesInSession($conn, $data) {
+    $session_id = $data['session_id'] ?? 0;
+    if (!$session_id) {
+        throw new Exception("Session ID is required");
+    }
+    
+    $sql = "SELECT DISTINCT 
+                c.id as class_id,
+                c.name as class_name,
+                s.id as section_id,
+                s.name as section_name,
+                COUNT(DISTINCT esub.id) as subjects_count,
+                COUNT(DISTINCT st.user_id) as students_count
+            FROM exam_sessions sess
+            JOIN exam_subjects esub ON sess.id = esub.exam_session_id
+            JOIN assessments a ON esub.assessment_id = a.id
+            JOIN classes c ON a.class_id = c.id
+            LEFT JOIN sections s ON a.section_id = s.id
+            LEFT JOIN students st ON c.id = st.class_id AND (s.id IS NULL OR s.id = st.section_id)
+            WHERE sess.id = ?
+            GROUP BY c.id, c.name, s.id, s.name
+            ORDER BY c.name, s.name";
+    
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param('i', $session_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $classes = [];
+    while ($row = $result->fetch_assoc()) {
+        $classes[] = $row;
+    }
+    
+    echo json_encode(['success' => true, 'classes' => $classes]);
+}
+
+/**
+ * Get subjects in a specific class for a session
+ */
+function getSubjectsInClass($conn, $data) {
+    $session_id = $data['session_id'] ?? 0;
+    $class_id = $data['class_id'] ?? 0;
+    
+    if (!$session_id || !$class_id) {
+        throw new Exception("Session ID and Class ID are required");
+    }
+    
+    $sql = "SELECT 
+                esub.*,
+                s.name as subject_name,
+                s.code as subject_code,
+                a.title as assessment_name,
+                a.class_id,
+                a.section_id,
+                COUNT(DISTINCT er.id) as marks_count,
+                ROUND(AVG(er.marks_obtained), 2) as avg_marks
+            FROM exam_subjects esub
+            JOIN subjects s ON esub.subject_id = s.id
+            JOIN assessments a ON esub.assessment_id = a.id
+            LEFT JOIN exam_results er ON a.id = er.assessment_id
+            WHERE esub.exam_session_id = ? AND a.class_id = ?
+            GROUP BY esub.id, s.name, s.code, a.title, a.class_id, a.section_id
+            ORDER BY esub.exam_date, s.name";
+    
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param('ii', $session_id, $class_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $subjects = [];
+    while ($row = $result->fetch_assoc()) {
+        $subjects[] = $row;
+    }
+    
+    echo json_encode(['success' => true, 'subjects' => $subjects]);
+}
+
+/**
+ * Get all available subjects
+ */
+function getAllSubjects($conn) {
+    $sql = "SELECT id, name, code, description FROM subjects ORDER BY name";
+    $result = $conn->query($sql);
+    
+    $subjects = [];
+    while ($row = $result->fetch_assoc()) {
+        $subjects[] = $row;
+    }
+    
+    echo json_encode(['success' => true, 'data' => $subjects]);
+}
+
+/**
+ * Get assessments by session type
+ */
+function getAssessments($conn, $data) {
+    $session_type = $data['session_type'] ?? '';
+    
+    if ($session_type) {
+        $sql = "SELECT id, title, assessment_type, total_marks, date, class_id, section_id
+                FROM assessments 
+                WHERE assessment_type = ? 
+                ORDER BY date DESC, title";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param('s', $session_type);
+        $stmt->execute();
+        $result = $stmt->get_result();
+    } else {
+        $sql = "SELECT id, title, assessment_type, total_marks, date, class_id, section_id
+                FROM assessments 
+                ORDER BY date DESC, title";
+        $result = $conn->query($sql);
+    }
+    
+    $assessments = [];
+    while ($row = $result->fetch_assoc()) {
+        $assessments[] = $row;
+    }
+    
+    echo json_encode(['success' => true, 'data' => $assessments]);
+}
+
+/**
+ * Get all exam sessions
+ */
+function getAllSessions($conn) {
+    $sql = "SELECT 
+                es.*,
+                c.name as class_name,
+                s.name as section_name,
+                COUNT(DISTINCT esub.id) as subject_count,
+                COUNT(DISTINCT er.id) as marks_entered,
+                ROUND(AVG(er.marks_obtained), 2) as avg_marks
+            FROM exam_sessions es
+            LEFT JOIN classes c ON es.class_id = c.id
+            LEFT JOIN sections s ON es.section_id = s.id
+            LEFT JOIN exam_subjects esub ON es.id = esub.exam_session_id
+            LEFT JOIN assessments a ON esub.assessment_id = a.id
+            LEFT JOIN exam_results er ON a.id = er.assessment_id
+            GROUP BY es.id
+            ORDER BY es.created_at DESC";
+    
+    $result = $conn->query($sql);
+    $sessions = [];
+    
+    while ($row = $result->fetch_assoc()) {
+        $sessions[] = $row;
+    }
+    
+    echo json_encode(['success' => true, 'sessions' => $sessions]);
 }
 ?>

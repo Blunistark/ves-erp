@@ -70,7 +70,6 @@
                             <th>Date</th>
                             <th>Subject</th>
                             <th>Time</th>
-                            <th>Venue</th>
                             <th>Syllabus</th>
                             <th>Study Material</th>
                         </tr>
@@ -101,12 +100,6 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                                 9:00 AM - 12:00 PM
-                            </td>
-                            <td class="venue-column">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                </svg>
-                                Examination Hall A
                             </td>
                             <td class="syllabus-column">
                                 <ul class="syllabus-list">
@@ -152,12 +145,6 @@
                                 </svg>
                                 9:00 AM - 12:00 PM
                             </td>
-                            <td class="venue-column">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                </svg>
-                                Examination Hall B
-                            </td>
                             <td class="syllabus-column">
                                 <ul class="syllabus-list">
                                     <li>Physics: Light, Electricity, Magnetism</li>
@@ -201,12 +188,6 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                                 9:00 AM - 12:00 PM
-                            </td>
-                            <td class="venue-column">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                </svg>
-                                Examination Hall A
                             </td>
                             <td class="syllabus-column">
                                 <ul class="syllabus-list">
@@ -252,12 +233,6 @@
                                 </svg>
                                 9:00 AM - 12:00 PM
                             </td>
-                            <td class="venue-column">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                </svg>
-                                Examination Hall B
-                            </td>
                             <td class="syllabus-column">
                                 <ul class="syllabus-list">
                                     <li>Ancient Civilizations: Egypt, Mesopotamia</li>
@@ -302,12 +277,6 @@
                                 </svg>
                                 9:00 AM - 12:00 PM
                             </td>
-                            <td class="venue-column">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                </svg>
-                                Art Studio
-                            </td>
                             <td class="syllabus-column">
                                 <ul class="syllabus-list">
                                     <li>Drawing: Perspective, Shading Techniques</li>
@@ -351,12 +320,6 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                                 9:00 AM - 12:00 PM
-                            </td>
-                            <td class="venue-column">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                </svg>
-                                Science Lab
                             </td>
                             <td class="syllabus-column">
                                 <ul class="syllabus-list">

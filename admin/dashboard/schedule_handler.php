@@ -4,6 +4,17 @@
  * Integrates schedule.php with exam_session_management.php
  */
 
+// Prevent any HTML output that could break JSON responses
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+
+// Set proper content type for JSON responses
+header('Content-Type: application/json');
+
+// Start output buffering to catch any unwanted output
+ob_start();
+
 // Start session for authentication
 session_start();
 
@@ -32,6 +43,10 @@ try {
             getExamSessions($conn);
             break;
             
+        case 'get_available_sessions':
+            getAvailableExamSessions($conn, $_POST, $user_id, $user_role);
+            break;
+            
         case 'get_schedule_data':
             getScheduleData($conn, $_GET);
             break;
@@ -55,11 +70,6 @@ try {
         case 'get_subjects':
             getSubjects($conn);
             break;
-      
-            
-        case 'get_proctors':
-            getProctors($conn);
-            break;
             
         case 'get_exam_details':
             getExamDetails($conn, $_GET['id']);
@@ -71,145 +81,215 @@ try {
             break;
     }
 } catch (Exception $e) {
+    // Clear any output buffer to prevent HTML errors in JSON
+    if (ob_get_level()) {
+        ob_clean();
+    }
+    
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+} finally {
+    // End output buffering
+    if (ob_get_level()) {
+        ob_end_flush();
+    }
 }
 
 /**
- * Create exam schedule entry linked to exam session
+ * Create exam schedule entry following existing exam session workflow
+ * Modified to integrate with exam_session_management.php system
  */
 function createExamSchedule($conn, $data, $user_id, $user_role) {
-    // Validate required fields - removed examName
-    $required_fields = ['examType', 'examSubject', 'examClass', 'examDate', 'examStartTime', 'examEndTime'];
+    // Follow proper workflow: Work with existing sessions, don't create automatically
+    if (!empty($data['examSessionId'])) {
+        // Option 1: Add subject to existing session (preferred workflow)
+        return addSubjectToExistingSession($conn, $data, $user_id, $user_role);
+    } else {
+        // Option 2: Guide user to create session first, then add subjects
+        // Instead of auto-creating, return available sessions for user to choose
+        return getAvailableExamSessions($conn, $data, $user_id, $user_role);
+    }
+}
+
+/**
+ * Add subject to existing exam session following proper workflow
+ * Uses same pattern as exam_session_actions.php for consistency
+ */
+function addSubjectToExistingSession($conn, $data, $user_id, $user_role) {
+    $required_fields = ['examSessionId', 'examSubject', 'examDate'];
     foreach ($required_fields as $field) {
         if (empty($data[$field])) {
             throw new Exception("Field '{$field}' is required");
         }
     }
     
-    $conn->begin_transaction();
+    // Verify session exists and user has access
+    $session_sql = "SELECT * FROM exam_sessions WHERE id = ? AND status = 'active'";
+    $stmt = $conn->prepare($session_sql);
+    $stmt->bind_param("i", $data['examSessionId']);
+    $stmt->execute();
+    $session = $stmt->get_result()->fetch_assoc();
     
-    try {
-        // Check if we have an existing exam session for this class/type
-        $session_check_sql = "SELECT id FROM exam_sessions 
-                             WHERE class_id = ? AND session_type = ? 
-                             AND academic_year = ? AND status = 'active'
-                             ORDER BY created_at DESC LIMIT 1";
+    if (!$session) {
+        throw new Exception("Exam session not found or inactive");
+    }
+    
+    // Get subject ID
+    $subject_sql = "SELECT id FROM subjects WHERE name = ? OR code = ?";
+    $stmt = $conn->prepare($subject_sql);
+    $stmt->bind_param("ss", $data['examSubject'], $data['examSubject']);
+    $stmt->execute();
+    $subject_result = $stmt->get_result();
+    
+    if ($subject_result->num_rows === 0) {
+        throw new Exception("Subject not found: " . $data['examSubject']);
+    }
+    
+    $subject_row = $subject_result->fetch_assoc();
+    $subject_id = $subject_row['id'];
+    
+    // Check for existing subject in this session
+    $duplicate_check = "SELECT id FROM exam_subjects WHERE exam_session_id = ? AND subject_id = ?";
+    $stmt = $conn->prepare($duplicate_check);
+    $stmt->bind_param("ii", $data['examSessionId'], $subject_id);
+    $stmt->execute();
+    
+    if ($stmt->get_result()->num_rows > 0) {
+        throw new Exception("This subject is already scheduled for this exam session");
+    }
+    
+    // Find or create assessment for this subject and session type
+    $assessment_title = $session['session_type'] . " - " . $data['examSubject'] . " Assessment";
+    $assessment_sql = "SELECT id FROM assessments WHERE assessment_type = ? AND subject_id = ? ORDER BY created_at DESC LIMIT 1";
+    $stmt = $conn->prepare($assessment_sql);
+    $stmt->bind_param("si", $session['session_type'], $subject_id);
+    $stmt->execute();
+    $assessment_result = $stmt->get_result();
+    
+    $assessment_id = null;
+    if ($assessment_result->num_rows > 0) {
+        $assessment_row = $assessment_result->fetch_assoc();
+        $assessment_id = $assessment_row['id'];
+    } else {
+        // Create new assessment following same pattern
+        $create_assessment_sql = "INSERT INTO assessments (
+            class_id, section_id, teacher_user_id, title, type, 
+            total_marks, date, subject_id, assessment_type
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
-        $stmt = $conn->prepare($session_check_sql);
-        $academic_year = '2024-25'; // Current academic year
-        $session_type = $data['examType']; // Now directly FA or SA
-        $stmt->bind_param("iss", $data['examClass'], $session_type, $academic_year);
+        $stmt = $conn->prepare($create_assessment_sql);
+        $section_id = $session['section_id'] ?? null;
+        $legacy_type = 'exam';
+        $total_marks = $data['maxMarks'] ?? 100;
+        
+        $stmt->bind_param("iissisiss", 
+            $session['class_id'], $section_id, $user_id, $assessment_title, 
+            $legacy_type, $total_marks, $data['examDate'], $subject_id, $session['session_type']
+        );
         $stmt->execute();
-        $session_result = $stmt->get_result();
-        
-        $exam_session_id = null;
-        if ($session_result->num_rows > 0) {
-            $session_row = $session_result->fetch_assoc();
-            $exam_session_id = $session_row['id'];
-        } else {
-            // Create new exam session with simplified naming
-            $session_name = $session_type . " Assessment - " . date('Y');
-            $term = getCurrentTerm(); // You'll need to implement this function
-            $start_date = $data['examDate'];
-            $end_date = date('Y-m-d', strtotime($start_date . ' +7 days')); // Default 7-day exam period
-            
-            $create_session_sql = "INSERT INTO exam_sessions (
-                session_name, session_type, academic_year, term, 
-                start_date, end_date, class_id, created_by, status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')";
-            
-            $stmt = $conn->prepare($create_session_sql);
-            $stmt->bind_param("ssssssii", 
-                $session_name, $session_type, $academic_year, $term,
-                $start_date, $end_date, $data['examClass'], $user_id
-            );
-            $stmt->execute();
-            $exam_session_id = $conn->insert_id;
-        }
-        
-        // Get subject ID
-        $subject_sql = "SELECT id FROM subjects WHERE name = ? OR code = ?";
-        $stmt = $conn->prepare($subject_sql);
-        $stmt->bind_param("ss", $data['examSubject'], $data['examSubject']);
-        $stmt->execute();
-        $subject_result = $stmt->get_result();
-        
-        if ($subject_result->num_rows === 0) {
-            throw new Exception("Subject not found: " . $data['examSubject']);
-        }
-        
-        $subject_row = $subject_result->fetch_assoc();
-        $subject_id = $subject_row['id'];
-          // Get or create assessment entry with auto-generated title
-        $assessment_title = $session_type . " - " . $data['examSubject'] . " Assessment";
-        $assessment_sql = "SELECT id FROM assessments WHERE title = ? AND class_id = ? AND subject_id = ? AND assessment_type = ?";
-        $stmt = $conn->prepare($assessment_sql);
-        $stmt->bind_param("siis", $assessment_title, $data['examClass'], $subject_id, $session_type);
-        $stmt->execute();
-        $assessment_result = $stmt->get_result();
-        
-        $assessment_id = null;
-        if ($assessment_result->num_rows > 0) {
-            $assessment_row = $assessment_result->fetch_assoc();
-            $assessment_id = $assessment_row['id'];
-        } else {
-            // Create new assessment entry
-            $create_assessment_sql = "INSERT INTO assessments (
-                class_id, section_id, teacher_user_id, title, type, 
-                total_marks, date, subject_id, assessment_type
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            $stmt = $conn->prepare($create_assessment_sql);
-            $section_id = $data['examSection'] ?? null;
-            $legacy_type = 'exam'; // Simplified to just 'exam'
-            $total_marks = $data['maxMarks'] ?? 100;
-            
-            $stmt->bind_param("iiissisis", 
-                $data['examClass'], $section_id, $user_id, $assessment_title, 
-                $legacy_type, $total_marks, $data['examDate'], $subject_id, $session_type
-            );
-            $stmt->execute();
-            $assessment_id = $conn->insert_id;
-        }
-        
-        // Calculate duration
+        $assessment_id = $conn->insert_id;
+    }
+    
+    // Insert exam subject using same pattern as exam_session_actions.php
+    $exam_subject_sql = "INSERT INTO exam_subjects (
+        exam_session_id, subject_id, assessment_id, exam_date, 
+        total_marks, status, created_by, created_at";
+    
+    $values_part = "VALUES (?, ?, ?, ?, ?, 'active', ?, NOW()";
+    $bind_types = "iiisii";
+    $bind_values = [
+        $data['examSessionId'], 
+        $subject_id, 
+        $assessment_id, 
+        $data['examDate'],
+        $data['maxMarks'] ?? 100,
+        $user_id
+    ];
+    
+    // Add optional time fields if provided (for schedule.php compatibility)
+    if (!empty($data['examStartTime'])) {
+        $exam_subject_sql .= ", exam_time";
+        $values_part .= ", ?";
+        $bind_types .= "s";
+        $bind_values[] = $data['examStartTime'];
+    }
+    
+    if (!empty($data['examStartTime']) && !empty($data['examEndTime'])) {
         $start_time = new DateTime($data['examStartTime']);
         $end_time = new DateTime($data['examEndTime']);
         $duration = $end_time->diff($start_time);
         $duration_minutes = ($duration->h * 60) + $duration->i;
         
-        // Insert exam subject entry
-        $exam_subject_sql = "INSERT INTO exam_subjects (
-            exam_session_id, subject_id, assessment_id, exam_date, 
-            exam_time, duration_minutes, total_marks, passing_marks, 
-            venue, instructions
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-          $stmt = $conn->prepare($exam_subject_sql);
-        $total_marks = $data['maxMarks'] ?? 100;
-        $passing_marks = round($total_marks * 0.4); // 40% passing
-        $venue = 'TBD'; // Default venue since rooms are no longer used
-        $instructions = $data['examInstructions'] ?? '';
-        
-        $stmt->bind_param("iiiisiisss", 
-            $exam_session_id, $subject_id, $assessment_id, $data['examDate'],
-            $data['examStartTime'], $duration_minutes, $total_marks, 
-            $passing_marks, $venue, $instructions
-        );
-        $stmt->execute();
-        
-        $conn->commit();
-        
-        echo json_encode([
-            'success' => true, 
-            'message' => 'Exam scheduled successfully',
-            'exam_session_id' => $exam_session_id,
-            'exam_subject_id' => $conn->insert_id
-        ]);
-        
-    } catch (Exception $e) {
-        $conn->rollback();
-        throw $e;
+        $exam_subject_sql .= ", duration_minutes";
+        $values_part .= ", ?";
+        $bind_types .= "i";
+        $bind_values[] = $duration_minutes;
     }
+    
+    if (!empty($data['examInstructions'])) {
+        $exam_subject_sql .= ", instructions";
+        $values_part .= ", ?";
+        $bind_types .= "s";
+        $bind_values[] = $data['examInstructions'];
+    }
+    
+    $exam_subject_sql .= ") " . $values_part . ")";
+    
+    $stmt = $conn->prepare($exam_subject_sql);
+    $stmt->bind_param($bind_types, ...$bind_values);
+    $stmt->execute();
+    
+    echo json_encode([
+        'success' => true, 
+        'message' => 'Subject added to exam session successfully',
+        'exam_session_id' => $data['examSessionId'],
+        'exam_subject_id' => $conn->insert_id,
+        'workflow_note' => 'Subject added following existing exam session workflow'
+    ]);
+}
+
+/**
+ * Get available exam sessions instead of auto-creating
+ * Guides user to use proper workflow: Session → Subjects → Marks
+ */
+function getAvailableExamSessions($conn, $data, $user_id, $user_role) {
+    // Get current academic year
+    $academic_year = '2024-25';
+    
+    // Check for existing active sessions that could accommodate this subject
+    $session_sql = "SELECT es.*, c.name as class_name
+                   FROM exam_sessions es
+                   LEFT JOIN classes c ON es.class_id = c.id
+                   WHERE es.status = 'active' 
+                   AND es.academic_year = ?
+                   ORDER BY es.created_at DESC";
+    
+    $stmt = $conn->prepare($session_sql);
+    $stmt->bind_param("s", $academic_year);
+    $stmt->execute();
+    $sessions_result = $stmt->get_result();
+    
+    $available_sessions = [];
+    while ($session = $sessions_result->fetch_assoc()) {
+        $available_sessions[] = [
+            'id' => $session['id'],
+            'session_name' => $session['session_name'],
+            'session_type' => $session['session_type'],
+            'class_name' => $session['class_name'],
+            'start_date' => $session['start_date'],
+            'end_date' => $session['end_date']
+        ];
+    }
+    
+    // Return guidance message with available sessions
+    echo json_encode([
+        'success' => false,
+        'message' => 'Please select an existing exam session or create a new one first',
+        'workflow_guidance' => 'To schedule exams: 1) Create exam session, 2) Add subjects to session, 3) Enter marks',
+        'available_sessions' => $available_sessions,
+        'redirect_url' => 'exam_session_management.php',
+        'action_required' => 'create_or_select_session'
+    ]);
 }
 
 /**
@@ -243,21 +323,19 @@ function getScheduleData($conn, $params) {
                     es.session_name as exam_name,
                     es.session_type as exam_type,
                     esub.exam_date,
-                    esub.start_time,
-                    esub.end_time,
+                    esub.exam_time as start_time,
+                    TIME_FORMAT(ADDTIME(esub.exam_time, SEC_TO_TIME(esub.duration_minutes * 60)), '%H:%i:%s') as end_time,
                     esub.total_marks as max_marks,
-                    esub.duration,
+                    esub.duration_minutes as duration,
                     s.name as subject_name,
                     s.id as subject_id,
                     c.name as class_name,
-                    c.id as class_id,
-                    u.full_name as proctor_name,
-                    u.id as teacher_id
+                    c.id as class_id
                 FROM exam_sessions es
-                INNER JOIN exam_subjects esub ON es.id = esub.session_id
+                INNER JOIN exam_subjects esub ON es.id = esub.exam_session_id
                 INNER JOIN subjects s ON esub.subject_id = s.id
                 INNER JOIN classes c ON es.class_id = c.id
-                LEFT JOIN users u ON esub.teacher_user_id = u.id
+                INNER JOIN assessments a ON esub.assessment_id = a.id
                 WHERE es.status = 'active'";
         
         $bind_params = [];
@@ -303,7 +381,7 @@ function getScheduleData($conn, $params) {
         }
         
         // Order by date and time
-        $sql .= " ORDER BY esub.exam_date ASC, esub.start_time ASC";
+        $sql .= " ORDER BY esub.exam_date ASC, esub.exam_time ASC";
         
         // Prepare and execute query
         $stmt = $conn->prepare($sql);
@@ -338,14 +416,11 @@ function getScheduleData($conn, $params) {
  */
 function getCalendarEvents($conn, $params) {
     $start_date = $params['start'] ?? date('Y-m-01');
-    $end_date = $params['end'] ?? date('Y-m-t');
-    
-    $sql = "SELECT 
+    $end_date = $params['end'] ?? date('Y-m-t');        $sql = "SELECT 
                 es.id,
                 es.exam_date as start,
                 es.exam_time,
                 es.duration_minutes,
-                es.venue,
                 s.name as subject_name,
                 c.name as class_name,
                 sess.session_type,
@@ -381,7 +456,6 @@ function getCalendarEvents($conn, $params) {
             'extendedProps' => [
                 'subject' => $row['subject_name'],
                 'class' => $row['class_name'],
-                'venue' => $row['venue'],
                 'type' => $row['session_type'],
                 'duration' => $row['duration_minutes']
             ]
@@ -574,40 +648,18 @@ function getSubjects($conn) {
     echo json_encode(['success' => true, 'data' => $subjects]);
 }
 
-
-
-/**
- * Get all teachers/proctors for dropdown
- */
-function getProctors($conn) {
-    $sql = "SELECT id as teacher_id, full_name 
-            FROM users WHERE role = 'teacher' AND status = 'active' 
-            ORDER BY full_name";
-    $result = $conn->query($sql);
-    
-    $proctors = [];
-    if ($result && $result->num_rows > 0) {
-        while ($row = $result->fetch_assoc()) {
-            $proctors[] = $row;
-        }
-    }
-    
-    echo json_encode(['success' => true, 'data' => $proctors]);
-}
-
 /**
  * Get detailed information about a specific exam
  */
-function getExamDetails($conn, $exam_id) {    $sql = "SELECT es.*, 
+function getExamDetails($conn, $exam_id) {
+    $sql = "SELECT es.*, 
                    sess.session_name, sess.session_type, sess.academic_year, sess.class_id,
                    c.name as class_name, 
-                   s.name as subject_name,
-                   u.full_name as proctor_name
+                   s.name as subject_name
             FROM exam_subjects es
             JOIN exam_sessions sess ON es.exam_session_id = sess.id
             LEFT JOIN classes c ON sess.class_id = c.id
             LEFT JOIN subjects s ON es.subject_id = s.id
-            LEFT JOIN users u ON sess.created_by = u.id
             WHERE es.id = ?";
     
     $stmt = $conn->prepare($sql);
@@ -620,7 +672,8 @@ function getExamDetails($conn, $exam_id) {    $sql = "SELECT es.*,
         
         // Format the exam data for frontend
         $formatted_exam = [
-            'id' => $exam['id'],            'exam_name' => $exam['session_name'],
+            'id' => $exam['id'],
+            'exam_name' => $exam['session_name'],
             'exam_type' => strtolower($exam['session_type']),
             'exam_date' => $exam['exam_date'],
             'start_time' => $exam['exam_time'],
@@ -629,8 +682,7 @@ function getExamDetails($conn, $exam_id) {    $sql = "SELECT es.*,
             'subject_id' => $exam['subject_id'],
             'duration' => $exam['duration_minutes'],
             'max_marks' => $exam['total_marks'],
-            'instructions' => $exam['instructions'] ?? '',
-            'proctor_name' => $exam['proctor_name'] ?? 'Not assigned'
+            'instructions' => $exam['instructions'] ?? ''
         ];
         
         echo json_encode(['success' => true, 'exam' => $formatted_exam]);
