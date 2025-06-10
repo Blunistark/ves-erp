@@ -67,7 +67,10 @@ switch ($action) {
 // Discard any buffered output that might interfere with our JSON
 ob_end_clean();
 
-/** * Get dashboard statistics for the teacher */function getDashboardStats($conn, $teacher_user_id) {
+/**
+ * Get dashboard statistics for the teacher
+ */
+function getDashboardStats($conn, $teacher_user_id) {
     // Always define these variables at the very top
     $classIds = [];
     $sectionIds = [];
@@ -75,7 +78,12 @@ ob_end_clean();
     if (ob_get_length()) ob_clean();
     
     // Get classes assigned to this teacher
-    $classQuery = "SELECT DISTINCT c.id, s.id AS section_id                   FROM classes c                    JOIN sections s ON c.id = s.class_id                    LEFT JOIN teacher_subjects ts ON ts.teacher_user_id = ?                    LEFT JOIN class_subjects cs ON cs.subject_id = ts.subject_id AND cs.class_id = c.id                   WHERE s.class_teacher_user_id = ? OR cs.class_id IS NOT NULL";
+    $classQuery = "SELECT DISTINCT c.id, s.id AS section_id
+                   FROM classes c
+                   JOIN sections s ON c.id = s.class_id
+                   LEFT JOIN teacher_subjects ts ON ts.teacher_user_id = ?
+                   LEFT JOIN class_subjects cs ON cs.subject_id = ts.subject_id AND cs.class_id = c.id
+                   WHERE s.class_teacher_user_id = ? OR cs.class_id IS NOT NULL";
     $stmt = $conn->prepare($classQuery);
     $stmt->bind_param("ii", $teacher_user_id, $teacher_user_id);
     $stmt->execute();
@@ -653,12 +661,12 @@ function getAttendanceHistory($conn, $teacher_user_id) {
         // Get attendance for specific class/section
         $historyQuery = "SELECT a.date, c.name as class_name, s.name as section_name, c.id as class_id, s.id as section_id,
                             COUNT(CASE WHEN a.status = 'present' THEN 1 END) as present,
-                            COUNT(CASE WHEN a.status = 'absent' THEN 1 END) as absent,
+                            COUNT(CASE WHEN a.status = 'absent' THEN 1 END) as absent
                          FROM attendance a
                          JOIN classes c ON a.class_id = c.id
                          JOIN sections s ON a.section_id = s.id
                          WHERE a.class_id = ? AND a.section_id = ? AND a.date BETWEEN ? AND ?
-                         GROUP BY a.date
+                         GROUP BY a.date, c.id, c.name, s.id, s.name
                          ORDER BY a.date DESC";
         
         $stmt = $conn->prepare($historyQuery);
@@ -667,20 +675,20 @@ function getAttendanceHistory($conn, $teacher_user_id) {
         // Get attendance for all classes/sections this teacher has access to
         $historyQuery = "SELECT a.date, c.name as class_name, s.name as section_name, c.id as class_id, s.id as section_id,
                             COUNT(CASE WHEN a.status = 'present' THEN 1 END) as present,
-                            COUNT(CASE WHEN a.status = 'absent' THEN 1 END) as absent,
+                            COUNT(CASE WHEN a.status = 'absent' THEN 1 END) as absent
                          FROM attendance a
                          JOIN classes c ON a.class_id = c.id
                          JOIN sections s ON a.section_id = s.id
                          WHERE a.date BETWEEN ? AND ? 
                          AND a.class_id IN (
-                             SELECT DISTINCT c.id
-                             FROM classes c 
-                             JOIN sections s ON c.id = s.class_id 
-                             LEFT JOIN teacher_subjects ts ON ts.teacher_user_id = ? 
-                             LEFT JOIN class_subjects cs ON cs.subject_id = ts.subject_id AND cs.class_id = c.id
-                             WHERE s.class_teacher_user_id = ? OR cs.class_id IS NOT NULL
+                             SELECT DISTINCT c2.id
+                             FROM classes c2 
+                             JOIN sections s2 ON c2.id = s2.class_id 
+                             LEFT JOIN teacher_subjects ts2 ON ts2.teacher_user_id = ? 
+                             LEFT JOIN class_subjects cs2 ON cs2.subject_id = ts2.subject_id AND cs2.class_id = c2.id
+                             WHERE s2.class_teacher_user_id = ? OR cs2.class_id IS NOT NULL
                          )
-                         GROUP BY a.date, a.class_id, a.section_id
+                         GROUP BY a.date, a.class_id, a.section_id, c.id, c.name, s.id, s.name
                          ORDER BY a.date DESC, c.name, s.name";
         
         $stmt = $conn->prepare($historyQuery);
