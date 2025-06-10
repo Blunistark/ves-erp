@@ -87,12 +87,16 @@ if (!empty($student['dob']) && $student['dob'] != '0000-00-00') {
     <link rel="stylesheet" href="css/profile.css">
     <style>
         /* Main container and sidebar integration */
+     /* Main container and sidebar integration */
         .main-content {
-            margin-left: 250px;
-            padding: 2rem;
-            background-color: #f8fafc;
-            min-height: 100vh;
-            transition: margin-left 0.3s ease;
+            margin-left: 280px !important;
+            padding: 2rem !important;
+            background-color: #f8fafc !important;
+            min-height: 100vh !important;
+            transition: margin-left 0.3s ease !important;
+            width: calc(100% - 280px) !important;
+            box-sizing: border-box !important;
+            position: relative !important;
         }
         
         .sidebar.collapsed ~ .main-content {
