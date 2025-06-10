@@ -18,9 +18,9 @@ $teacher_id = $_SESSION['user_id'];
 $query = "SELECT DISTINCT c.id, c.name as class_name, s.id as section_id, s.name as section_name 
         FROM classes c 
         JOIN sections s ON c.id = s.class_id 
-        LEFT JOIN teacher_assignments ta ON ta.class_id = c.id AND ta.section_id = s.id
-        WHERE (s.class_teacher_user_id = ? OR ta.teacher_user_id = ?)
-        AND ta.academic_year_id = (SELECT id FROM academic_years WHERE is_current = 1)
+        LEFT JOIN teacher_assignments ta ON ta.class_id = c.id AND ta.section_id = s.id 
+                                         AND ta.academic_year_id = (SELECT id FROM academic_years WHERE is_current = 1)
+        WHERE s.class_teacher_user_id = ? OR ta.teacher_user_id = ?
         ORDER BY c.name, s.name";
 $stmt = $conn->prepare($query);
 $stmt->bind_param("ii", $teacher_id, $teacher_id);
@@ -209,11 +209,11 @@ while ($row = $result->fetch_assoc()) {
 </div>
 
 <!-- Create/Edit Notice Modal -->
-<div class="modal-overlay" id="noticeModal">
-    <div class="modal-content">
+<div class="modal-overlay" id="noticeModal" style="display: none;">
+    <div class="modal">
                 <div class="modal-header">
             <h3 class="modal-title" id="modalTitle">Create New Class Notice</h3>
-            <button class="close-modal" id="closeModal">&times;</button>
+            <button class="modal-close" id="closeModal">&times;</button>
                 </div>
         
         <form id="noticeForm" action="notice_actions.php" method="POST">
@@ -269,10 +269,10 @@ while ($row = $result->fetch_assoc()) {
 
 <!-- Delete Confirmation Modal -->
 <div class="modal-overlay" id="deleteModal">
-    <div class="modal-content" style="max-width: 500px;">
+    <div class="modal" style="max-width: 500px;">
         <div class="modal-header">
             <h3 class="modal-title">Confirm Delete</h3>
-            <button class="close-modal" id="closeDeleteModal">&times;</button>
+            <button class="modal-close" id="closeDeleteModal">&times;</button>
         </div>
 
         <p>Are you sure you want to delete this notice? This action cannot be undone.</p>
@@ -367,27 +367,38 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Create Notice Button Click Handler
-    document.getElementById('createNoticeBtn').addEventListener('click', function() {
-        // Reset the form
-        document.getElementById('noticeForm').reset();
-        if (jQuery().summernote) {
-            $('#content').summernote('code', '');
-        }
-        
-        // Set form action to create
-        document.getElementById('formAction').value = 'create';
-        document.getElementById('noticeId').value = '';
-        
-        // Hide status field (it's only for editing)
-        document.getElementById('statusGroup').style.display = 'none';
-        
-        // Update modal title and button text
-        document.getElementById('modalTitle').textContent = 'Create New Class Notice';
-        document.getElementById('submitBtn').textContent = 'Create Notice';
-        
-        // Show the modal
-        document.getElementById('noticeModal').style.display = 'block';
-    });
+    const createNoticeBtn = document.getElementById('createNoticeBtn');
+    if (createNoticeBtn) {
+        console.log('Create Notice Button found');
+        createNoticeBtn.addEventListener('click', function() {
+            console.log('Create Notice Button clicked');
+            
+            // Reset the form
+            document.getElementById('noticeForm').reset();
+            if (jQuery().summernote) {
+                $('#content').summernote('code', '');
+            }
+            
+            // Set form action to create
+            document.getElementById('formAction').value = 'create';
+            document.getElementById('noticeId').value = '';
+            
+            // Hide status field (it's only for editing)
+            document.getElementById('statusGroup').style.display = 'none';
+            
+            // Update modal title and button text
+            document.getElementById('modalTitle').textContent = 'Create New Class Notice';
+            document.getElementById('submitBtn').textContent = 'Create Notice';
+            
+            // Show the modal
+            console.log('Showing modal');
+            const modal = document.getElementById('noticeModal');
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('show'), 10);
+        });
+    } else {
+        console.error('Create Notice Button not found');
+    }
 
     // Edit Notice Button Click Handlers
     document.querySelectorAll('.edit-btn').forEach(function(button) {
@@ -423,7 +434,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('submitBtn').textContent = 'Update Notice';
                     
                     // Show the modal
-                    document.getElementById('noticeModal').style.display = 'block';
+                    const modal = document.getElementById('noticeModal');
+                    modal.style.display = 'flex';
+                    setTimeout(() => modal.classList.add('show'), 10);
                 })
                 .catch(error => {
                     alert('Error loading notice data. Please try again.');
@@ -436,15 +449,25 @@ document.addEventListener('DOMContentLoaded', function() {
         button.addEventListener('click', function() {
             const noticeId = this.getAttribute('data-id');
             document.getElementById('deleteNoticeId').value = noticeId;
-            document.getElementById('deleteModal').style.display = 'block';
+            const deleteModal = document.getElementById('deleteModal');
+            deleteModal.style.display = 'flex';
+            setTimeout(() => deleteModal.classList.add('show'), 10);
         });
     });
 
     // Modal Close Handlers
-    document.querySelectorAll('.close-modal, .cancel-btn').forEach(function(element) {
+    document.querySelectorAll('.modal-close, .cancel-btn').forEach(function(element) {
         element.addEventListener('click', function() {
-            document.getElementById('noticeModal').style.display = 'none';
-            document.getElementById('deleteModal').style.display = 'none';
+            const noticeModal = document.getElementById('noticeModal');
+            const deleteModal = document.getElementById('deleteModal');
+            
+            noticeModal.classList.remove('show');
+            deleteModal.classList.remove('show');
+            
+            setTimeout(() => {
+                noticeModal.style.display = 'none';
+                deleteModal.style.display = 'none';
+            }, 300);
         });
     });
 
@@ -452,7 +475,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
         overlay.addEventListener('click', function(e) {
             if (e.target === this) {
-                this.style.display = 'none';
+                this.classList.remove('show');
+                setTimeout(() => {
+                    this.style.display = 'none';
+                }, 300);
             }
         });
     });
