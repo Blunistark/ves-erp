@@ -66,15 +66,14 @@ include 'sidebar.php'; ?>
                 <!-- Profile Card -->
                 <div class="profile-card">
                     <div class="profile-avatar">
-                        <div class="avatar-container">
+                        <div class="avatar-container" onclick="showAvatarModal()">
                             <div class="avatar-placeholder">VS</div>
-                            <label for="photo-upload" class="avatar-overlay" style="pointer-events: none; opacity: 0.5;">
+                            <div class="avatar-overlay">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="avatar-edit-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
-                            </label>
-                            <input type="file" id="photo-upload" name="photo" accept="image/jpeg,image/png,image/jpg" style="display: none;" disabled>
+                            </div>
                         </div>
                         <h2 class="admin-name">Vinodh English School</h2>
                         <p class="admin-role">School Administrator</p>
@@ -237,6 +236,39 @@ include 'sidebar.php'; ?>
         </main>
     </div>
 
+    <!-- Avatar Selection Modal -->
+    <div class="modal-overlay" id="avatarModal" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Choose Profile Picture</h3>
+                <button class="modal-close" onclick="hideAvatarModal()">
+                    <svg class="modal-close-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-top: 0; margin-bottom: 1rem; color: #6b7280; font-size: 0.9375rem;">Upload your own profile picture.</p>
+                
+                <h4 style="font-size: 0.9375rem; color: #4b5563; margin-bottom: 0.5rem;">Upload Image</h4>
+                <label class="file-upload" for="avatar-upload" style="padding: 1rem;">
+                    <input type="file" id="avatar-upload" class="file-input" accept="image/*">
+                    <svg style="width: 24px; height: 24px; color: #6b7280; margin-bottom: 0.5rem;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    <div style="font-size: 0.875rem; color: #4b5563;">Click to upload image</div>
+                    <div style="font-size: 0.75rem; color: #9ca3af; margin-top: 0.25rem;">JPG, PNG (Max 2MB)</div>
+                </label>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="hideAvatarModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveAvatar()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
@@ -277,6 +309,32 @@ include 'sidebar.php'; ?>
                 });
             });
         });
+
+        // Avatar modal functions
+        function showAvatarModal() {
+            document.getElementById('avatarModal').style.display = 'flex';
+            Swal.fire({
+                title: 'Avatar Selection Disabled',
+                text: 'Avatar selection is currently disabled for demonstration purposes.',
+                icon: 'info',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#3085d6'
+            });
+        }
+
+        function hideAvatarModal() {
+            document.getElementById('avatarModal').style.display = 'none';
+        }
+
+        function saveAvatar() {
+            Swal.fire({
+                title: 'Save Disabled',
+                text: 'Avatar saving is currently disabled.',
+                icon: 'info',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#3085d6'
+            });
+        }
 
         // Disabled password visibility toggle
         function togglePasswordVisibility(inputId) {

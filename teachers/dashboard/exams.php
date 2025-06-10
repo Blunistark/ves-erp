@@ -30,7 +30,7 @@ if ($sections_res) {
         body, html {
             background: #fff !important;
         }
-        .sidebar-overlay, .sidebar, .dashboard-header, .quick-actions, .filters-container, .tab, .modal, .modal-header, .modal-footer, .hamburger-btn, .print-link, .btn, .action-card, .exam-details-modal, #newExamForm, #studentListModal {
+        .sidebar-overlay, .sidebar, .dashboard-header, .quick-actions, .filters-container, .tab, .modal, .modal-header, .modal-footer, .hamburger-btn, .print-link, .btn, .action-card, .exam-details-modal, #studentListModal {
             display: none !important;
         }
         .dashboard-container {
@@ -100,24 +100,8 @@ if ($sections_res) {
     </header>
 
     <main class="dashboard-content">
-        <!-- Upcoming Exam Alert -->
-        <div class="upcoming-exam" id="upcomingExamAlert">
-            <div class="upcoming-exam-info">
-                <div class="upcoming-exam-title" id="upcomingExamTitle"></div>
-                <div class="upcoming-exam-details" id="upcomingExamDetails"></div>
-            </div>
-            <div class="upcoming-exam-countdown" id="upcomingExamCountdown"></div>
-        </div>
-
         <!-- Quick Actions -->
         <div class="quick-actions">
-            <div class="action-card">
-                <svg xmlns="http://www.w3.org/2000/svg" class="action-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                </svg>
-                <div class="action-title">Create Exam</div>
-                <div class="action-description">Schedule a new exam or test</div>
-            </div>
             <div class="action-card">
                 <svg xmlns="http://www.w3.org/2000/svg" class="action-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -139,6 +123,15 @@ if ($sections_res) {
                 <div class="action-title">Sync Calendar</div>
                 <div class="action-description">Export to your calendar</div>
             </div>
+        </div>
+
+        <!-- Upcoming Exam Alert -->
+        <div class="upcoming-exam" id="upcomingExamAlert" style="display: none;">
+            <div class="upcoming-exam-info">
+                <div class="upcoming-exam-title" id="upcomingExamTitle">Loading...</div>
+                <div class="upcoming-exam-details" id="upcomingExamDetails">Loading...</div>
+            </div>
+            <div class="upcoming-exam-countdown" id="upcomingExamCountdown">Loading...</div>
         </div>
 
         <!-- Main Content Card -->
@@ -215,7 +208,7 @@ if ($sections_res) {
                                 </tr>
                             </thead>
                             <tbody id="examTableBody">
-                                <tr><td colspan="6" style="text-align:center;">Loading exams...</td></tr>
+                                <tr><td colspan="7" style="text-align:center;">Loading exams...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -297,126 +290,6 @@ if ($sections_res) {
             </div>
         </div>
         
-        <!-- Create New Exam Form (would typically be hidden until action is taken) -->
-        <div class="card" id="newExamForm" style="display: none;">
-            <div class="card-header">
-                <h2 class="card-title">Create New Exam/Test</h2>
-            </div>
-            <div class="card-body">
-                <form>
-                    <div class="form-group">
-                        <label for="examTitle" class="form-label">Exam Title*</label>
-                        <input type="text" id="examTitle" class="form-input" placeholder="Enter a title for this exam" required>
-                    </div>
-                    
-                    <div class="two-col">
-                        <div class="form-group">
-                            <label for="examClass" class="form-label">Class*</label>
-                            <select id="examClass" class="form-select" required>
-                                <option value="">Select a class</option>
-                                <?php
-                                require_once 'con.php';
-                                $class_res = mysqli_query($conn, "SELECT id, name FROM classes ORDER BY name");
-                                while ($row = mysqli_fetch_assoc($class_res)) {
-                                    echo '<option value="' . $row['id'] . '">' . htmlspecialchars($row['name']) . '</option>';
-                                }
-                                ?>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="examSection" class="form-label">Section*</label>
-                            <select id="examSection" class="form-select" required>
-                                <option value="">Select a section</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="examType" class="form-label">Assessment Type*</label>
-                            <select id="examType" class="form-select" required>
-                                <option value="">Select assessment type</option>
-                                <option value="SA">📊 SA (Summative Assessment)</option>
-                                <?php if (hasRole(['teacher', 'headmaster'])): ?>
-                                <option value="FA">📝 FA (Formative Assessment)</option>
-                                <?php endif; ?>
-                            </select>
-                            <small class="form-help">
-                                <?php if (hasRole(['teacher', 'headmaster'])): ?>
-                                SA: Formal exams (percentage-based grading) | FA: Continuous assessments (marks-based grading)
-                                <?php else: ?>
-                                Only SA assessments can be created. Contact administrator for FA assessments.
-                                <?php endif; ?>
-                            </small>
-                        </div>
-                    </div>
-                    
-                    <div class="two-col">
-                        <div class="form-group">
-                            <label for="examDate" class="form-label">Date*</label>
-                            <input type="date" id="examDate" class="form-input" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="examLocation" class="form-label">Location*</label>
-                            <input type="text" id="examLocation" class="form-input" placeholder="e.g. Room 203" required>
-                        </div>
-                    </div>
-                    
-                    <div class="two-col">
-                        <div class="form-group">
-                            <label for="examStartTime" class="form-label">Start Time*</label>
-                            <input type="time" id="examStartTime" class="form-input" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="examEndTime" class="form-label">End Time*</label>
-                            <input type="time" id="examEndTime" class="form-input" required>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="examSyllabus" class="form-label">Syllabus/Topics Covered</label>
-                        <textarea id="examSyllabus" class="form-textarea" placeholder="Enter the syllabus or topics covered in the exam"></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="examInstructions" class="form-label">Special Instructions</label>
-                        <textarea id="examInstructions" class="form-textarea" placeholder="Enter any special instructions for students"></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="examInvigilators" class="form-label">Invigilators</label>
-                        <input type="text" id="examInvigilators" class="form-input" placeholder="Enter names of invigilators">
-                    </div>
-                    
-                    <div class="two-col">
-                        <div class="form-group">
-                            <label for="examTotalMarks" class="form-label">Total Marks</label>
-                            <input type="number" id="examTotalMarks" class="form-input" placeholder="e.g. 100" min="0">
-                        </div>
-                        <div class="form-group">
-                            <label for="examPassingMarks" class="form-label">Passing Marks</label>
-                            <input type="number" id="examPassingMarks" class="form-input" placeholder="e.g. 40" min="0">
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="examSubject" class="form-label">Subject*</label>
-                        <select id="examSubject" class="form-select" required>
-                            <option value="">Select a subject</option>
-                            <?php
-                            $subject_res = mysqli_query($conn, "SELECT id, name FROM subjects ORDER BY name");
-                            while ($row = mysqli_fetch_assoc($subject_res)) {
-                                echo '<option value="' . $row['id'] . '">' . htmlspecialchars($row['name']) . '</option>';
-                            }
-                            ?>
-                        </select>
-                    </div>
-                    
-                    <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
-                        <button type="button" class="btn btn-secondary" id="cancelExam">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Create Exam</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
         <!-- Student List Modal -->
         <div class="exam-details-modal" id="studentListModal" style="display: none;">
             <div class="modal-header">
@@ -489,20 +362,8 @@ if ($sections_res) {
             modal.style.display = 'none';
         });
         
-        // Create New Exam
+        // Create New Exam - REMOVED
         const actionCards = document.querySelectorAll('.action-card');
-        const newExamForm = document.getElementById('newExamForm');
-        const cancelExamButton = document.getElementById('cancelExam');
-        
-        actionCards[0].addEventListener('click', function() {
-            newExamForm.style.display = 'block';
-            // Scroll to form
-            newExamForm.scrollIntoView({ behavior: 'smooth' });
-        });
-        
-        cancelExamButton.addEventListener('click', function() {
-            newExamForm.style.display = 'none';
-        });
         
         // Function to toggle the sidebar (defined in the sidebar.php)
         window.toggleSidebar = function() {
@@ -512,113 +373,6 @@ if ($sections_res) {
             body.classList.toggle('sidebar-open');
         };
         
-        // Section dropdown population (no AJAX)
-        const classSelect = document.getElementById('examClass');
-        const sectionSelect = document.getElementById('examSection');
-        const sectionsByClass = <?php echo json_encode($sections_by_class ?: new stdClass()); ?>;
-        classSelect.addEventListener('change', function() {
-            const classVal = this.value;
-            sectionSelect.innerHTML = '<option value="">Select a section</option>';
-            if (!classVal || !sectionsByClass[classVal]) return;
-            sectionsByClass[classVal].forEach(function(s) {
-                sectionSelect.innerHTML += `<option value="${s.id}">${s.name}</option>`;
-            });
-        });
-
-        // Form submission for Create Exam
-        const form = newExamForm.querySelector('form');
-        const submitBtn = form.querySelector('button[type="submit"]');
-        let formMessage = form.querySelector('.form-message');
-        if (!formMessage) {
-            formMessage = document.createElement('div');
-            formMessage.className = 'form-message';
-            formMessage.style.marginTop = '1rem';
-            form.appendChild(formMessage);
-        }
-        function clearFormMessage() { formMessage.textContent = ''; formMessage.style.color = ''; }
-        function showFormMessage(msg, color) { formMessage.textContent = msg; formMessage.style.color = color; }
-
-        let editExamId = null;
-        function setFormToEditMode(exam) {
-            editExamId = exam.id;
-            form.examTitle.value = exam.title;
-            form.examClass.value = exam.class_id;
-            // Trigger change to populate sections
-            const event = new Event('change');
-            form.examClass.dispatchEvent(event);
-            setTimeout(() => { form.examSection.value = exam.section_id; }, 100); // Wait for section options
-            form.examType.value = exam.assessment_type || exam.type; // Support both new and legacy field names
-            form.examDate.value = exam.date;
-            form.examStartTime.value = exam.start_time || '';
-            form.examEndTime.value = exam.end_time || '';
-            form.examSyllabus.value = exam.syllabus || '';
-            form.examInstructions.value = exam.instructions || '';
-            form.examInvigilators.value = exam.invigilators || '';
-            form.examTotalMarks.value = exam.total_marks || '';
-            form.examPassingMarks.value = exam.passing_marks || '';
-            submitBtn.textContent = 'Update Exam';
-            newExamForm.style.display = 'block';
-            newExamForm.scrollIntoView({ behavior: 'smooth' });
-        }
-        function resetFormMode() {
-            editExamId = null;
-            form.reset();
-            submitBtn.textContent = 'Create Exam';
-        }
-
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            clearFormMessage();
-            submitBtn.disabled = true;
-            const data = {
-                action: editExamId ? 'update_assessment' : 'create_assessment',
-                assessment_id: editExamId,
-                title: form.examTitle.value.trim(),
-                class_id: form.examClass.value,
-                section_id: form.examSection.value,
-                assessment_type: form.examType.value, // Changed from 'type' to 'assessment_type'
-                date: form.examDate.value,
-                start_time: form.examStartTime.value,
-                end_time: form.examEndTime.value,
-                syllabus: form.examSyllabus.value,
-                instructions: form.examInstructions.value,
-                invigilators: form.examInvigilators.value,
-                total_marks: form.examTotalMarks.value,
-                passing_marks: form.examPassingMarks.value,
-                subject_id: form.examSubject.value
-            };
-            if (!data.title || !data.class_id || !data.section_id || !data.assessment_type || !data.date || !data.start_time || !data.end_time) {
-                showFormMessage('Please fill all required fields.', 'red');
-                submitBtn.disabled = false;
-                return;
-            }
-            fetch('assessment_actions.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            })
-            .then(res => res.json())
-            .then(resp => {
-                if (resp.success) {
-                    showFormMessage(editExamId ? 'Exam updated successfully!' : 'Exam created successfully!', 'green');
-                    setTimeout(() => {
-                        newExamForm.style.display = 'none';
-                        clearFormMessage();
-                    }, 1000);
-                    fetchExams();
-                    resetFormMode();
-                } else {
-                    showFormMessage(resp.error || 'Failed to save exam.', 'red');
-                }
-            })
-            .catch(() => {
-                showFormMessage('Failed to save exam.', 'red');
-            })
-            .finally(() => {
-                submitBtn.disabled = false;
-            });
-        });
-
         // Dynamic exam list fetch
         let allExams = [];
         function renderExamRow(exam) {
@@ -671,15 +425,36 @@ if ($sections_res) {
         function fetchExams() {
             const tbody = document.getElementById('examTableBody');
             tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Loading exams...</td></tr>`;
-            fetch('assessment_actions.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'list_assessments' })
+            
+            // Fetch exams from admin exam session management system
+            fetch('../../admin/dashboard/exam_session_actions.php?action=get_teacher_exam_sessions', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
             })
             .then(res => res.json())
             .then(data => {
-                if (data.success && data.data.length > 0) {
-                    allExams = data.data;
+                if (data.success && data.data && data.data.length > 0) {
+                    // Transform admin exam session data to match expected format
+                    const transformedExams = data.data.map(exam => ({
+                        id: exam.id,
+                        title: exam.session_name || exam.subject_name || 'Untitled Exam',
+                        class_name: exam.class_name || 'Unknown Class',
+                        section_name: exam.section_name || 'All Sections',
+                        date: exam.exam_date || exam.start_date,
+                        start_time: exam.exam_time || exam.start_time || '',
+                        end_time: exam.end_time || '',
+                        location: exam.location || 'TBA',
+                        assessment_type: exam.session_type || 'SA',
+                        type: exam.session_type || 'SA',
+                        status: exam.status || 'active',
+                        total_marks: exam.total_marks || '',
+                        duration: exam.duration_minutes || '',
+                        instructions: exam.instructions || '',
+                        subject_name: exam.subject_name || '',
+                        teacher_name: exam.teacher_name || ''
+                    }));
+                    
+                    allExams = transformedExams;
                     applyFilters();
                 } else {
                     allExams = [];
@@ -687,7 +462,8 @@ if ($sections_res) {
                 }
                 bindViewButtons();
             })
-            .catch(() => {
+            .catch(error => {
+                console.error('Error fetching exams from admin system:', error);
                 allExams = [];
                 renderExamTable([]);
             });
@@ -699,34 +475,24 @@ if ($sections_res) {
             document.querySelectorAll('.view-exam-btn').forEach(function(button) {
                 button.addEventListener('click', function() {
                     const examId = this.getAttribute('data-exam-id');
-                    // Fetch exam details
-                    fetch('assessment_actions.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'get_assessment', assessment_id: examId })
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success && data.data) {
-                            const exam = data.data;
-                            document.getElementById('modalExamTitle').textContent = exam.title;
-                            document.getElementById('modalExamClass').textContent = exam.class_name + ' - ' + exam.section_name;
-                            document.getElementById('modalExamDate').textContent = exam.date;
-                            document.getElementById('modalExamTime').textContent = (exam.start_time || '') + (exam.end_time ? ' - ' + exam.end_time : '');
-                            document.getElementById('modalExamType').textContent = exam.type;
-                            document.getElementById('modalExamTotalMarks').textContent = exam.total_marks;
-                            document.getElementById('modalExamSyllabus').textContent = exam.syllabus || '';
-                            document.getElementById('modalExamInstructions').textContent = exam.instructions || '';
-                            document.getElementById('modalExamInvigilators').textContent = exam.invigilators || '';
-                            document.getElementById('modalExamTeacher').textContent = exam.teacher_name || '';
-                            modal.style.display = 'block';
-                        } else {
-                            alert('Failed to load exam details.');
-                        }
-                    })
-                    .catch(() => {
+                    // Find exam in already loaded data
+                    const exam = allExams.find(e => e.id == examId);
+                    
+                    if (exam) {
+                        document.getElementById('modalExamTitle').textContent = exam.title;
+                        document.getElementById('modalExamClass').textContent = exam.class_name + ' - ' + exam.section_name;
+                        document.getElementById('modalExamDate').textContent = exam.date;
+                        document.getElementById('modalExamTime').textContent = (exam.start_time || '') + (exam.end_time ? ' - ' + exam.end_time : '');
+                        document.getElementById('modalExamType').textContent = exam.type || exam.assessment_type;
+                        document.getElementById('modalExamTotalMarks').textContent = exam.total_marks || 'TBA';
+                        document.getElementById('modalExamSyllabus').textContent = exam.subject_name || '';
+                        document.getElementById('modalExamInstructions').textContent = exam.instructions || '';
+                        document.getElementById('modalExamInvigilators').textContent = ''; // Not available in new system
+                        document.getElementById('modalExamTeacher').textContent = exam.teacher_name || '';
+                        modal.style.display = 'block';
+                    } else {
                         alert('Failed to load exam details.');
-                    });
+                    }
                 });
             });
             closeModal.addEventListener('click', function() {
@@ -737,45 +503,12 @@ if ($sections_res) {
             });
             document.querySelectorAll('.delete-exam-btn').forEach(function(button) {
                 button.addEventListener('click', function() {
-                    const examId = this.getAttribute('data-exam-id');
-                    if (!confirm('Are you sure you want to delete this exam?')) return;
-                    fetch('assessment_actions.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'delete_assessment', assessment_id: examId })
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            fetchExams();
-                        } else {
-                            alert(data.error || 'Failed to delete exam.');
-                        }
-                    })
-                    .catch(() => {
-                        alert('Failed to delete exam.');
-                    });
+                    alert('Delete functionality has been disabled. Please contact administrator to modify exams.');
                 });
             });
             document.querySelectorAll('.edit-exam-btn').forEach(function(button) {
                 button.addEventListener('click', function() {
-                    const examId = this.getAttribute('data-exam-id');
-                    fetch('assessment_actions.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'get_assessment', assessment_id: examId })
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success && data.data) {
-                            setFormToEditMode(data.data);
-                        } else {
-                            alert('Failed to load exam for editing.');
-                        }
-                    })
-                    .catch(() => {
-                        alert('Failed to load exam for editing.');
-                    });
+                    alert('Edit functionality has been disabled. Please contact administrator.');
                 });
             });
         }
@@ -928,18 +661,39 @@ if ($sections_res) {
         byClassTab.addEventListener('click', function() {
             byClassContainer.innerHTML = '';
             byClassLoading.style.display = 'block';
-            fetch('assessment_actions.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'list_assessments_by_class' })
+            fetch('../../admin/dashboard/exam_session_actions.php?action=get_teacher_exam_sessions', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
             })
             .then(res => res.json())
             .then(data => {
                 byClassLoading.style.display = 'none';
-                if (data.success && data.data.length > 0) {
+                if (data.success && data.data && data.data.length > 0) {
+                    // Group exams by class-section
+                    const grouped = {};
+                    data.data.forEach(exam => {
+                        const key = `${exam.class_name}-${exam.section_name || 'All Sections'}`;
+                        if (!grouped[key]) {
+                            grouped[key] = {
+                                class_name: exam.class_name,
+                                section_name: exam.section_name || 'All Sections',
+                                assessments: []
+                            };
+                        }
+                        grouped[key].assessments.push({
+                            id: exam.id,
+                            title: exam.session_name + (exam.subject_name ? ` - ${exam.subject_name}` : ''),
+                            date: exam.exam_date || exam.start_date,
+                            start_time: exam.exam_time || '',
+                            end_time: '',
+                            type: exam.session_type || 'SA',
+                            status: exam.status || 'active'
+                        });
+                    });
+                    
                     // Render each class-section card
                     let html = '<div class="two-col">';
-                    data.data.forEach(group => {
+                    Object.values(grouped).forEach(group => {
                         html += `<div class="card">
                             <div class="card-header">
                                 <h3 class="card-title">${group.class_name} - ${group.section_name}</h3>
@@ -958,8 +712,8 @@ if ($sections_res) {
                         group.assessments.forEach(exam => {
                             const date = new Date(exam.date);
                             const dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-                            const timeStr = exam.start_time && exam.end_time ? `${exam.start_time} - ${exam.end_time}` : '';
-                            let status = exam.status || 'Upcoming';
+                            const timeStr = exam.start_time && exam.end_time ? `${exam.start_time} - ${exam.end_time}` : exam.start_time || '';
+                            let status = exam.status || 'active';
                             let badgeClass = 'badge-upcoming';
                             if (status.toLowerCase() === 'completed') badgeClass = 'badge-completed';
                             else if (status.toLowerCase() === 'draft') badgeClass = 'badge-draft';
@@ -980,7 +734,8 @@ if ($sections_res) {
                     byClassContainer.innerHTML = '<div style="text-align:center; padding:2rem;">No exams found for any class-section.</div>';
                 }
             })
-            .catch(() => {
+            .catch(error => {
+                console.error('Error loading exams by class:', error);
                 byClassLoading.style.display = 'none';
                 byClassContainer.innerHTML = '<div style="text-align:center; padding:2rem; color:red;">Failed to load data.</div>';
             });
@@ -1035,35 +790,39 @@ if ($sections_res) {
             studentListLoading.style.display = 'block';
             studentListError.style.display = 'none';
             studentListTableContainer.innerHTML = '';
-            fetch('assessment_actions.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'get_student_list_for_assessment', assessment_id: assessmentId })
+            fetch('../../admin/dashboard/exam_session_actions.php?action=get_student_list_for_exam&exam_subject_id=' + assessmentId, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
             })
             .then(res => res.json())
             .then(data => {
                 studentListLoading.style.display = 'none';
-                if (data.success && data.data.length > 0) {
-                    let html = `<div style=\"overflow-x:auto;\"><table class=\"exam-table\"><thead><tr><th>Roll No</th><th>Name</th><th>Marks</th><th>Grade</th><th>Remark</th></tr></thead><tbody>`;
+                if (data.success && data.data && data.data.length > 0) {
+                    let html = `<div style=\"overflow-x:auto;\"><table class=\"exam-table\"><thead><tr><th>Roll No</th><th>Name</th><th>Class</th><th>Marks</th><th>Grade</th><th>Remark</th></tr></thead><tbody>`;
                     data.data.forEach(stu => {
                         html += `<tr>
                             <td>${stu.roll_number || ''}</td>
                             <td>${stu.full_name || ''}</td>
-                            <td>${stu.marks_obtained !== null && stu.marks_obtained !== undefined ? stu.marks_obtained : ''}</td>
+                            <td>${stu.class_name} - ${stu.section_name || 'All'}</td>
+                            <td>${stu.marks_obtained !== null && stu.marks_obtained !== undefined ? stu.marks_obtained : 'Not graded'}</td>
                             <td>${stu.grade_code || ''}</td>
                             <td>${stu.remark || ''}</td>
                         </tr>`;
                     });
                     html += '</tbody></table></div>';
                     studentListTableContainer.innerHTML = html;
+                } else if (data.success && data.data && data.data.length === 0) {
+                    studentListTableContainer.innerHTML = '<div style="text-align:center; padding:2rem; color:#888;">No students found for this exam.</div>';
                 } else {
-                    studentListTableContainer.innerHTML = '<div style="text-align:center; padding:1rem;">No students found.</div>';
+                    studentListError.style.display = 'block';
+                    studentListError.textContent = data.message || 'Failed to load student list.';
                 }
             })
-            .catch(() => {
+            .catch(error => {
+                console.error('Error loading student list:', error);
                 studentListLoading.style.display = 'none';
-                studentListError.textContent = 'Failed to load student list.';
                 studentListError.style.display = 'block';
+                studentListError.textContent = 'Failed to load student list.';
             });
         }
 
@@ -1154,69 +913,94 @@ if ($sections_res) {
 
         // Dynamic Upcoming Exam Alert
         function fetchUpcomingExam() {
-            fetch('assessment_actions.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'get_next_upcoming_exam' })
+            fetch('../../admin/dashboard/exam_session_actions.php?action=get_teacher_exam_sessions', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
             })
             .then(res => res.json())
             .then(data => {
                 console.log('Upcoming exam data:', data); // Debug output
                 const alertDiv = document.getElementById('upcomingExamAlert');
                 alertDiv.style.display = ''; // Always show for debugging
-                if (data.success && data.data) {
-                    const exam = data.data;
-                    // Make the title a link if possible
-                    let titleHtml = 'Upcoming: ';
-                    let examId = null;
-                    if (window.allExams && Array.isArray(window.allExams)) {
-                        const found = allExams.find(e => e.title === exam.title && e.date === exam.date);
-                        if (found) examId = found.id;
-                    }
-                    if (examId) {
-                        titleHtml += `<a href="#" class="upcoming-exam-link" data-exam-id="${examId}" style="color:#2a4cff; text-decoration:underline;">${exam.title}</a>`;
-                    } else {
-                        titleHtml += exam.title;
-                    }
-                    document.getElementById('upcomingExamTitle').innerHTML = titleHtml;
-                    const dateObj = new Date(exam.date);
-                    const dateStr = dateObj.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-                    document.getElementById('upcomingExamDetails').textContent = `${exam.class_name} - ${exam.section_name} - ${dateStr}`;
-                    // Countdown (by date only)
-                    const now = new Date();
-                    const diffMs = dateObj.setHours(0,0,0,0) - now.setHours(0,0,0,0);
-                    let countdown = '';
-                    if (diffMs > 0) {
-                        const days = Math.floor(diffMs / (1000*60*60*24));
-                        countdown = days + ' day' + (days>1?'s':'') + ' remaining';
-                    } else if (diffMs === 0) {
-                        countdown = 'Today';
-                    } else {
-                        countdown = 'Ongoing or passed';
-                    }
-                    document.getElementById('upcomingExamCountdown').textContent = countdown;
-                    alertDiv.style.display = '';
-                    setTimeout(() => {
-                        const link = document.querySelector('.upcoming-exam-link');
-                        if (link) {
-                            link.addEventListener('click', function(e) {
-                                e.preventDefault();
-                                if (window.allExams && Array.isArray(window.allExams)) {
-                                    const exam = allExams.find(e => e.id == this.getAttribute('data-exam-id'));
-                                    if (exam && typeof setFormToEditMode === 'function') {
-                                        setFormToEditMode(exam);
-                                    }
-                                }
-                            });
+                
+                if (data.success && data.data && data.data.length > 0) {
+                    // Find the next upcoming exam
+                    const today = new Date();
+                    const upcomingExams = data.data.filter(exam => {
+                        const examDate = new Date(exam.exam_date || exam.start_date);
+                        return examDate >= today;
+                    }).sort((a, b) => {
+                        const dateA = new Date(a.exam_date || a.start_date);
+                        const dateB = new Date(b.exam_date || b.start_date);
+                        return dateA - dateB;
+                    });
+                    
+                    if (upcomingExams.length > 0) {
+                        const exam = upcomingExams[0];
+                        // Transform to expected format
+                        const examData = {
+                            title: exam.session_name + (exam.subject_name ? ` - ${exam.subject_name}` : ''),
+                            date: exam.exam_date || exam.start_date,
+                            class_name: exam.class_name || 'Unknown Class',
+                            section_name: exam.section_name || 'All Sections'
+                        };
+                        
+                        // Make the title a link if possible
+                        let titleHtml = 'Upcoming: ';
+                        let examId = null;
+                        if (window.allExams && Array.isArray(window.allExams)) {
+                            const found = allExams.find(e => e.title === examData.title && e.date === examData.date);
+                            if (found) examId = found.id;
                         }
-                    }, 100);
+                        if (examId) {
+                            titleHtml += `<a href="#" class="upcoming-exam-link" data-exam-id="${examId}" style="color:#2a4cff; text-decoration:underline;">${examData.title}</a>`;
+                        } else {
+                            titleHtml += examData.title;
+                        }
+                        document.getElementById('upcomingExamTitle').innerHTML = titleHtml;
+                        const dateObj = new Date(examData.date);
+                        const dateStr = dateObj.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                        document.getElementById('upcomingExamDetails').textContent = `${examData.class_name} - ${examData.section_name} - ${dateStr}`;
+                        // Countdown (by date only)
+                        const now = new Date();
+                        const diffMs = dateObj.setHours(0,0,0,0) - now.setHours(0,0,0,0);
+                        let countdown = '';
+                        if (diffMs > 0) {
+                            const days = Math.floor(diffMs / (1000*60*60*24));
+                            countdown = days + ' day' + (days>1?'s':'') + ' remaining';
+                        } else if (diffMs === 0) {
+                            countdown = 'Today';
+                        } else {
+                            countdown = 'Ongoing or passed';
+                        }
+                        document.getElementById('upcomingExamCountdown').textContent = countdown;
+                        alertDiv.style.display = '';
+                        setTimeout(() => {
+                            const link = document.querySelector('.upcoming-exam-link');
+                            if (link) {
+                                link.addEventListener('click', function(e) {
+                                    e.preventDefault();
+                                    // Edit functionality disabled - form removed
+                                    console.log('Edit functionality disabled');
+                                });
+                            }
+                        }, 100);
+                    } else {
+                        alertDiv.innerHTML = '<div style="padding:1rem; color:#888;">No upcoming exams scheduled.</div>';
+                    }
                 } else {
-                    alertDiv.innerHTML = '<div style="padding:1rem; color:red;">No upcoming exams found or error in response.</div>';
+                    alertDiv.innerHTML = '<div style="padding:1rem; color:#888;">No upcoming exams found.</div>';
                 }
+            })
+            .catch(error => {
+                console.error('Error fetching upcoming exam:', error);
+                const alertDiv = document.getElementById('upcomingExamAlert');
+                alertDiv.innerHTML = '<div style="padding:1rem; color:red;">Error loading upcoming exam data.</div>';
             });
         }
         fetchUpcomingExam();
     });
+
 </script>
 </body>
 </html>

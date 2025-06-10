@@ -113,6 +113,14 @@ try {
             getAcademicYears($conn);
             break;
             
+        case 'get_teacher_exam_sessions':
+            getTeacherExamSessions($conn);
+            break;
+            
+        case 'get_student_list_for_exam':
+            getStudentListForExam($conn, $input);
+            break;
+            
         default:
             http_response_code(400);
             echo json_encode(['success' => false, 'message' => 'Invalid action']);
@@ -1051,5 +1059,155 @@ function getAcademicYears($conn) {
     }
     
     echo json_encode(['success' => true, 'data' => $years]);
+}
+
+/**
+ * Get exam sessions for teachers dashboard
+ * Provides exam data in format expected by teachers dashboard
+ */
+function getTeacherExamSessions($conn) {
+    // Get current user role and ID for access control
+    $user_role = $_SESSION['role'] ?? '';
+    $user_id = $_SESSION['user_id'] ?? 0;
+    
+    // Build query to get exam subjects with session and class details
+    $sql = "SELECT 
+                esub.id,
+                sess.session_name,
+                sess.session_type,
+                sess.start_date,
+                sess.end_date,
+                sess.academic_year,
+                sess.status,
+                esub.exam_date,
+                esub.exam_time,
+                esub.total_marks,
+                esub.duration_minutes,
+                esub.instructions,
+                s.name as subject_name,
+                s.code as subject_code,
+                a.title as assessment_name,
+                c.name as class_name,
+                sec.name as section_name,
+                u.full_name as teacher_name
+            FROM exam_sessions sess
+            LEFT JOIN exam_subjects esub ON sess.id = esub.exam_session_id
+            LEFT JOIN subjects s ON esub.subject_id = s.id
+            LEFT JOIN assessments a ON esub.assessment_id = a.id
+            LEFT JOIN exam_session_classes esc ON sess.id = esc.exam_session_id
+            LEFT JOIN classes c ON esc.class_id = c.id
+            LEFT JOIN sections sec ON esc.section_id = sec.id
+            LEFT JOIN users u ON a.teacher_user_id = u.id
+            WHERE sess.status IN ('active', 'draft')";
+    
+    // If user is a teacher, only show exams they're responsible for
+    if ($user_role === 'teacher') {
+        $sql .= " AND a.teacher_user_id = ?";
+        $stmt = $conn->prepare($sql . " ORDER BY esub.exam_date ASC, sess.start_date ASC");
+        $stmt->bind_param('i', $user_id);
+    } else {
+        // For admin/headmaster, show all active exam sessions
+        $stmt = $conn->prepare($sql . " ORDER BY esub.exam_date ASC, sess.start_date ASC");
+    }
+    
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $exams = [];
+    while ($row = $result->fetch_assoc()) {
+        // Skip rows without subject data (sessions without subjects added yet)
+        if (!$row['subject_name']) {
+            continue;
+        }
+        
+        $exams[] = [
+            'id' => $row['id'],
+            'session_name' => $row['session_name'],
+            'session_type' => $row['session_type'],
+            'exam_date' => $row['exam_date'],
+            'exam_time' => $row['exam_time'],
+            'start_date' => $row['start_date'],
+            'end_date' => $row['end_date'],
+            'total_marks' => $row['total_marks'],
+            'duration_minutes' => $row['duration_minutes'],
+            'instructions' => $row['instructions'],
+            'subject_name' => $row['subject_name'],
+            'subject_code' => $row['subject_code'],
+            'assessment_name' => $row['assessment_name'],
+            'class_name' => $row['class_name'],
+            'section_name' => $row['section_name'],
+            'teacher_name' => $row['teacher_name'],
+            'status' => $row['status'],
+            'academic_year' => $row['academic_year']
+        ];
+    }
+    
+    echo json_encode(['success' => true, 'data' => $exams]);
+}
+
+/**
+ * Get student list for a specific exam subject
+ * Provides student data with marks if available
+ */
+function getStudentListForExam($conn, $data) {
+    $exam_subject_id = $data['exam_subject_id'] ?? 0;
+    
+    if (!$exam_subject_id) {
+        echo json_encode(['success' => false, 'message' => 'Exam subject ID is required']);
+        return;
+    }
+    
+    // Get exam subject details to find the session and classes
+    $exam_subject_sql = "
+        SELECT es.*, sess.id as session_id
+        FROM exam_subjects es
+        JOIN exam_sessions sess ON es.exam_session_id = sess.id
+        WHERE es.id = ?
+    ";
+    $stmt = $conn->prepare($exam_subject_sql);
+    $stmt->bind_param('i', $exam_subject_id);
+    $stmt->execute();
+    $exam_subject = $stmt->get_result()->fetch_assoc();
+    
+    if (!$exam_subject) {
+        echo json_encode(['success' => false, 'message' => 'Exam subject not found']);
+        return;
+    }
+    
+    // Get all students from classes/sections associated with this exam session
+    $students_sql = "
+        SELECT DISTINCT st.user_id, st.full_name, st.roll_number, st.admission_number,
+               sem.marks_obtained, sem.grade_code, sem.remark,
+               c.name as class_name, s.name as section_name
+        FROM exam_session_classes esc
+        JOIN classes c ON esc.class_id = c.id
+        LEFT JOIN sections s ON esc.section_id = s.id
+        JOIN students st ON c.id = st.class_id AND (esc.section_id IS NULL OR esc.section_id = st.section_id)
+        LEFT JOIN student_exam_marks sem ON st.user_id = sem.student_user_id AND sem.exam_subject_id = ?
+        WHERE esc.exam_session_id = ?
+        ORDER BY st.roll_number, st.full_name
+    ";
+    
+    $stmt = $conn->prepare($students_sql);
+    $stmt->bind_param('ii', $exam_subject_id, $exam_subject['session_id']);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $students = [];
+    while ($row = $result->fetch_assoc()) {
+        $students[] = [
+            'user_id' => $row['user_id'],
+            'full_name' => $row['full_name'],
+            'roll_number' => $row['roll_number'],
+            'admission_number' => $row['admission_number'],
+            'class_name' => $row['class_name'],
+            'section_name' => $row['section_name'],
+            'marks_obtained' => $row['marks_obtained'],
+            'grade_code' => $row['grade_code'],
+            'remark' => $row['remark']
+        ];
+    }
+    
+    echo json_encode(['success' => true, 'data' => $students]);
 }
 ?>
