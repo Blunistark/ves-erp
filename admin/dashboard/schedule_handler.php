@@ -71,6 +71,10 @@ try {
             getSubjects($conn);
             break;
             
+        case 'get_all_subjects':
+            getAllSubjectsForLegend($conn);
+            break;
+            
         case 'get_exam_details':
             getExamDetails($conn, $_GET['id']);
             break;
@@ -317,16 +321,20 @@ function getExamSessions($conn) {
  * Get schedule data for calendar, list, and table views
  */
 function getScheduleData($conn, $params) {
-    try {        // Build the base query to get scheduled exams
+    try {
+        // Build the base query to get scheduled exams with class information from junction table
         $sql = "SELECT 
                     es.id,
-                    es.session_name as exam_name,
-                    es.session_type as exam_type,
+                    es.session_name,
+                    es.session_type,
+                    es.start_date as session_start_date,
+                    es.end_date as session_end_date,
+                    es.status,
+                    esub.id as exam_subject_id,
                     esub.exam_date,
-                    esub.exam_time as start_time,
-                    TIME_FORMAT(ADDTIME(esub.exam_time, SEC_TO_TIME(esub.duration_minutes * 60)), '%H:%i:%s') as end_time,
-                    esub.total_marks as max_marks,
-                    esub.duration_minutes as duration,
+                    esub.exam_time,
+                    esub.total_marks,
+                    esub.duration_minutes,
                     s.name as subject_name,
                     s.id as subject_id,
                     c.name as class_name,
@@ -334,9 +342,9 @@ function getScheduleData($conn, $params) {
                 FROM exam_sessions es
                 INNER JOIN exam_subjects esub ON es.id = esub.exam_session_id
                 INNER JOIN subjects s ON esub.subject_id = s.id
-                INNER JOIN classes c ON es.class_id = c.id
-                INNER JOIN assessments a ON esub.assessment_id = a.id
-                WHERE es.status = 'active'";
+                INNER JOIN exam_session_classes esc ON es.id = esc.exam_session_id
+                INNER JOIN classes c ON esc.class_id = c.id
+                WHERE es.status IN ('active', 'draft')";
         
         $bind_params = [];
         $param_types = "";
@@ -349,7 +357,7 @@ function getScheduleData($conn, $params) {
         }
         
         if (!empty($params['class'])) {
-            $sql .= " AND es.class_id = ?";
+            $sql .= " AND c.id = ?";
             $bind_params[] = $params['class'];
             $param_types .= "i";
         }
@@ -381,7 +389,7 @@ function getScheduleData($conn, $params) {
         }
         
         // Order by date and time
-        $sql .= " ORDER BY esub.exam_date ASC, esub.exam_time ASC";
+        $sql .= " ORDER BY esub.exam_date ASC, esub.exam_time ASC, c.name ASC";
         
         // Prepare and execute query
         $stmt = $conn->prepare($sql);
@@ -392,13 +400,31 @@ function getScheduleData($conn, $params) {
         $result = $stmt->get_result();
         
         $events = [];
+        $sessions_map = [];
+        
         while ($row = $result->fetch_assoc()) {
             $events[] = $row;
+            
+            // Collect unique sessions
+            if (!isset($sessions_map[$row['id']])) {
+                $sessions_map[$row['id']] = [
+                    'id' => $row['id'],
+                    'session_name' => $row['session_name'],
+                    'session_type' => $row['session_type'],
+                    'start_date' => $row['session_start_date'],
+                    'end_date' => $row['session_end_date'],
+                    'status' => $row['status']
+                ];
+            }
         }
+        
+        // Get active sessions for the calendar header
+        $sessions = array_values($sessions_map);
         
         echo json_encode([
             'success' => true,
             'events' => $events,
+            'sessions' => $sessions,
             'count' => count($events)
         ]);
         
@@ -406,7 +432,8 @@ function getScheduleData($conn, $params) {
         echo json_encode([
             'success' => false,
             'message' => 'Error fetching schedule data: ' . $e->getMessage(),
-            'events' => []
+            'events' => [],
+            'sessions' => []
         ]);
     }
 }
@@ -646,6 +673,27 @@ function getSubjects($conn) {
     }
     
     echo json_encode(['success' => true, 'data' => $subjects]);
+}
+
+/**
+ * Get all subjects for calendar legend
+ */
+function getAllSubjectsForLegend($conn) {
+    $sql = "SELECT id, name, code FROM subjects ORDER BY name";
+    $result = $conn->query($sql);
+    
+    $subjects = [];
+    if ($result && $result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $subjects[] = [
+                'id' => $row['id'],
+                'name' => $row['name'],
+                'code' => $row['code']
+            ];
+        }
+    }
+    
+    echo json_encode(['success' => true, 'subjects' => $subjects]);
 }
 
 /**

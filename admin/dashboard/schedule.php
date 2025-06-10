@@ -4,7 +4,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=5.0">
     <title>Exam Schedule</title>
     
     <link rel="stylesheet" href="css/sidebar.css">
@@ -65,7 +65,8 @@
         </header>
 
         <main class="dashboard-content">
-            <div class="action-bar">
+            <!-- Mobile-friendly action bar -->
+            <div class="action-bar" id="action-bar">
                 <div class="search-bar">
                     <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -77,19 +78,19 @@
                         <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
                         </svg>
-                        Filter
+                        <span class="btn-text">Filter</span>
                     </button>
                     <button class="btn btn-outline">
                         <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                         </svg>
-                        Export
+                        <span class="btn-text">Export</span>
                     </button>
                     <button class="btn btn-primary" id="newExamBtn">
                         <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
-                        Schedule Exam
+                        <span class="btn-text">Schedule</span>
                     </button>
                     
                     <!-- Workflow Helper Buttons -->
@@ -98,7 +99,7 @@
                             <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
-                            Create Session
+                            <span class="btn-text">Session</span>
                         </button>
                         <button class="btn btn-outline btn-sm" id="manageSubjectsBtn">
                             <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -254,6 +255,15 @@
                             </button>
                         </div>
                     </div>
+                    
+                    <!-- Calendar Legend -->
+                    <div class="calendar-legend" id="calendarLegend" style="display: none;">
+                        <h4>📚 Subject Legend</h4>
+                        <div class="legend-grid" id="legendGrid">
+                            <!-- Legend items will be dynamically populated -->
+                        </div>
+                    </div>
+                    
                     <div class="calendar-grid">
                         <div class="calendar-weekday">Sun</div>
                         <div class="calendar-weekday">Mon</div>
@@ -882,11 +892,14 @@
         }
         
         function loadScheduleData(view = 'calendar') {
+            const selectedDate = document.querySelector('.calendar-month-select')?.value || 
+                                `${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, '0')}`;
+            
             const params = new URLSearchParams({
                 action: 'get_schedule_data',
                 view: view,
-                month: document.querySelector('.calendar-month-select')?.value || new Date().getMonth() + 1,
-                year: new Date().getFullYear()
+                month: selectedDate.split('-')[1],
+                year: selectedDate.split('-')[0]
             });
             
             fetch(`schedule_handler.php?${params}`)
@@ -894,7 +907,14 @@
                 .then(data => {
                     if (data.success) {
                         if (view === 'calendar') {
-                            updateCalendarView(data.events);
+                            updateCalendarView(data.events, data.sessions);
+                            // Show/hide legend based on events
+                            const legend = document.getElementById('calendarLegend');
+                            if (data.events.length > 0) {
+                                legend.style.display = 'block';
+                            } else {
+                                legend.style.display = 'none';
+                            }
                         } else if (view === 'list') {
                             updateListView(data.events);
                         } else if (view === 'table') {
@@ -1019,26 +1039,147 @@
             });
         }
         
-        function updateCalendarView(events) {
+        function updateCalendarView(events, sessions) {
             // Clear existing events
             document.querySelectorAll('.calendar-event').forEach(event => event.remove());
+            
+            // Add session information to calendar header if available
+            if (sessions && sessions.length > 0) {
+                updateCalendarHeader(sessions);
+            }
+            
+            // Collect subjects for legend (will be deduplicated in updateCalendarLegend)
+            const subjects = [];
             
             // Add new events to calendar
             events.forEach(event => {
                 const eventDate = new Date(event.exam_date);
                 const dayElement = findCalendarDay(eventDate.getDate());
-                  if (dayElement) {
+                
+                if (dayElement) {
                     const eventElement = document.createElement('div');
-                    eventElement.className = `calendar-event exam-${event.exam_type}`;
-                    eventElement.textContent = `${event.exam_type} - ${event.subject_name}`;
-                    eventElement.setAttribute('title', `${event.exam_type} - ${event.subject_name} Assessment (${event.class_name})`);
-                    eventElement.setAttribute('data-exam-id', event.id);
                     
+                    // Get color scheme from loaded subjects or generate default
+                    let colorScheme = null;
+                    if (window.subjectColorMap && window.subjectColorMap.has(event.subject_name)) {
+                        colorScheme = window.subjectColorMap.get(event.subject_name).colors;
+                    }
+                    
+                    // Generate subject-specific class name
+                    const subjectClass = generateSubjectClass(event.subject_name);
+                    eventElement.className = `calendar-event ${subjectClass}`;
+                    
+                    // Apply dynamic colors if available
+                    if (colorScheme) {
+                        eventElement.style.cssText = `
+                            background: ${colorScheme.bg};
+                            color: ${colorScheme.color};
+                            border-left: 3px solid ${colorScheme.border};
+                            padding: 0.25rem 0.5rem;
+                            margin-bottom: 0.25rem;
+                            border-radius: 4px;
+                            font-size: 0.65rem;
+                            font-weight: 500;
+                            cursor: pointer;
+                            transition: all 0.2s ease;
+                            white-space: nowrap;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                        `;
+                        
+                        // Add hover effect
+                        eventElement.addEventListener('mouseenter', function() {
+                            this.style.transform = 'translateX(2px)';
+                            this.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
+                        });
+                        
+                        eventElement.addEventListener('mouseleave', function() {
+                            this.style.transform = 'translateX(0)';
+                            this.style.boxShadow = 'none';
+                        });
+                    }
+                    
+                    // Add to subjects array (deduplication will happen in legend function)
+                    subjects.push({
+                        name: event.subject_name,
+                        class: subjectClass
+                    });
+                    
+                    // Use responsive text based on screen size
+                    const eventText = getResponsiveEventText({
+                        subject_name: event.subject_name,
+                        subject_abbr: event.subject_name.substring(0, 3).toUpperCase(),
+                        class_name: event.class_name
+                    });
+                    eventElement.textContent = eventText;
+                    
+                    // Store event data for tooltip
+                    eventElement.dataset.eventData = JSON.stringify({
+                        subject: event.subject_name,
+                        class: event.class_name,
+                        session: event.session_name,
+                        type: event.session_type,
+                        date: event.exam_date,
+                        time: event.exam_time,
+                        duration: event.duration_minutes || 60,
+                        totalMarks: event.total_marks,
+                        passingMarks: event.passing_marks
+                    });
+                    
+                    // Store event data for responsive text updates
+                    eventElement.dataset.event = JSON.stringify({
+                        subject_name: event.subject_name,
+                        subject_abbr: event.subject_name.substring(0, 3).toUpperCase(),
+                        class_name: event.class_name
+                    });
+                    
+                    // Add enhanced event listeners
+                    eventElement.addEventListener('mouseenter', showEventTooltip);
+                    eventElement.addEventListener('mouseleave', hideEventTooltip);
                     eventElement.addEventListener('click', () => showExamDetails(event.id));
                     
                     dayElement.querySelector('.calendar-day-events').appendChild(eventElement);
                 }
             });
+            
+            // Update legend
+            updateCalendarLegend(subjects);
+        }
+        
+        function updateCalendarHeader(sessions) {
+            // Update calendar title with session information
+            const titleElement = document.querySelector('.calendar-title');
+            if (titleElement && sessions.length > 0) {
+                const currentMonth = titleElement.textContent;
+                const activeSession = sessions.find(s => s.status === 'active') || sessions[0];
+                
+                if (activeSession) {
+                    const sessionSpan = `${new Date(activeSession.start_date).toLocaleDateString('en-US', {month: 'short', day: 'numeric'})} - ${new Date(activeSession.end_date).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'})}`;
+                    
+                    // Add session info below calendar title
+                    let sessionInfoDiv = document.querySelector('.calendar-session-info');
+                    if (!sessionInfoDiv) {
+                        sessionInfoDiv = document.createElement('div');
+                        sessionInfoDiv.className = 'calendar-session-info';
+                        sessionInfoDiv.style.cssText = `
+                            font-size: 14px; 
+                            color: #667eea; 
+                            margin-top: 5px; 
+                            font-weight: 500;
+                        `;
+                        titleElement.parentNode.appendChild(sessionInfoDiv);
+                    }
+                    
+                    sessionInfoDiv.innerHTML = `
+                        <div style="margin-bottom: 3px;">
+                            📅 <strong>${activeSession.session_name}</strong> (${activeSession.session_type})
+                        </div>
+                        <div style="font-size: 12px; color: #718096;">
+                            Exam Period: ${sessionSpan}
+                        </div>
+                    `;
+                }
+            }
         }
         
         function findCalendarDay(dayNumber) {
@@ -1047,6 +1188,229 @@
                 const dayNum = day.querySelector('.calendar-day-number');
                 return dayNum && parseInt(dayNum.textContent) === dayNumber;
             });
+        }
+        
+        function generateSubjectClass(subjectName) {
+            // Generate a consistent class name based on subject name
+            // Handle cases where subjectName might be undefined, null, or not a string
+            if (!subjectName || typeof subjectName !== 'string') {
+                console.warn('Invalid subject name provided to generateSubjectClass:', subjectName);
+                return 'event-subject-unknown';
+            }
+            
+            const normalized = subjectName.toLowerCase()
+                .replace(/[^a-z0-9\s]/g, '')
+                .replace(/\s+/g, '_')
+                .substring(0, 15); // Limit length
+            
+            return `event-subject-${normalized}`;
+        }
+        
+        // Fetch subjects directly from database and create legend
+        function loadSubjectsForLegend() {
+            fetch('schedule_handler.php?action=get_all_subjects')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.subjects) {
+                        console.log('Subjects loaded for legend:', data.subjects);
+                        createSubjectLegend(data.subjects);
+                    } else {
+                        console.error('Failed to load subjects for legend:', data.message || 'Unknown error');
+                        // Hide legend if no subjects are available
+                        const legend = document.getElementById('calendarLegend');
+                        if (legend) {
+                            legend.style.display = 'none';
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading subjects for legend:', error);
+                    // Hide legend on error
+                    const legend = document.getElementById('calendarLegend');
+                    if (legend) {
+                        legend.style.display = 'none';
+                    }
+                });
+        }
+        
+        function createSubjectLegend(subjects) {
+            const legend = document.getElementById('calendarLegend');
+            const legendGrid = document.getElementById('legendGrid');
+            
+            if (!subjects || subjects.length === 0) {
+                legend.style.display = 'none';
+                return;
+            }
+            
+            legend.style.display = 'block';
+            legendGrid.innerHTML = '';
+            
+            // Predefined color schemes for different subjects
+            const subjectColors = [
+                { bg: '#fef2f2', color: '#dc2626', border: '#ef4444' }, // Red
+                { bg: '#f0f9ff', color: '#0284c7', border: '#0ea5e9' }, // Blue
+                { bg: '#f0fdf4', color: '#16a34a', border: '#22c55e' }, // Green
+                { bg: '#fefce8', color: '#ca8a04', border: '#eab308' }, // Yellow
+                { bg: '#fdf4ff', color: '#c026d3', border: '#d946ef' }, // Magenta
+                { bg: '#f1f5f9', color: '#475569', border: '#64748b' }, // Slate
+                { bg: '#fff7ed', color: '#ea580c', border: '#f97316' }, // Orange
+                { bg: '#ecfdf5', color: '#059669', border: '#10b981' }, // Emerald
+                { bg: '#fdf2f8', color: '#be185d', border: '#ec4899' }, // Pink
+                { bg: '#fefbeb', color: '#b45309', border: '#d97706' }, // Amber
+                { bg: '#f0fdfa', color: '#0d9488', border: '#14b8a6' }, // Teal
+                { bg: '#f6ffed', color: '#389e0d', border: '#52c41a' }, // Lime
+                { bg: '#fff2e8', color: '#d4380d', border: '#ff7a45' }, // Red-Orange
+                { bg: '#e6f7ff', color: '#0958d9', border: '#1890ff' }, // Light Blue
+                { bg: '#f9f0ff', color: '#722ed1', border: '#9254de' }, // Purple
+            ];
+            
+            // Create legend items for all subjects with assigned colors
+            subjects.forEach((subject, index) => {
+                // Validate subject data - check for both 'name' and 'subject_name' fields
+                const subjectName = subject?.name || subject?.subject_name;
+                if (!subject || !subjectName) {
+                    console.warn('Invalid subject data:', subject);
+                    return; // Skip this subject
+                }
+                
+                const colorScheme = subjectColors[index % subjectColors.length];
+                const subjectClass = generateSubjectClass(subjectName);
+                
+                // Store color mapping for use in calendar events
+                if (!window.subjectColorMap) {
+                    window.subjectColorMap = new Map();
+                }
+                window.subjectColorMap.set(subjectName, {
+                    class: subjectClass,
+                    colors: colorScheme
+                });
+                
+                const legendItem = document.createElement('div');
+                legendItem.className = 'legend-item';
+                legendItem.style.cssText = `
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    background: ${colorScheme.bg};
+                    color: ${colorScheme.color};
+                    border-left: 3px solid ${colorScheme.border};
+                    font-size: 0.75rem;
+                    font-weight: 500;
+                `;
+                
+                const colorBox = document.createElement('div');
+                colorBox.style.cssText = `
+                    width: 12px;
+                    height: 12px;
+                    border-radius: 2px;
+                    background: ${colorScheme.color};
+                    border: 1px solid ${colorScheme.border};
+                    flex-shrink: 0;
+                `;
+                
+                const label = document.createElement('span');
+                label.textContent = subjectName;
+                label.style.cssText = `
+                    font-size: 0.75rem;
+                    font-weight: 500;
+                    color: ${colorScheme.color};
+                `;
+                
+                legendItem.appendChild(colorBox);
+                legendItem.appendChild(label);
+                legendGrid.appendChild(legendItem);
+            });
+        }
+        
+        function updateCalendarLegend(subjects) {
+            // This function is now primarily for compatibility
+            // The main legend is loaded from database
+            loadSubjectsForLegend();
+        }
+        
+        let currentTooltip = null;
+        
+        function showEventTooltip(event) {
+            // Remove existing tooltip
+            if (currentTooltip) {
+                currentTooltip.remove();
+            }
+            
+            const element = event.target;
+            const eventData = JSON.parse(element.dataset.eventData);
+            
+            // Create tooltip
+            const tooltip = document.createElement('div');
+            tooltip.className = 'calendar-event-tooltip show';
+            
+            const formatTime = (time) => {
+                if (!time) return 'Not specified';
+                return new Date(`2000-01-01 ${time}`).toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                });
+            };
+            
+            const formatDate = (date) => {
+                return new Date(date).toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            };
+            
+            tooltip.innerHTML = `
+                <div class="tooltip-title">${eventData.type} - ${eventData.subject}</div>
+                <div class="tooltip-details">
+                    <div>📚 <strong>Subject:</strong> ${eventData.subject}</div>
+                    <div>🏫 <strong>Class:</strong> ${eventData.class}</div>
+                    <div>📋 <strong>Session:</strong> ${eventData.session}</div>
+                    <div>📅 <strong>Date:</strong> ${formatDate(eventData.date)}</div>
+                    <div>⏰ <strong>Time:</strong> ${formatTime(eventData.time)}</div>
+                    <div>⏱️ <strong>Duration:</strong> ${eventData.duration} minutes</div>
+                    ${eventData.totalMarks ? `<div>📝 <strong>Total Marks:</strong> ${eventData.totalMarks}</div>` : ''}
+                    ${eventData.passingMarks ? `<div>✅ <strong>Passing Marks:</strong> ${eventData.passingMarks}</div>` : ''}
+                </div>
+            `;
+            
+            document.body.appendChild(tooltip);
+            currentTooltip = tooltip;
+            
+            // Position tooltip
+            const rect = element.getBoundingClientRect();
+            const tooltipRect = tooltip.getBoundingClientRect();
+            
+            let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+            let top = rect.top - tooltipRect.height - 12;
+            
+            // Adjust if tooltip goes off screen
+            if (left < 10) left = 10;
+            if (left + tooltipRect.width > window.innerWidth - 10) {
+                left = window.innerWidth - tooltipRect.width - 10;
+            }
+            if (top < 10) {
+                top = rect.bottom + 12;
+                tooltip.style.transform = 'translateY(8px)';
+            }
+            
+            tooltip.style.left = `${left}px`;
+            tooltip.style.top = `${top}px`;
+        }
+        
+        function hideEventTooltip() {
+            if (currentTooltip) {
+                currentTooltip.classList.remove('show');
+                setTimeout(() => {
+                    if (currentTooltip) {
+                        currentTooltip.remove();
+                        currentTooltip = null;
+                    }
+                }, 200);
+            }
         }
         
         function showExamDetails(examId) {
@@ -1533,6 +1897,86 @@
             // Navigate to manage subjects page with session ID
             window.location.href = `manage_exam_subjects.php?session_id=${sessionId}`;
         }
+        
+        // Responsive event text function
+        function getResponsiveEventText(event) {
+            const screenWidth = window.innerWidth;
+            const isMobile = screenWidth <= 768;
+            const isSmallMobile = screenWidth <= 480;
+            
+            if (isSmallMobile) {
+                // Very small screens: Show only abbreviations
+                return `${event.subject_abbr || event.subject_name.substring(0, 3).toUpperCase()}`;
+            } else if (isMobile) {
+                // Mobile screens: Show abbreviated subject name
+                return `${event.subject_name.length > 8 ? event.subject_name.substring(0, 8) + '...' : event.subject_name}`;
+            } else {
+                // Desktop screens: Show full subject name
+                return `${event.subject_name} - ${event.class_name}`;
+            }
+        }
+        
+        // Window resize handler for responsive adjustments
+        window.addEventListener('resize', function() {
+            // Debounce resize events
+            clearTimeout(window.resizeTimer);
+            window.resizeTimer = setTimeout(function() {
+                // Re-render calendar events with appropriate text size
+                const events = document.querySelectorAll('.calendar-event');
+                events.forEach(eventElement => {
+                    const eventData = JSON.parse(eventElement.dataset.event || '{}');
+                    if (eventData.subject_name) {
+                        eventElement.textContent = getResponsiveEventText(eventData);
+                    }
+                });
+                
+                // Adjust legend visibility based on screen size
+                const legend = document.getElementById('calendarLegend');
+                const screenWidth = window.innerWidth;
+                
+                if (screenWidth <= 480 && legend.style.display !== 'none') {
+                    // Hide legend on very small screens
+                    legend.style.display = 'none';
+                } else if (screenWidth > 480 && legend.style.display === 'none') {
+                    // Show legend on larger screens
+                    legend.style.display = 'block';
+                }
+                
+                // Hide tooltips on resize to prevent positioning issues
+                hideEventTooltip();
+            }, 250);
+        });
+        
+        // Touch device improvements
+        if ('ontouchstart' in window) {
+            // Add touch-friendly event handling
+            document.addEventListener('touchstart', function(e) {
+                // Close tooltips when touching elsewhere
+                if (!e.target.closest('.calendar-event') && !e.target.closest('.event-tooltip')) {
+                    hideEventTooltip();
+                }
+            });
+            
+            // Prevent zoom on double tap for buttons
+            document.querySelectorAll('button, .btn').forEach(btn => {
+                btn.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    this.click();
+                });
+            });
+        }
+        
+        // Initialize responsive features on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set initial responsive state
+            window.dispatchEvent(new Event('resize'));
+            
+            // Add responsive classes to calendar container
+            const calendarContainer = document.querySelector('.calendar-view');
+            if (calendarContainer) {
+                calendarContainer.classList.add('responsive-calendar');
+            }
+        });
     </script>
 </body>
 </html>

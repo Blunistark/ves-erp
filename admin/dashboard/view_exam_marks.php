@@ -77,20 +77,26 @@ if ($session_id && !$exam_subject_id) {
     if (!$exam_subject) {
         header('Location: exam_session_management.php');
         exit();
-    }      // Get all students and their marks for this exam subject
+    }      // Get all students from classes/sections associated with this exam session and their marks
     $students_sql = "
         SELECT st.*, sem.marks_obtained, 
                (sem.marks_obtained / es.total_marks) * 100 as percentage, 
                sem.grade_code as grade, 
-               sem.remarks, sem.marked_at as recorded_at, sem.id as mark_id
+               sem.remarks, sem.marked_at as recorded_at, sem.id as mark_id,
+               c.name as class_name, sec.name as section_name
         FROM students st
+        INNER JOIN exam_session_classes esc ON (st.class_id = esc.class_id AND st.section_id = esc.section_id)
+        INNER JOIN exam_subjects es_session ON esc.exam_session_id = es_session.exam_session_id
         LEFT JOIN student_exam_marks sem ON st.user_id = sem.student_id 
             AND sem.exam_subject_id = ?
         LEFT JOIN exam_subjects es ON sem.exam_subject_id = es.id
-        ORDER BY st.full_name
+        LEFT JOIN classes c ON st.class_id = c.id
+        LEFT JOIN sections sec ON st.section_id = sec.id
+        WHERE es_session.id = ?
+        ORDER BY c.name, sec.name, st.roll_number, st.full_name
     ";
     $students_stmt = $conn->prepare($students_sql);
-    $students_stmt->bind_param('i', $exam_subject_id);
+    $students_stmt->bind_param('ii', $exam_subject_id, $exam_subject_id);
     $students_stmt->execute();
     $students_result = $students_stmt->get_result();
     
@@ -104,519 +110,682 @@ if ($session_id && !$exam_subject_id) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">    <title><?= htmlspecialchars($page_title) ?></title>
-    <link rel="stylesheet" href="css/view.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= htmlspecialchars($page_title) ?></title>
+    <link rel="stylesheet" href="css/sidebar.css">
+    <link rel="stylesheet" href="css/exam.css">
     <style>
-        /* Smooth scrolling for the entire page */
-        html {
-            scroll-behavior: smooth;
+        .marks-container {
+            padding: 20px;
         }
-        
-        /* Custom scrollbar styling */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+
+        .marks-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         }
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 4px;
+
+        .marks-header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
         }
-        ::-webkit-scrollbar-thumb {
-            background: #28a745;
-            border-radius: 4px;
+
+        .marks-header h2 {
+            margin: 10px 0 5px 0;
+            font-size: 20px;
+            opacity: 0.9;
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #218838;
+
+        .marks-header p {
+            margin: 5px 0;
+            opacity: 0.8;
         }
-        
-        /* Scroll to top button */
-        .scroll-to-top {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: 50px;
-            height: 50px;
-            background: #28a745;
+
+        .subject-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .subject-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .subject-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border-color: #667eea;
+        }
+
+        .subject-card-header {
+            display: flex;
+            justify-content: between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .subject-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2d3748;
+            margin: 0;
+        }
+
+        .marks-badge {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .subject-meta {
+            color: #718096;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .subject-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: #667eea;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #a0aec0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .subject-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-view-marks {
+            flex: 1;
+            background: #667eea;
             color: white;
             border: none;
-            border-radius: 50%;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
             cursor: pointer;
-            font-size: 20px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            opacity: 0;
-            visibility: hidden;
             transition: all 0.3s ease;
-            z-index: 1000;
-        }
-        .scroll-to-top.visible {
-            opacity: 1;
-            visibility: visible;
-        }
-        .scroll-to-top:hover {
-            background: #218838;
-            transform: translateY(-2px);
-        }
-        
-        /* Quick navigation */
-        .quick-nav {
-            position: fixed;
-            top: 50%;
-            right: 20px;
-            transform: translateY(-50%);
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            padding: 10px;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-            z-index: 999;
-        }
-        .quick-nav.visible {
-            opacity: 1;
-            visibility: visible;
-        }
-        .quick-nav-item {
-            display: block;
-            padding: 8px 12px;
-            margin: 4px 0;
-            background: #f8f9fa;
-            color: #495057;
             text-decoration: none;
-            border-radius: 4px;
-            font-size: 12px;
             text-align: center;
-            transition: all 0.2s ease;
         }
-        .quick-nav-item:hover {
-            background: #28a745;
-            color: white;
+
+        .btn-view-marks:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
         }
-        .quick-nav-item.active {
-            background: #007bff;
-            color: white;
-        }
-        
-        /* Enhanced table scrolling */
+
         .marks-table-container {
-            max-height: 600px;
-            overflow-y: auto;
-            overflow-x: auto;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            position: relative;
-        }
-        .marks-table-container::-webkit-scrollbar {
-            width: 12px;
-            height: 12px;
-        }
-        
-        /* Sticky header enhancement */
-        .marks-table thead th {
-            position: sticky;
-            top: 0;
-            background: #f8f9fa;
-            z-index: 10;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        /* Scroll shadows for better UX */
-        .marks-table-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 20px;
-            background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, transparent 100%);
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            z-index: 5;
-        }        .marks-table-container.scrolled::before {
-            opacity: 1;
-        }
-        
-        /* Enhanced table interactions */
-        .marks-table tbody tr {
-            transition: all 0.2s ease;
-        }
-        .marks-table tbody tr:hover {
-            background: #f8f9fa;
-            transform: scale(1.001);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .marks-table tbody tr.highlighted {
-            background: #e3f2fd;
-            border-left: 4px solid #2196f3;
-        }
-        
-        /* Smooth input focus effects */
-        .marks-input:focus {
-            outline: none;
-            border-color: #28a745;
-            box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
-            transform: scale(1.05);
-        }
-        
-        /* Progress indicator for bulk operations */
-        .progress-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-        }
-        .progress-content {
             background: white;
-            padding: 30px;
-            border-radius: 8px;
-            text-align: center;
-            min-width: 300px;
-        }
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: #e9ecef;
-            border-radius: 4px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
             overflow: hidden;
-            margin: 15px 0;
+            margin-bottom: 30px;
         }
-        .progress-fill {
-            height: 100%;
-            background: #28a745;
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-        
-        .marks-header {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
+
+        .table-header {
+            background: #f8fafc;
             padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+            border-bottom: 1px solid #e2e8f0;
         }
-        .marks-card {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+        .table-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #2d3748;
+            margin: 0;
         }
+
         .marks-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
         }
-        .marks-table th, .marks-table td {
-            padding: 12px;
+
+        .marks-table th,
+        .marks-table td {
+            padding: 15px;
             text-align: left;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid #e2e8f0;
         }
+
         .marks-table th {
-            background: #f8f9fa;
+            background: #f8fafc;
             font-weight: 600;
+            color: #2d3748;
+            font-size: 14px;
         }
-        .marks-table tr:hover {
-            background: #f8f9fa;
+
+        .marks-table tbody tr {
+            transition: all 0.2s ease;
         }
+
+        .marks-table tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .student-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .student-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #667eea;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
         .marks-input {
             width: 80px;
-            padding: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            padding: 8px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
             text-align: center;
+            font-size: 14px;
+            transition: all 0.3s ease;
         }
+
+        .marks-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
         .grade-badge {
-            padding: 4px 8px;
-            border-radius: 12px;
+            padding: 6px 12px;
+            border-radius: 20px;
             font-size: 12px;
-            font-weight: bold;
+            font-weight: 600;
+            text-align: center;
+            min-width: 40px;
         }
+
         .grade-A1, .grade-A { background: #d4edda; color: #155724; }
         .grade-A2, .grade-B { background: #d1ecf1; color: #0c5460; }
         .grade-B1, .grade-B2, .grade-C { background: #fff3cd; color: #856404; }
         .grade-C1, .grade-C2, .grade-D { background: #f8d7da; color: #721c24; }
         .grade-E { background: #f5c6cb; color: #721c24; }
-        .btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            text-decoration: none;
-            display: inline-block;
-            text-align: center;
-            margin: 2px;
-        }
-        .btn-primary { background: #007bff; color: white; }
-        .btn-success { background: #28a745; color: white; }
-        .btn-warning { background: #ffc107; color: #212529; }
-        .btn-danger { background: #dc3545; color: white; }
-        .btn-secondary { background: #6c757d; color: white; }
-        .btn-sm { padding: 4px 8px; font-size: 12px; }
-        .btn:hover { opacity: 0.9; }
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 15px;
+
+        .workflow-buttons {
+            display: flex;
+            gap: 10px;
             margin-bottom: 20px;
         }
-        .stat-box {
+
+        .workflow-btn {
+            padding: 12px 20px;
+            border: 2px solid #e2e8f0;
             background: white;
-            padding: 15px;
+            color: #4a5568;
             border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .workflow-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+            transform: translateY(-1px);
+        }
+
+        .workflow-btn.active {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+
+        .bulk-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+
+        .bulk-actions select {
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background: white;
+        }
+
+        .action-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn.primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .action-btn.success {
+            background: #48bb78;
+            color: white;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-1px);
+            opacity: 0.9;
+        }
+
+        .empty-state {
             text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 60px 20px;
+            color: #a0aec0;
         }
-        .stat-value {
-            font-size: 20px;
-            font-weight: bold;
-            color: #28a745;
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
         }
-        .stat-label {
-            font-size: 12px;
-            color: #666;
-            margin-top: 5px;
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #718096;
         }
-        .subject-overview {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
+
+        .breadcrumb a {
+            color: #667eea;
+            text-decoration: none;
         }
-        .subject-card {
-            background: white;
-            border-radius: 8px;
-            padding: 15px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            border-left: 4px solid #28a745;
-        }    </style>
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
-    <!-- Progress overlay for bulk operations -->
-    <div class="progress-overlay" id="progressOverlay">
-        <div class="progress-content">
-            <h4 id="progressTitle">Processing...</h4>
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill"></div>
-            </div>
-            <p id="progressText">Please wait...</p>
-        </div>
-    </div>
-    
-    <!-- Scroll to top button -->
-    <button class="scroll-to-top" id="scrollToTopBtn" onclick="scrollToTop()">↑</button>
-    
-    <!-- Quick navigation -->
-    <div class="quick-nav" id="quickNav">
-        <a href="#header" class="quick-nav-item" onclick="scrollToSection('header')">📊 Header</a>
-        <a href="#statistics" class="quick-nav-item" onclick="scrollToSection('statistics')">📈 Stats</a>
-        <a href="#marks-table" class="quick-nav-item" onclick="scrollToSection('marks-table')">📋 Marks</a>
-    </div>
-    
-    <div class="admin-container">
-        <!-- Header -->
-        <div class="marks-header" id="header">
-            <h1>📊 <?= $show_session_overview ? 'Exam Marks Overview' : 'Student Marks Management' ?></h1>
-            <?php if ($show_session_overview): ?>
-                <h2><?= htmlspecialchars($session['session_name']) ?></h2>
-                <p>📅 <?= date('M d, Y', strtotime($session['start_date'])) ?> - <?= date('M d, Y', strtotime($session['end_date'])) ?></p>
-            <?php else: ?>
-                <h2><?= htmlspecialchars($exam_subject['subject_name']) ?> - <?= htmlspecialchars($exam_subject['assessment_name']) ?></h2>
-                <p>📅 Exam Date: <?= date('M d, Y', strtotime($exam_subject['exam_date'])) ?> | Max Marks: <?= $exam_subject['total_marks'] ?></p>
-            <?php endif; ?>
-            
-            <div style="margin-top: 15px;">
-                <a href="exam_session_management.php" class="btn btn-secondary">← Back to Sessions</a>
-                <?php if (!$show_session_overview): ?>
-                    <a href="manage_exam_subjects.php?session_id=<?= $session_id ?>" class="btn btn-secondary">Manage Subjects</a>
-                <?php endif; ?>
-            </div>
-        </div>
+    <div class="dashboard-container">
+        <?php include 'sidebar.php'; ?>
+        
+        <main class="main-content">
+            <div class="marks-container">
+                <!-- Breadcrumb Navigation -->
+                <div class="breadcrumb">
+                    <a href="exam_session_management.php">Exam Sessions</a>
+                    <span>›</span>
+                    <?php if ($show_session_overview): ?>
+                        <span><?= htmlspecialchars($session['session_name']) ?></span>
+                    <?php else: ?>
+                        <a href="view_exam_marks.php?session_id=<?= $session_id ?>">Session Overview</a>
+                        <span>›</span>
+                        <span><?= htmlspecialchars($exam_subject['subject_name']) ?></span>
+                    <?php endif; ?>
+                </div>
 
-        <?php if ($show_session_overview): ?>
-            <!-- Session Overview -->
-            <div class="marks-card">
-                <h3>📚 Subjects in this Session</h3>
-                
-                <?php if ($subjects_result->num_rows > 0): ?>
-                    <div class="subject-overview">
-                        <?php while ($subject = $subjects_result->fetch_assoc()): ?>
-                            <div class="subject-card">
-                                <h4><?= htmlspecialchars($subject['subject_name']) ?></h4>
-                                <p><strong>Assessment:</strong> <?= htmlspecialchars($subject['assessment_name']) ?></p>
-                                <p><strong>Date:</strong> <?= date('M d, Y', strtotime($subject['exam_date'])) ?></p>
-                                <p><strong>Max Marks:</strong> <?= $subject['total_marks'] ?></p>
-                                <p><strong>Marks Recorded:</strong> <?= $subject['marks_recorded'] ?> students</p>
-                                
-                                <div style="margin-top: 15px;">
-                                    <a href="view_exam_marks.php?exam_subject_id=<?= $subject['id'] ?>" 
-                                       class="btn btn-primary btn-sm">View/Edit Marks</a>
-                                    <a href="exam_report.php?exam_subject_id=<?= $subject['id'] ?>" 
-                                       class="btn btn-success btn-sm" target="_blank">Generate Report</a>
-                                </div>
+                <!-- Workflow Navigation -->
+                <div class="workflow-buttons">
+                    <a href="exam_session_management.php" class="workflow-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        Back to Sessions
+                    </a>
+                    <?php if (!$show_session_overview): ?>
+                        <a href="view_exam_marks.php?session_id=<?= $session_id ?>" class="workflow-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                            Session Overview
+                        </a>
+                        <a href="schedule.php?session_id=<?= $session_id ?>" class="workflow-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            Schedule Exam
+                        </a>
+                        <a href="#" class="workflow-btn active">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                            </svg>
+                            View Marks
+                        </a>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Header -->
+                <div class="marks-header">
+                    <h1><?= $show_session_overview ? 'Exam Session Overview' : 'Student Marks Management' ?></h1>
+                    <?php if ($show_session_overview): ?>
+                        <h2><?= htmlspecialchars($session['session_name']) ?></h2>
+                        <p>📅 <?= date('M d, Y', strtotime($session['start_date'])) ?> - <?= date('M d, Y', strtotime($session['end_date'])) ?></p>
+                        <p>📋 <?= htmlspecialchars($session['session_type']) ?> | <?= htmlspecialchars($session['academic_year']) ?></p>
+                    <?php else: ?>
+                        <h2><?= htmlspecialchars($exam_subject['subject_name']) ?> - <?= htmlspecialchars($exam_subject['assessment_name']) ?></h2>
+                        <p>📅 Exam Date: <?= date('M d, Y', strtotime($exam_subject['exam_date'])) ?> | ⏱️ Duration: <?= $exam_subject['duration_minutes'] ?> minutes</p>
+                        <p>📝 Total Marks: <?= $exam_subject['total_marks'] ?> | ✅ Passing Marks: <?= $exam_subject['passing_marks'] ?></p>
+                    <?php endif; ?>
+                </div>
+
+                <?php if ($show_session_overview): ?>
+                    <!-- Session Overview -->
+                    <div class="marks-table-container">
+                        <div class="table-header">
+                            <h3 class="table-title">📚 Subjects in this Session</h3>
+                        </div>
+                        
+                        <?php if ($subjects_result->num_rows > 0): ?>
+                            <div class="subject-grid" style="padding: 20px;">
+                                <?php while ($subject = $subjects_result->fetch_assoc()): ?>
+                                    <div class="subject-card" onclick="viewSubjectMarks(<?= $subject['id'] ?>)">
+                                        <div class="subject-card-header">
+                                            <h4 class="subject-title"><?= htmlspecialchars($subject['subject_name']) ?></h4>
+                                            <span class="marks-badge"><?= $subject['marks_recorded'] ?> recorded</span>
+                                        </div>
+                                        
+                                        <div class="subject-meta">
+                                            <div>📝 <?= htmlspecialchars($subject['assessment_name']) ?></div>
+                                            <div>📅 <?= date('M d, Y', strtotime($subject['exam_date'])) ?></div>
+                                            <?php if ($subject['exam_time']): ?>
+                                                <div>⏰ <?= date('g:i A', strtotime($subject['exam_time'])) ?></div>
+                                            <?php endif; ?>
+                                        </div>
+                                        
+                                        <div class="subject-stats">
+                                            <div class="stat-item">
+                                                <span class="stat-value"><?= $subject['total_marks'] ?></span>
+                                                <span class="stat-label">Total Marks</span>
+                                            </div>
+                                            <div class="stat-item">
+                                                <span class="stat-value"><?= $subject['duration_minutes'] ?>m</span>
+                                                <span class="stat-label">Duration</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="subject-actions">
+                                            <a href="view_exam_marks.php?exam_subject_id=<?= $subject['id'] ?>" 
+                                               class="btn-view-marks" onclick="event.stopPropagation();">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                                                </svg>
+                                                View/Edit Marks
+                                            </a>
+                                        </div>
+                                    </div>
+                                <?php endwhile; ?>
                             </div>
-                        <?php endwhile; ?>
+                        <?php else: ?>
+                            <div class="empty-state">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                </svg>
+                                <h3>No Subjects Found</h3>
+                                <p>No subjects have been added to this session yet.</p>
+                                <a href="exam_session_management.php?session_id=<?= $session_id ?>" class="workflow-btn">
+                                    Add Subjects
+                                </a>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 <?php else: ?>
-                    <p>No subjects found for this session. <a href="manage_exam_subjects.php?session_id=<?= $session_id ?>">Add subjects</a> to get started.</p>
+                    <!-- Individual Subject Marks Management -->
+                    
+                    <!-- Statistics Section -->
+                    <?php
+                    $total_students = $students_result->num_rows;
+                    $students_result->data_seek(0);
+                    
+                    $recorded_count = 0;
+                    $total_marks = 0;
+                    $grade_counts = [];
+                    $pass_count = 0;
+                    
+                    while ($student = $students_result->fetch_assoc()) {
+                        if (!is_null($student['marks_obtained'])) {
+                            $recorded_count++;
+                            $total_marks += $student['marks_obtained'];
+                            
+                            if ($student['marks_obtained'] >= $exam_subject['passing_marks']) {
+                                $pass_count++;
+                            }
+                            
+                            $grade = $student['grade'] ?? 'Not Graded';
+                            $grade_counts[$grade] = ($grade_counts[$grade] ?? 0) + 1;
+                        }
+                    }
+                    $students_result->data_seek(0);
+                    
+                    $average_marks = $recorded_count > 0 ? round($total_marks / $recorded_count, 2) : 0;
+                    $completion_percentage = $total_students > 0 ? round(($recorded_count / $total_students) * 100, 1) : 0;
+                    $pass_percentage = $recorded_count > 0 ? round(($pass_count / $recorded_count) * 100, 1) : 0;
+                    ?>
+                    
+                    <div class="marks-table-container" style="margin-bottom: 20px;">
+                        <div class="table-header">
+                            <h3 class="table-title">📊 Performance Statistics</h3>
+                        </div>
+                        <div style="padding: 20px;">
+                            <div class="subject-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px;">
+                                <div class="stat-item">
+                                    <span class="stat-value"><?= $total_students ?></span>
+                                    <span class="stat-label">Total Students</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-value"><?= $recorded_count ?></span>
+                                    <span class="stat-label">Marks Recorded</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-value"><?= $completion_percentage ?>%</span>
+                                    <span class="stat-label">Completion</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-value"><?= $average_marks ?></span>
+                                    <span class="stat-label">Average Marks</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-value"><?= $exam_subject['total_marks'] > 0 ? round($average_marks / $exam_subject['total_marks'] * 100, 1) : 0 ?>%</span>
+                                    <span class="stat-label">Average %</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-value"><?= $pass_percentage ?>%</span>
+                                    <span class="stat-label">Pass Rate</span>
+                                </div>
+                            </div>
+                            
+                            <?php if (!empty($grade_counts)): ?>
+                                <div style="margin-top: 30px;">
+                                    <h4 style="margin-bottom: 15px; color: #2d3748;">Grade Distribution</h4>
+                                    <div class="subject-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 15px;">
+                                        <?php foreach ($grade_counts as $grade => $count): ?>
+                                            <div class="stat-item">
+                                                <span class="stat-value"><?= $count ?></span>
+                                                <span class="stat-label">Grade <?= $grade ?></span>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <!-- Bulk Actions -->
+                    <div class="bulk-actions">
+                        <label style="font-weight: 500; color: #4a5568;">Quick Actions:</label>
+                        <button onclick="saveAllMarks()" class="action-btn success">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-3m-1 4l-3 3 7-7" />
+                            </svg>
+                            Save All Changes
+                        </button>
+                        <button onclick="bulkMarkEntry()" class="action-btn primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            Bulk Entry
+                        </button>
+                        <input type="text" id="studentSearch" placeholder="🔍 Search students, class, or section..." 
+                               style="padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; flex: 1; max-width: 300px;"
+                               onkeyup="filterStudents()">
+                        <select id="gradeFilter" onchange="filterByGrade()" 
+                                style="padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px;">
+                            <option value="">All Grades</option>
+                            <option value="recorded">With Marks</option>
+                            <option value="pending">Pending</option>
+                            <?php foreach (array_keys($grade_counts) as $grade): ?>
+                                <option value="<?= $grade ?>">Grade <?= $grade ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <!-- Student Marks Table -->
+                    <div class="marks-table-container">
+                        <div class="table-header">
+                            <h3 class="table-title">👥 Student Marks Entry</h3>
+                        </div>
+                        <table class="marks-table" id="marksTable">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Student Name</th>
+                                    <th>Class</th>
+                                    <th>Section</th>
+                                    <th>Marks Obtained</th>
+                                    <th>Percentage</th>
+                                    <th>Grade</th>
+                                    <th>Remarks</th>
+                                    <th>Last Updated</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php while ($student = $students_result->fetch_assoc()): ?>
+                                    <tr data-student-id="<?= $student['user_id'] ?>" data-mark-id="<?= $student['mark_id'] ?? '' ?>">
+                                        <td>
+                                            <div class="student-info">
+                                                <div class="student-avatar">
+                                                    <?= strtoupper(substr($student['full_name'], 0, 1)) ?>
+                                                </div>
+                                                <span><?= htmlspecialchars($student['roll_number'] ?? 'N/A') ?></span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <strong><?= htmlspecialchars($student['full_name']) ?></strong>
+                                        </td>
+                                        <td>
+                                            <span style="color: #667eea; font-weight: 500;"><?= htmlspecialchars($student['class_name'] ?? 'N/A') ?></span>
+                                        </td>
+                                        <td>
+                                            <span style="color: #667eea; font-weight: 500;"><?= htmlspecialchars($student['section_name'] ?? 'N/A') ?></span>
+                                        </td>
+                                        <td>
+                                            <input type="number" class="marks-input" 
+                                                   name="marks_<?= $student['user_id'] ?>"
+                                                   value="<?= $student['marks_obtained'] ?? '' ?>"
+                                                   min="0" max="<?= $exam_subject['total_marks'] ?>"
+                                                   step="0.5" 
+                                                   onchange="calculateGrade(this, <?= $exam_subject['total_marks'] ?>, '<?= $exam_subject['session_type'] ?>')">
+                                            <span style="color: #a0aec0; font-size: 12px; margin-left: 5px;">/ <?= $exam_subject['total_marks'] ?></span>
+                                        </td>
+                                        <td class="percentage">
+                                            <?= $student['percentage'] ? round($student['percentage'], 1) . '%' : '-' ?>
+                                        </td>
+                                        <td class="grade">
+                                            <?php if ($student['grade']): ?>
+                                                <span class="grade-badge grade-<?= $student['grade'] ?>"><?= $student['grade'] ?></span>
+                                            <?php else: ?>
+                                                <span class="grade-badge">-</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <input type="text" 
+                                                   style="width: 150px; padding: 8px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 14px;"
+                                                   name="remarks_<?= $student['user_id'] ?>"
+                                                   value="<?= htmlspecialchars($student['remarks'] ?? '') ?>"
+                                                   placeholder="Optional remarks">
+                                        </td>
+                                        <td class="last-updated" style="color: #718096; font-size: 12px;">
+                                            <?= $student['recorded_at'] ? date('M d, Y H:i', strtotime($student['recorded_at'])) : '-' ?>
+                                        </td>
+                                        <td>
+                                            <button onclick="saveStudentMark(<?= $student['user_id'] ?>)" 
+                                                    class="action-btn primary" style="padding: 6px 12px; font-size: 12px;">
+                                                Save
+                                            </button>
+                                        </td>
+                                    </tr>
+                                <?php endwhile; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 <?php endif; ?>
             </div>
-              <?php else: ?>
-            <!-- Individual Subject Marks Management -->
-            
-            <!-- Statistics -->
-            <div id="statistics">
-            <?php
-            $total_students = $students_result->num_rows;
-            $students_result->data_seek(0);
-            
-            $recorded_count = 0;
-            $total_marks = 0;
-            $grade_counts = [];
-            
-            while ($student = $students_result->fetch_assoc()) {
-                if (!is_null($student['marks_obtained'])) {
-                    $recorded_count++;
-                    $total_marks += $student['marks_obtained'];
-                    
-                    $grade = $student['grade'] ?? 'Not Graded';
-                    $grade_counts[$grade] = ($grade_counts[$grade] ?? 0) + 1;
-                }
-            }
-            $students_result->data_seek(0);
-            
-            $average_marks = $recorded_count > 0 ? round($total_marks / $recorded_count, 2) : 0;
-            $completion_percentage = $total_students > 0 ? round(($recorded_count / $total_students) * 100, 1) : 0;
-            ?>
-            
-            <div class="stats-row">
-                <div class="stat-box">
-                    <div class="stat-value"><?= $total_students ?></div>
-                    <div class="stat-label">Total Students</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-value"><?= $recorded_count ?></div>
-                    <div class="stat-label">Marks Recorded</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-value"><?= $completion_percentage ?>%</div>
-                    <div class="stat-label">Completion</div>                </div>
-                <div class="stat-box">
-                    <div class="stat-value"><?= $average_marks ?></div>
-                    <div class="stat-label">Average Marks</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-value"><?= $exam_subject['total_marks'] > 0 ? round($average_marks / $exam_subject['total_marks'] * 100, 1) : 0 ?>%</div>
-                    <div class="stat-label">Average %</div>
-                </div>
-            </div>
-
-            <!-- Grade Distribution -->
-            <?php if (!empty($grade_counts)): ?>
-                <div class="marks-card">
-                    <h3>📈 Grade Distribution</h3>
-                    <div class="stats-row">
-                        <?php foreach ($grade_counts as $grade => $count): ?>
-                            <div class="stat-box">
-                                <div class="stat-value"><?= $count ?></div>
-                                <div class="stat-label">Grade <?= $grade ?></div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>                </div>
-            <?php endif; ?>
-            </div>
-
-            <!-- Student Marks Table -->
-            <div class="marks-card" id="marks-table">                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h3>👥 Student Marks</h3>
-                    <div>
-                        <button onclick="saveAllMarks()" class="btn btn-success">💾 Save All Changes</button>
-                        <button onclick="bulkMarkEntry()" class="btn btn-primary">⚡ Bulk Entry</button>
-                        <button onclick="scrollToSection('statistics')" class="btn btn-secondary">📈 View Stats</button>
-                    </div>
-                </div>
-                
-                <!-- Search and Filter Bar -->
-                <div style="margin-bottom: 15px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                    <input type="text" id="studentSearch" placeholder="🔍 Search students..." 
-                           style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; width: 250px;"
-                           onkeyup="filterStudents()">
-                    <select id="gradeFilter" onchange="filterByGrade()" 
-                            style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px;">
-                        <option value="">All Grades</option>
-                        <option value="A+">A+</option>
-                        <option value="A">A</option>
-                        <option value="B">B</option>
-                        <option value="C">C</option>
-                        <option value="D">D</option>
-                        <option value="-">Not Graded</option>
-                    </select>
-                    <button onclick="clearFilters()" class="btn btn-secondary btn-sm">Clear Filters</button>
-                    <span id="studentCount" style="margin-left: auto; color: #666; font-size: 14px;"></span>
-                </div>
-                
-                <div class="marks-table-container" id="marksTableContainer">
-                    <table class="marks-table" id="marksTable">
-                        <thead>
-                            <tr>
-                                <th>Roll No</th>
-                                <th>Student Name</th>
-                                <th>Marks Obtained</th>
-                                <th>Percentage</th>
-                                <th>Grade</th>
-                                <th>Remarks</th>
-                                <th>Last Updated</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>                        <tbody>
-                            <?php while ($student = $students_result->fetch_assoc()): ?>
-                                <tr data-student-id="<?= $student['user_id'] ?>" data-mark-id="<?= $student['mark_id'] ?? '' ?>">
-                                    <td><?= htmlspecialchars($student['roll_number']) ?></td>
-                                    <td><?= htmlspecialchars($student['full_name']) ?></td>
-                                    <td>
-                                        <input type="number" class="marks-input" 
-                                               name="marks_<?= $student['user_id'] ?>"
-                                               value="<?= $student['marks_obtained'] ?? '' ?>"
-                                               min="0" max="<?= $exam_subject['total_marks'] ?>"
-                                               step="0.5" onchange="calculateGrade(this, <?= $exam_subject['total_marks'] ?>, '<?= $exam_subject['session_type'] ?>')">
-                                        <span class="max-marks">/ <?= $exam_subject['total_marks'] ?></span>
-                                    </td>
-                                    <td class="percentage"><?= $student['percentage'] ? round($student['percentage'], 1) . '%' : '-' ?></td>
-                                    <td class="grade">
-                                        <?php if ($student['grade']): ?>
-                                            <span class="grade-badge grade-<?= $student['grade'] ?>"><?= $student['grade'] ?></span>
-                                        <?php else: ?>
-                                            <span class="grade-badge">-</span>
-                                        <?php endif; ?>                                    </td>
-                                    <td>
-                                        <input type="text" style="width: 150px; padding: 4px; border: 1px solid #ddd; border-radius: 3px;"
-                                               name="remarks_<?= $student['user_id'] ?>"
-                                               value="<?= htmlspecialchars($student['remarks'] ?? '') ?>"
-                                               placeholder="Optional remarks">
-                                    </td>
-                                    <td class="last-updated">
-                                        <?= $student['recorded_at'] ? date('M d, Y H:i', strtotime($student['recorded_at'])) : '-' ?>
-                                    </td>
-                                    <td>
-                                        <button onclick="saveStudentMark(<?= $student['user_id'] ?>)" 
-                                                class="btn btn-sm btn-primary">Save</button>
-                                    </td>
-                                </tr>
-                            <?php endwhile; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        <?php endif; ?>
+        </main>
     </div>
 
     <script>
+        // Sidebar toggle function
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.querySelector('.sidebar-overlay');
+            sidebar.classList.toggle('show');
+            document.body.classList.toggle('sidebar-open');
+            overlay.addEventListener('click', () => {
+                sidebar.classList.remove('show');
+                document.body.classList.remove('sidebar-open');
+            });
+        }
+
+        // View subject marks functionality
+        function viewSubjectMarks(subjectId) {
+            window.location.href = `view_exam_marks.php?exam_subject_id=${subjectId}`;
+        }
+
         // Calculate grade based on marks and session type
         function calculateGrade(input, maxMarks, sessionType) {
             const marks = parseFloat(input.value) || 0;
@@ -851,9 +1020,14 @@ if ($session_id && !$exam_subject_id) {
             rows.forEach(row => {
                 const studentName = row.cells[1].textContent.toLowerCase();
                 const rollNo = row.cells[0].textContent.toLowerCase();
+                const className = row.cells[2].textContent.toLowerCase();
+                const sectionName = row.cells[3].textContent.toLowerCase();
                 const grade = row.querySelector('.grade-badge')?.textContent.trim() || '-';
                 
-                const matchesSearch = studentName.includes(searchTerm) || rollNo.includes(searchTerm);
+                const matchesSearch = studentName.includes(searchTerm) || 
+                                    rollNo.includes(searchTerm) || 
+                                    className.includes(searchTerm) || 
+                                    sectionName.includes(searchTerm);
                 const matchesGrade = !gradeFilter || grade === gradeFilter;
                 
                 if (matchesSearch && matchesGrade) {
