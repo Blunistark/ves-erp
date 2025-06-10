@@ -173,6 +173,65 @@ if (!isset($stats['attendance_marked'])) {
     <link rel="stylesheet" href="css/index.css">
    <style>
         /* Enhanced styles matching student dashboard theme */
+        /* DASHBOARD CONTAINER - MATCHES WORKING LAYOUT */
+        body {
+            margin: 0 !important;
+            padding: 0 !important;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #ffffff !important;
+            overflow-x: hidden !important;
+        }
+
+        html {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .dashboard-container {
+            margin-left: 280px !important;
+            padding: 2rem !important;
+            background-color: #ffffff !important;
+            min-height: 100vh !important;
+            transition: margin-left 0.3s ease !important;
+            width: calc(100% - 280px) !important;
+            box-sizing: border-box !important;
+            position: relative !important;
+        }
+
+        .sidebar.collapsed ~ .dashboard-container {
+            margin-left: 60px !important;
+            width: calc(100% - 60px) !important;
+        }
+
+        /* FIXED MOBILE OVERLAY - NO MORE UNRESPONSIVE SCREEN */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .dashboard-container {
+                margin-left: 0 !important;
+                padding: 1rem !important;
+                width: 100% !important;
+            }
+        }
         body {
             margin: 0;
             padding: 0;
