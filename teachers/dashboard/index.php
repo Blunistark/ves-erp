@@ -171,15 +171,141 @@ if (!isset($stats['attendance_marked'])) {
     
     <link rel="stylesheet" href="css/sidebar.css">
     <link rel="stylesheet" href="css/index.css">
-    <style>
-        /* Enhanced styles while maintaining the same theme */
+   <style>
+        /* Enhanced styles matching student dashboard theme */
+        /* DASHBOARD CONTAINER - MATCHES WORKING LAYOUT */
+        body {
+            margin: 0 !important;
+            padding: 0 !important;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #ffffff !important;
+            overflow-x: hidden !important;
+        }
+
+        html {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .dashboard-container {
+            margin-left: 280px !important;
+            padding: 2rem !important;
+            background-color: #ffffff !important;
+            min-height: 100vh !important;
+            transition: margin-left 0.3s ease !important;
+            width: calc(100% - 280px) !important;
+            box-sizing: border-box !important;
+            position: relative !important;
+        }
+
+        .sidebar.collapsed ~ .dashboard-container {
+            margin-left: 60px !important;
+            width: calc(100% - 60px) !important;
+        }
+
+        /* FIXED MOBILE OVERLAY - NO MORE UNRESPONSIVE SCREEN */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .dashboard-container {
+                margin-left: 0 !important;
+                padding: 1rem !important;
+                width: 100% !important;
+            }
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #ffffff;
+        }
+
+        .dashboard-container {
+            margin-left: 280px;
+            padding: 2rem;
+            background-color: #ffffff;
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+
+        .sidebar.collapsed ~ .dashboard-container {
+            margin-left: 60px;
+        }
+
+        /* HAMBURGER BUTTON */
+        .hamburger-btn {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1001;
+            background: #ffffff;
+            color: #4a5568;
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+        }
+
+        .hamburger-btn:hover {
+            background: #f7fafc;
+            transform: scale(1.05);
+        }
+
+        .hamburger-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* SIDEBAR OVERLAY */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
         .dashboard-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px 0;
-            border-bottom: 2px solid #f0f0f0;
-            margin-bottom: 25px;
+            padding: 0 0 30px 0;
+            border-bottom: 1px solid #f1f5f9;
+            margin-bottom: 30px;
         }
         
         .header-left {
@@ -189,32 +315,38 @@ if (!isset($stats['attendance_marked'])) {
         }
         
         .school-logo {
-            width: 50px;
-            height: 50px;
+            width: 48px;
+            height: 48px;
             object-fit: contain;
-            border-radius: 8px;
+            border-radius: 10px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         
         .header-title {
             margin: 0;
-            color: #333;
-            font-size: 1.8rem;
-            font-weight: 600;
+            color: #1a202c;
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
         }
         
         .header-date {
-            color: #666;
-            font-size: 1rem;
+            color: #718096;
+            font-size: 0.95rem;
             font-weight: 500;
+            background: #f7fafc;
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
         }
         
         .user-welcome {
-            background: linear-gradient(135deg, #f9f9f9 0%, #f0f0f0 100%);
-            border-radius: 12px;
-            padding: 25px;
-            margin-bottom: 25px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -232,39 +364,47 @@ if (!isset($stats['attendance_marked'])) {
             background: linear-gradient(90deg, #667eea, #764ba2);
         }
         
+        .welcome-text {
+            flex: 1;
+        }
+        
         .welcome-text h2 {
             margin: 0;
-            color: #333;
-            font-size: 1.6rem;
-            font-weight: 600;
+            color: #1a202c;
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
         }
         
         .welcome-text p {
             margin: 8px 0 0;
-            color: #666;
+            color: #4a5568;
             font-size: 1rem;
+            font-weight: 500;
         }
         
         .date-time {
             background: rgba(255,255,255,0.9);
-            padding: 15px 20px;
-            border-radius: 10px;
+            padding: 20px 24px;
+            border-radius: 12px;
             text-align: center;
             min-width: 200px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
         
         .date-time .time {
-            font-size: 1.4rem;
-            font-weight: bold;
-            color: #333;
+            font-size: 1.5rem;
+            font-weight: 700;
             margin-bottom: 5px;
-            font-family: 'Courier New', monospace;
+            font-family: 'SF Mono', 'Monaco', 'Consolas', 'Liberation Mono', monospace;
+            color: #2d3748;
         }
         
         .date-time .date {
-            font-size: 0.9rem;
-            color: #666;
+            font-size: 0.875rem;
+            color: #718096;
+            font-weight: 500;
         }
         
         /* Quick Stats Section */
@@ -275,38 +415,34 @@ if (!isset($stats['attendance_marked'])) {
             margin-bottom: 30px;
         }
         
-        .stat-card {
-            background: #fff;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+     .stat-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             text-align: center;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
-            border-left: 4px solid #667eea;
         }
         
         .stat-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border-color: #cbd5e0;
         }
-        
-        .stat-card.attendance { border-left-color: #4CAF50; }
-        .stat-card.students { border-left-color: #FF9800; }
-        .stat-card.schedule { border-left-color: #2196F3; }
         
         .stat-number {
             font-size: 2.2rem;
-            font-weight: bold;
-            color: #333;
+            font-weight: 700;
+            color: #1a202c;
             margin-bottom: 5px;
             line-height: 1.2;
         }
         
         .stat-label {
-            font-size: 0.85rem;
-            color: #666;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            font-size: 0.875rem;
+            color: #718096;
+            font-weight: 500;
             line-height: 1.3;
         }
         
@@ -317,8 +453,6 @@ if (!isset($stats['attendance_marked'])) {
         
         .stat-card.students .stat-label {
             font-size: 0.8rem;
-            text-transform: none;
-            letter-spacing: normal;
         }
         
         /* Enhanced dashboard cards */
@@ -330,16 +464,18 @@ if (!isset($stats['attendance_marked'])) {
         }
         
         .dashboard-card {
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            padding: 25px;
+            background: #ffffff;
+            border: 1px solid #f1f5f9;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
         
         .dashboard-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: #cbd5e0;
         }
         
         .dashboard-card-header {
@@ -348,20 +484,21 @@ if (!isset($stats['attendance_marked'])) {
             align-items: center;
             margin-bottom: 20px;
             padding-bottom: 15px;
-            border-bottom: 2px solid #f0f0f0;
+            border-bottom: 1px solid #f1f5f9;
         }
         
         .dashboard-card-title {
             margin: 0;
-            font-size: 1.3rem;
-            color: #333;
-            font-weight: 600;
+            font-size: 1.5rem;
+            color: #1a202c;
+            font-weight: 700;
+            letter-spacing: -0.025em;
         }
         
-        .dashboard-card-icon {
+      .dashboard-card-icon {
             width: 28px;
             height: 28px;
-            color: #667eea;
+            color: #4299e1;
         }
         
         /* Enhanced attendance items */
@@ -369,90 +506,101 @@ if (!isset($stats['attendance_marked'])) {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 0;
-            border-bottom: 1px solid #f0f0f0;
-            transition: background-color 0.2s ease;
+            padding: 24px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+            position: relative;
         }
         
         .attendance-item:hover {
-            background-color: #f8f9fa;
-            margin: 0 -10px;
-            padding-left: 10px;
-            padding-right: 10px;
-            border-radius: 8px;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: #cbd5e0;
         }
         
         .attendance-item:last-child {
-            border-bottom: none;
+            margin-bottom: 0;
         }
         
         .attendance-class-name {
-            font-weight: 600;
-            margin-bottom: 5px;
-            color: #333;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #1a202c;
+            font-size: 1.125rem;
         }
         
         .attendance-class-info {
-            font-size: 0.85rem;
-            color: #666;
+            font-size: 0.875rem;
+            color: #718096;
+            font-weight: 500;
         }
         
         .attendance-action {
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 0.85rem;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 0.875rem;
             text-decoration: none;
-            font-weight: 500;
+            font-weight: 600;
             transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
         
         .btn-mark {
-            background-color: #4CAF50;
+            background-color: #48bb78;
             color: white;
         }
         
         .btn-mark:hover {
-            background-color: #45a049;
-            transform: scale(1.05);
+            background-color: #38a169;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
         }
         
         .btn-view {
-            background-color: #2196F3;
+            background-color: #4299e1;
             color: white;
         }
         
         .btn-view:hover {
-            background-color: #1976D2;
-            transform: scale(1.05);
+            background-color: #3182ce;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(66, 153, 225, 0.3);
         }
         
         /* Today's Schedule Card */
         .schedule-card {
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            padding: 25px;
+            background: #ffffff;
+            border: 1px solid #f1f5f9;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             margin-bottom: 25px;
         }
         
         .schedule-item {
             display: flex;
             align-items: center;
-            padding: 15px 0;
-            border-bottom: 1px solid #f0f0f0;
-            transition: background-color 0.2s ease;
+            padding: 24px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
         }
         
         .schedule-item:hover {
-            background-color: #f8f9fa;
-            margin: 0 -15px;
-            padding-left: 15px;
-            padding-right: 15px;
-            border-radius: 8px;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: #cbd5e0;
         }
         
         .schedule-item:last-child {
-            border-bottom: none;
+            margin-bottom: 0;
         }
         
         .schedule-time {
@@ -461,14 +609,14 @@ if (!isset($stats['attendance_marked'])) {
         }
         
         .schedule-time-start {
-            font-weight: 600;
+            font-weight: 700;
             margin-bottom: 3px;
-            color: #333;
+            color: #1a202c;
         }
         
         .schedule-time-end {
-            font-size: 0.8rem;
-            color: #666;
+            font-size: 0.875rem;
+            color: #718096;
         }
         
         .schedule-class {
@@ -476,29 +624,40 @@ if (!isset($stats['attendance_marked'])) {
         }
         
         .schedule-class-name {
-            font-weight: 600;
+            font-weight: 700;
             margin-bottom: 3px;
-            color: #333;
+            color: #1a202c;
         }
         
         .schedule-class-subject {
-            font-size: 0.85rem;
-            color: #666;
+            font-size: 0.875rem;
+            color: #718096;
+        }
+        
+        /* Navigation Cards Section */
+        .nav-cards-section {
+            background: #ffffff;
+            border: 1px solid #f1f5f9;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         
         /* Enhanced search */
         .search-container {
             position: relative;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
+            max-width: 500px;
         }
         
         .search-input {
             width: 100%;
-            padding: 15px 50px 15px 20px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
+            padding: 16px 50px 16px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
             font-size: 1rem;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
         }
         
         .search-input:focus {
@@ -509,67 +668,71 @@ if (!isset($stats['attendance_marked'])) {
         
         .search-icon {
             position: absolute;
-            right: 15px;
+            right: 16px;
             top: 50%;
             transform: translateY(-50%);
-            color: #999;
+            color: #9ca3af;
+            pointer-events: none;
         }
         
         /* Enhanced nav cards */
         .nav-cards-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 20px;
         }
         
         .nav-card {
-            background: #fff;
-            border-radius: 12px;
-            padding: 20px;
-            text-decoration: none;
-            color: inherit;
-            box-shadow: 0 3px 12px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
             display: flex;
             align-items: center;
-            border-left: 4px solid #667eea;
+            padding: 24px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         
         .nav-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-4px);
             box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            border-color: #667eea;
             text-decoration: none;
             color: inherit;
         }
         
-        .nav-card-icon {
-            width: 50px;
-            height: 50px;
-            margin-right: 15px;
+       .nav-card-icon {
+            width: 48px;
+            height: 48px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            border-radius: 10px;
-            color: white;
+            margin-right: 20px;
+            flex-shrink: 0;
         }
         
         .nav-card-icon svg {
             width: 24px;
             height: 24px;
+            color: #4299e1;
         }
         
         .nav-card-content h3 {
-            margin: 0 0 5px 0;
-            font-size: 1.1rem;
+            margin: 0 0 8px 0;
+            font-size: 1.125rem;
             font-weight: 600;
-            color: #333;
+            color: #1a202c;
         }
         
         .nav-card-content p {
             margin: 0;
-            font-size: 0.9rem;
-            color: #666;
+            font-size: 0.875rem;
+            color: #6b7280;
             line-height: 1.4;
         }
         
@@ -592,6 +755,24 @@ if (!isset($stats['attendance_marked'])) {
         
         /* Responsive improvements */
         @media (max-width: 768px) {
+            .hamburger-btn {
+                display: flex !important;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .dashboard-container {
+                margin-left: 0 !important;
+                padding: 1rem !important;
+            }
+
+            .dashboard-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+                padding-bottom: 20px;
+            }
+            
             .header-left {
                 flex-direction: column;
                 gap: 10px;
@@ -604,13 +785,23 @@ if (!isset($stats['attendance_marked'])) {
             }
             
             .header-title {
-                font-size: 1.4rem;
+                font-size: 1.5rem;
             }
             
             .user-welcome {
                 flex-direction: column;
                 text-align: center;
-                gap: 15px;
+                gap: 20px;
+                padding: 25px;
+            }
+
+            .welcome-text h2 {
+                font-size: 1.5rem;
+            }
+
+            .date-time {
+                min-width: auto;
+                width: 100%;
             }
             
             .quick-stats {
@@ -621,13 +812,71 @@ if (!isset($stats['attendance_marked'])) {
             .dashboard-cards {
                 grid-template-columns: 1fr;
             }
+
+            .nav-cards-section {
+                padding: 20px;
+            }
             
             .nav-cards-grid {
                 grid-template-columns: 1fr;
             }
+
+            .nav-card {
+                padding: 20px;
+            }
+
+            .nav-card-icon {
+                width: 44px;
+                height: 44px;
+                margin-right: 16px;
+            }
+
+            .nav-card-icon svg {
+                width: 22px;
+                height: 22px;
+            }
+
+            .nav-card-content h3 {
+                font-size: 1rem;
+            }
+
+            .nav-card-content p {
+                font-size: 0.8rem;
+            }
         }
         
         @media (max-width: 480px) {
+            .dashboard-container {
+                padding: 0.75rem !important;
+            }
+
+            .user-welcome {
+                padding: 20px;
+            }
+
+            .welcome-text h2 {
+                font-size: 1.25rem;
+            }
+
+            .nav-cards-section {
+                padding: 16px;
+            }
+
+            .nav-card {
+                padding: 16px;
+            }
+
+            .nav-card-icon {
+                width: 40px;
+                height: 40px;
+                margin-right: 14px;
+            }
+
+            .nav-card-icon svg {
+                width: 20px;
+                height: 20px;
+            }
+            
             .dashboard-header {
                 flex-direction: column;
                 gap: 15px;
@@ -654,7 +903,7 @@ if (!isset($stats['attendance_marked'])) {
             position: absolute;
             top: -5px;
             right: -5px;
-            background: #ff4444;
+            background: #f56565;
             color: white;
             border-radius: 50%;
             width: 20px;
@@ -667,15 +916,16 @@ if (!isset($stats['attendance_marked'])) {
         }
         
         .no-classes {
-            color: #666;
+            color: #718096;
             font-style: italic;
             padding: 20px 0;
             text-align: center;
-            background: #f8f9fa;
-            border-radius: 8px;
+            background: #f7fafc;
+            border: 2px dashed #cbd5e0;
+            border-radius: 16px;
             margin: 10px 0;
         }
-    </style>
+</style>
 </head>
 <body>
 <div class="sidebar-overlay"></div>
