@@ -166,6 +166,127 @@
         </header>
 
         <main class="dashboard-content">
+            <!-- Attendance Overview (moved to top) -->
+            <div id="attendanceOverviewContainer" class="attendance-view-container" style="display: none;">
+                <div class="attendance-overview">
+                    <div class="overview-card present-card">
+                        <h3 class="overview-title">Present</h3>
+                        <div class="overview-value">85.7%</div>
+                        <div class="overview-percentage">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="percentage-increase">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                            </svg>
+                            <span class="percentage-increase">2.3% from last month</span>
+                        </div>
+                    </div>
+                    <div class="overview-card absent-card">
+                        <h3 class="overview-title">Absent</h3>
+                        <div class="overview-value">8.2%</div>
+                        <div class="overview-percentage">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="percentage-decrease">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                            </svg>
+                            <span class="percentage-decrease">1.4% from last month</span>
+                        </div>
+                    </div>
+                    <div class="overview-card leave-card">
+                        <h3 class="overview-title">On Leave</h3>
+                        <div class="overview-value">1.6%</div>
+                        <div class="overview-percentage">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="percentage-decrease">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                            </svg>
+                            <span class="percentage-decrease">0.1% from last month</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attendance Summary (moved to top) -->
+            <div id="attendanceSummaryContainer" class="attendance-summary" style="display: none;">
+                <h3 class="summary-title">March 2025 Summary</h3>
+                <div class="summary-stats">
+                    <div class="stat-item">
+                        <div class="stat-value">85.7%</div>
+                        <div class="stat-label">Average Present</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">8.2%</div>
+                        <div class="stat-label">Average Absent</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">1.6%</div>
+                        <div class="stat-label">On Leave</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">22</div>
+                        <div class="stat-label">School Days</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">32</div>
+                        <div class="stat-label">Students</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Students Container (moved to top after statistics) -->
+            <div id="studentsContainer" class="students-container" style="display: none;">
+                <h3 class="section-title">Students</h3>
+                <div id="studentsGrid" class="cards-grid">
+                    <!-- Student cards will be dynamically added here -->
+                </div>
+            </div>
+
+            <!-- Student Attendance Details Container (moved to top) -->
+            <div id="studentAttendanceDetailsContainer" class="attendance-details-container" style="display: none;">
+                <div class="details-header">
+                    <button id="backToStudentsButton" class="back-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                        Back to Students
+                    </button>
+                    <h3 id="studentAttendanceDetailsTitle" class="details-title">Attendance Details for Student</h3>
+                </div>
+                <div class="date-filter">
+                    <label for="attendanceStartDate">From:</label>
+                    <input type="date" id="attendanceStartDate" class="date-input">
+                    <label for="attendanceEndDate">To:</label>
+                    <input type="date" id="attendanceEndDate" class="date-input">
+                    <button id="applyDateFilterButton" class="filter-btn filter-btn-apply">Apply</button>
+                </div>
+                <div class="attendance-details-content">
+                    <div class="attendance-status-summary">
+                        <div class="status-card present-card">
+                            <h4>Present Days</h4>
+                            <div class="status-count" id="presentDaysCount">0</div>
+                            <div class="status-percent" id="presentDaysPercent">0%</div>
+                        </div>
+                        <div class="status-card absent-card">
+                            <h4>Absent Days</h4>
+                            <div class="status-count" id="absentDaysCount">0</div>
+                            <div class="status-percent" id="absentDaysPercent">0%</div>
+                        </div>
+                    </div>
+                    <div class="attendance-records">
+                        <h4>Attendance Records</h4>
+                        <table class="attendance-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Remarks</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendanceRecordsTableBody">
+                                <!-- Records will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
             <div class="action-bar">
                 <div class="search-bar">
                     <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -292,43 +413,8 @@
                 </div>
             </div>
 
-            <!-- Attendance Overview -->
-            <div id="attendanceOverviewContainer" class="attendance-view-container">
-            <div class="attendance-overview">
-                <div class="overview-card present-card">
-                    <h3 class="overview-title">Present</h3>
-                    <div class="overview-value">85.7%</div>
-                    <div class="overview-percentage">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="percentage-increase">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                        </svg>
-                        <span class="percentage-increase">2.3% from last month</span>
-                    </div>
-                </div>
-                <div class="overview-card absent-card">
-                    <h3 class="overview-title">Absent</h3>
-                    <div class="overview-value">8.2%</div>
-                    <div class="overview-percentage">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="percentage-decrease">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                        </svg>
-                        <span class="percentage-decrease">1.4% from last month</span>
-                    </div>
-                </div>
-                <div class="overview-card leave-card">
-                    <h3 class="overview-title">On Leave</h3>
-                    <div class="overview-value">1.6%</div>
-                    <div class="overview-percentage">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="percentage-decrease">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                        </svg>
-                        <span class="percentage-decrease">0.1% from last month</span>
-                    </div>
-                </div>
-            </div>
-
             <!-- Calendar Navigation -->
-                <div id="calendarNavContainer" class="calendar-nav">
+            <div id="calendarNavContainer" class="calendar-nav" style="display: none;">
                 <h3 class="calendar-title">Grade 9A Attendance</h3>
                 <div class="calendar-controls">
                     <div class="calendar-date-selector">
@@ -349,33 +435,6 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                             </svg>
                         </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Attendance Summary -->
-                <div id="attendanceSummaryContainer" class="attendance-summary">
-                <h3 class="summary-title">March 2025 Summary</h3>
-                <div class="summary-stats">
-                    <div class="stat-item">
-                        <div class="stat-value value-present">85.7%</div>
-                        <div class="stat-label">Present Rate</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value value-absent">8.2%</div>
-                        <div class="stat-label">Absent Rate</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value value-leave">1.6%</div>
-                        <div class="stat-label">Leave Rate</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value">21</div>
-                        <div class="stat-label">School Days</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value">32</div>
-                        <div class="stat-label">Students</div>
                     </div>
                 </div>
             </div>
@@ -1154,10 +1213,17 @@
                                 statusClass = 'status-danger';
                             }
                             
+                            // Generate avatar (image or initials)
+                            const nameParts = student.full_name.trim().split(' ');
+                            const avatar = nameParts.length >= 2 ? (nameParts[0][0] + nameParts[1][0]).toUpperCase() : nameParts[0] ? nameParts[0][0].toUpperCase() : 'S';
+                            
                             // Add student info
                             card.innerHTML = `
                                 <div class="student-card-header ${statusClass}">
-                                    <img src="${student.profile_image || '../../assets/img/default-profile.png'}" alt="${student.full_name}" class="student-avatar">
+                                    ${student.profile_image ? 
+                                        `<img src="${student.profile_image}" alt="${student.full_name}" class="student-avatar">` :
+                                        `<div class="student-avatar">${avatar}</div>`
+                                    }
                                     <div class="student-info">
                                         <div class="student-name">${student.full_name}</div>
                                         <div class="student-id">ID: ${student.admission_number || student.user_id}</div>
@@ -2422,10 +2488,17 @@
                                 statusClass = 'status-danger';
                             }
                             
+                            // Generate avatar (image or initials)
+                            const nameParts = student.full_name.trim().split(' ');
+                            const avatar = nameParts.length >= 2 ? (nameParts[0][0] + nameParts[1][0]).toUpperCase() : nameParts[0] ? nameParts[0][0].toUpperCase() : 'S';
+                            
                             // Add student info
                             card.innerHTML = `
                                 <div class="student-card-header ${statusClass}">
-                                    <img src="${student.profile_image || '../../assets/img/default-profile.png'}" alt="${student.full_name}" class="student-avatar">
+                                    ${student.profile_image ? 
+                                        `<img src="${student.profile_image}" alt="${student.full_name}" class="student-avatar">` :
+                                        `<div class="student-avatar">${avatar}</div>`
+                                    }
                                     <div class="student-info">
                                         <div class="student-name">${student.full_name}</div>
                                         <div class="student-id">ID: ${student.admission_number || student.user_id}</div>

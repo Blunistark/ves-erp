@@ -21,6 +21,9 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
     <!-- Add DatePicker CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <!-- Add SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-material-ui/material-ui.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         /* Additional styles for the create announcement form */
         .action-button-container {
@@ -205,6 +208,37 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
         .summernote-container .note-editor {
             border-radius: 6px;
         }
+        
+        /* SweetAlert2 Custom Styles */
+        .swal2-popup {
+            border-radius: 12px;
+        }
+        
+        .swal2-title {
+            font-size: 1.25rem !important;
+            font-weight: 600 !important;
+        }
+        
+        .swal2-html-container {
+            font-size: 0.875rem !important;
+        }
+        
+        .swal2-confirm {
+            background-color: #4299e1 !important;
+            border-radius: 6px !important;
+            font-weight: 500 !important;
+        }
+        
+        .swal2-confirm.swal2-styled.danger {
+            background-color: #ef4444 !important;
+        }
+        
+        .swal2-cancel {
+            background-color: #e2e8f0 !important;
+            color: #4a5568 !important;
+            border-radius: 6px !important;
+            font-weight: 500 !important;
+        }
     </style>
 </head>
 <body>
@@ -294,7 +328,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
             <button class="close-modal" id="closeModal">&times;</button>
         </div>
         
-        <form id="announcementForm" action="announcement_actions.php" method="POST">
+        <form id="announcementForm">
             <input type="hidden" name="action" id="formAction" value="create">
             <input type="hidden" name="id" id="announcementId" value="">
             
@@ -345,28 +379,6 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
             <div class="form-actions">
                 <button type="button" class="cancel-btn" id="cancelBtn">Cancel</button>
                 <button type="submit" class="submit-btn" id="submitBtn">Create Announcement</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Delete Confirmation Modal -->
-<div class="modal-overlay" id="deleteModal">
-    <div class="modal-content" style="max-width: 500px;">
-        <div class="modal-header">
-            <h3 class="modal-title">Confirm Delete</h3>
-            <button class="close-modal" id="closeDeleteModal">&times;</button>
-        </div>
-        
-        <p>Are you sure you want to delete this announcement? This action cannot be undone.</p>
-        
-        <form id="deleteForm" action="announcement_actions.php" method="POST">
-            <input type="hidden" name="action" value="delete">
-            <input type="hidden" name="id" id="deleteAnnouncementId" value="">
-            
-            <div class="form-actions">
-                <button type="button" class="cancel-btn" id="cancelDeleteBtn">Cancel</button>
-                <button type="submit" class="submit-btn" style="background-color: #ef4444;">Delete</button>
             </div>
         </form>
     </div>
@@ -436,6 +448,12 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
             },
             error: function(xhr, status, error) {
                 console.error('Error loading announcements:', error);
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Failed to load announcements. Please try again.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
                 $('#announcementList').html('<div class="no-announcements">Error loading announcements. Please try again.</div>');
             }
         });
@@ -596,7 +614,12 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
             dataType: 'json',
             success: function(data) {
                 if (data.error) {
-                    alert('Error: ' + data.error);
+                    Swal.fire({
+                        title: 'Error',
+                        text: data.error,
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
                     return;
                 }
                 
@@ -623,15 +646,71 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
                 $('#announcementModal').fadeIn(300);
             },
             error: function(xhr, status, error) {
-                alert('Error loading announcement data. Please try again.');
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Failed to load announcement data. Please try again.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
             }
         });
     }
     
-    // Function to confirm deletion of an announcement
+    // Function to confirm deletion of an announcement using SweetAlert2
     function confirmDelete(id) {
-        $('#deleteAnnouncementId').val(id);
-        $('#deleteModal').fadeIn(300);
+        Swal.fire({
+            title: 'Delete Announcement',
+            text: 'Are you sure you want to delete this announcement? This action cannot be undone.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Delete',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#ef4444',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Perform the delete operation
+                const formData = new FormData();
+                formData.append('action', 'delete');
+                formData.append('id', id);
+                
+                $.ajax({
+                    url: 'announcement_actions.php',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            loadAnnouncements(); // Reload the announcements list
+                            Swal.fire({
+                                title: 'Deleted!',
+                                text: response.message || 'Announcement deleted successfully!',
+                                icon: 'success',
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Error',
+                                text: response.error || 'Failed to delete announcement',
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'Failed to delete announcement. Please try again.',
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                });
+            }
+        });
     }
     
     // Function to toggle announcement status
@@ -654,17 +733,62 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
             window.location.reload();
         })
         .catch(error => {
-            alert('Error toggling announcement status. Please try again.');
+            Swal.fire({
+                title: 'Error',
+                text: 'Failed to toggle announcement status. Please try again.',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
         });
     }
     
+    // Handle announcement form submission via AJAX
+    $('#announcementForm').submit(function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        
+        $.ajax({
+            url: 'announcement_actions.php',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    $('#announcementModal').fadeOut(300);
+                    loadAnnouncements(); // Reload the announcements list
+                    Swal.fire({
+                        title: 'Success!',
+                        text: response.message || 'Announcement saved successfully!',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Error',
+                        text: response.error || 'Failed to save announcement',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Failed to save announcement. Please try again.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            }
+        });
+    });
+
     // Close modal when clicking outside or on the close button
     $('#closeModal, #cancelBtn').click(function() {
         $('#announcementModal').fadeOut(300);
-    });
-    
-    $('#closeDeleteModal, #cancelDeleteBtn').click(function() {
-        $('#deleteModal').fadeOut(300);
     });
     
     // Close modal when clicking outside the modal content

@@ -194,13 +194,13 @@ try {
             
         case 'delete':
             // Validate announcement ID
-            if (!isset($_POST['announcement_id']) || !is_numeric($_POST['announcement_id'])) {
+            if (!isset($_POST['id']) || !is_numeric($_POST['id'])) {
                 http_response_code(400);
                 echo json_encode(['error' => 'Invalid announcement ID']);
                 exit;
             }
             
-            $announcement_id = (int)$_POST['announcement_id'];
+            $announcement_id = (int)$_POST['id'];
             
             // Delete the announcement
             $delete_query = "DELETE FROM announcements WHERE id = ?";
