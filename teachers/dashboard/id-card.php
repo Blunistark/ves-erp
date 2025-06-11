@@ -33,7 +33,7 @@ $state = $profile['state'] ?? '';
 $emergencyContact = $profile['emergency_contact'] ?? 'Not Available';
 
 // Profile photo
-$profilePhoto = !empty($profile['profile_photo']) ? '../../' . $profile['profile_photo'] : 'https://randomuser.me/api/portraits/men/32.jpg';
+$profilePhoto = !empty($profile['profile_photo']) ? '../../' . $profile['profile_photo'] : 'https://i.pinimg.com/736x/2f/15/f2/2f15f2e8c688b3120d3d26467b06330c.jpg';
 
 // Format address
 $fullAddress = trim($address);
@@ -109,7 +109,7 @@ $qrData = urlencode($employeeId . '|' . $fullName . '|' . $department);
                         <div class="id-card-front">
                             <div class="id-card-header">
                                 <div class="school-logo">
-                                    <img src="https://lh3.googleusercontent.com/-aDvI5uiAJ4pvFRPUoTjzNYt5LH4UvFiSM6OGAL5dQMlzNrzWqVhSFRTRXZ3UWrzDHvR9az0dkffr9t0P39bHbAJb0pbfG-sahO2oKU" class="logo-image" alt="School Logo">
+                                    <img src="https://vinodhenglishschool.com/images/ves/logo1t.png" class="logo-image" style="border-radius:50px;" alt="School Logo">
                                 </div>
                                 <h1 class="id-card-title">Vinodh English School</h1>
                                 <p class="id-card-subtitle">Est. 1995</p>
@@ -300,5 +300,3 @@ $qrData = urlencode($employeeId . '|' . $fullName . '|' . $department);
         }
     });
 </script>
-</body>
-</html>
