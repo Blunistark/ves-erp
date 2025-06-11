@@ -94,7 +94,7 @@ if (isset($_SESSION['user_id'])) {
                 <div class="profile-card">
                     <div class="profile-header">
                         <div class="profile-pic">
-                            <img src="<?php echo !empty($teacher_info['profile_photo']) ? '../../' . htmlspecialchars($teacher_info['profile_photo']) : 'https://randomuser.me/api/portraits/men/32.jpg'; ?>" alt="Teacher Profile" id="profile-image">
+                            <img src="<?php echo !empty($teacher_info['profile_photo']) ? '../../' . htmlspecialchars($teacher_info['profile_photo']) : '../../assets/img/default-profile.png'; ?>" alt="Teacher Profile" id="profile-image">
                             <div class="change-photo" onclick="showAvatarModal()">Change Photo</div>
                         </div>
                         <h2 class="profile-name"><?php echo htmlspecialchars($teacher_info['full_name'] ?? 'Teacher Name'); ?></h2>
@@ -440,40 +440,6 @@ if (isset($_SESSION['user_id'])) {
                 <div style="font-size: 0.875rem; color: #4b5563;">Click to upload image</div>
                 <div style="font-size: 0.75rem; color: #9ca3af; margin-top: 0.25rem;">JPG, PNG (Max 2MB)</div>
             </label>
-            
-            <h4 style="font-size: 0.9375rem; color: #4b5563; margin: 1rem 0 0.5rem;">Available Avatars</h4>
-            <div class="avatar-grid">
-                <div class="avatar-option" onclick="selectAvatar(1)">
-                    <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Avatar 1">
-                </div>
-                <div class="avatar-option" onclick="selectAvatar(2)">
-                    <img src="https://randomuser.me/api/portraits/men/40.jpg" alt="Avatar 2">
-                </div>
-                <div class="avatar-option" onclick="selectAvatar(3)">
-                    <img src="https://randomuser.me/api/portraits/men/55.jpg" alt="Avatar 3">
-                </div>
-                <div class="avatar-option" onclick="selectAvatar(4)">
-                    <img src="https://randomuser.me/api/portraits/men/65.jpg" alt="Avatar 4">
-                </div>
-                <div class="avatar-option" onclick="selectAvatar(5)">
-                    <img src="https://randomuser.me/api/portraits/men/75.jpg" alt="Avatar 5">
-                </div>
-                <div class="avatar-option" onclick="selectAvatar(6)">
-                    <img src="https://randomuser.me/api/portraits/women/32.jpg" alt="Avatar 6">
-                </div>
-                <div class="avatar-option" onclick="selectAvatar(7)">
-                    <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Avatar 7">
-                </div>
-                <div class="avatar-option" onclick="selectAvatar(8)">
-                    <img src="https://randomuser.me/api/portraits/women/55.jpg" alt="Avatar 8">
-                </div>
-                <div class="avatar-option" onclick="selectAvatar(9)">
-                    <img src="https://randomuser.me/api/portraits/women/65.jpg" alt="Avatar 9">
-                </div>
-                <div class="avatar-option" onclick="selectAvatar(10)">
-                    <img src="https://randomuser.me/api/portraits/women/75.jpg" alt="Avatar 10">
-                </div>
-            </div>
         </div>
         <div class="modal-footer">
             <button class="btn btn-secondary" onclick="hideAvatarModal()">Cancel</button>

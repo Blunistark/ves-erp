@@ -8,20 +8,8 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// Database connection
-$host = 'localhost';
-$dbname = 'erp_system';
-$username = 'root';
-$password = 'mysql';
-
-try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch(PDOException $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Database connection failed']);
-    exit();
-}
+// Include database connection
+require_once 'con.php';
 
 $user_id = $_SESSION['user_id'];
 $action = $_GET['action'] ?? '';
@@ -31,15 +19,17 @@ switch($action) {
         $limit = $_GET['limit'] ?? 10;
         $offset = $_GET['offset'] ?? 0;
         
-        $stmt = $pdo->prepare("
+        $stmt = $conn->prepare("
             SELECT id, title, message, type, priority, is_read, created_at 
             FROM notifications 
             WHERE user_id = ? 
             ORDER BY created_at DESC 
             LIMIT ? OFFSET ?
         ");
-        $stmt->execute([$user_id, $limit, $offset]);
-        $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt->bind_param('iii', $user_id, $limit, $offset);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $notifications = $result->fetch_all(MYSQLI_ASSOC);
         
         // Format the created_at field for better display
         foreach($notifications as &$notification) {
@@ -51,25 +41,29 @@ switch($action) {
         break;
         
     case 'get_unread_count':
-        $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0");
-        $stmt->execute([$user_id]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0");
+        $stmt->bind_param('i', $user_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
         
-        echo json_encode(['unread_count' => $result['count']]);
+        echo json_encode(['unread_count' => $row['count']]);
         break;
         
     case 'mark_as_read':
         $notification_id = $_POST['notification_id'] ?? 0;
         
-        $stmt = $pdo->prepare("UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?");
-        $stmt->execute([$notification_id, $user_id]);
+        $stmt = $conn->prepare("UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?");
+        $stmt->bind_param('ii', $notification_id, $user_id);
+        $stmt->execute();
         
         echo json_encode(['success' => true]);
         break;
         
     case 'mark_all_as_read':
-        $stmt = $pdo->prepare("UPDATE notifications SET is_read = 1 WHERE user_id = ?");
-        $stmt->execute([$user_id]);
+        $stmt = $conn->prepare("UPDATE notifications SET is_read = 1 WHERE user_id = ?");
+        $stmt->bind_param('i', $user_id);
+        $stmt->execute();
         
         echo json_encode(['success' => true]);
         break;

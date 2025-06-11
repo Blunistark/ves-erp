@@ -166,32 +166,6 @@ $user_id = $_SESSION['user_id'];
             <div class="filter-item" data-filter="important">Important</div>
         </div>
 
-        <!-- Featured Announcement -->
-        <div class="featured-announcement">
-            <div class="featured-header">
-                <svg xmlns="http://www.w3.org/2000/svg" class="featured-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-                </svg>
-                <div class="featured-title">Spring Concert - Date Change</div>
-            </div>
-            
-            <div class="featured-content">
-                <div class="featured-message">
-                    <p>Please note that the Annual Spring Concert has been rescheduled from April 15th to April 22nd due to venue availability. All ticket purchases will be honored for the new date.</p>
-                    <p>The concert will still begin at 6:30 PM and feature performances from our choir, orchestra, and band. If you are unable to attend on the new date, please contact the school office for a refund.</p>
-                </div>
-                
-                <div class="featured-footer">
-                    <div class="featured-date">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        Posted on March 10, 2025
-                    </div>
-                    <div class="featured-source">Music Department</div>
-                </div>
-            </div>
-        </div>
 
         <div class="card">
             <h2 class="card-title">School Notifications</h2>

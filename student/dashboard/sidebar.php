@@ -64,8 +64,8 @@ if (isset($_SESSION['user_id'])) {
 <div class="sidebar <?php echo isset($_COOKIE['sidebar_collapsed']) && $_COOKIE['sidebar_collapsed'] === 'true' ? 'collapsed' : ''; ?>" id="sidebar">
 <div class="sidebar-header">
     <div class="logo-container">
-    <img src="https://lh3.googleusercontent.com/-aDvI5uiAJ4pvFRPUoTjzNYt5LH4UvFiSM6OGAL5dQMlzNrzWqVhSFRTRXZ3UWrzDHvR9az0dkffr9t0P39bHbAJb0pbfG-sahO2oKU" height="20px" width="20px" alt="Logo" class="logo">
-    <span class="logo-text">VES Portal</span>
+    <img src="../../assets/images/school-logo.png" height="20px" width="20px" alt="Logo" class="logo">
+    <span class="logo-text">VES Student Portal</span>
     </div>
 </div>
 
