@@ -40,7 +40,7 @@ $conn->close();
     <title>My Homework</title>
     <link rel="stylesheet" href="css/sidebar.css">
     <link rel="stylesheet" href="css/homework.css">
-    <style>
+  <style>
         /* Subject section styles */
         .subject-section {
             margin-bottom: 2rem;
@@ -60,6 +60,14 @@ $conn->close();
             display: flex;
             border-bottom: 1px solid #e5e7eb;
             margin-bottom: 1.5rem;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .tabs::-webkit-scrollbar {
+            display: none;
         }
 
         .tab {
@@ -67,17 +75,27 @@ $conn->close();
             cursor: pointer;
             font-weight: 500;
             color: #6b7280;
-            border-bottom: 2px solid transparent;
+            border-bottom: 3px solid transparent;
             transition: all 0.2s ease;
+            white-space: nowrap;
+            flex-shrink: 0;
+            position: relative;
+            background: transparent;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+            outline: none;
         }
 
         .tab.active {
             color: #4f46e5;
             border-bottom-color: #4f46e5;
+            background: transparent;
         }
 
         .tab:hover:not(.active) {
             color: #4b5563;
+            background: rgba(79, 70, 229, 0.05);
         }
 
         .tab-content {
@@ -96,6 +114,8 @@ $conn->close();
             border-radius: 8px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             overflow: hidden;
+            background: white;
+            border: 1px solid #e2e8f0;
         }
         
         .homework-card:hover {
@@ -126,24 +146,612 @@ $conn->close();
         
         /* Loading and error message styles */
         .loading, .error, .no-data {
-            padding: 2rem;
+            padding: 3rem 2rem;
             text-align: center;
-            color: #4b5563;
+            color: #6b7280;
+            font-size: 1rem;
+            border-radius: 8px;
+            background: #f9fafb;
+            border: 1px dashed #d1d5db;
+            margin: 2rem 0;
         }
         
         .error {
-            color: #b91c1c;
+            color: #dc2626;
+            background: #fef2f2;
+            border-color: #fecaca;
         }
 
-        /* Ensure dashboard container behaves like attendance page */
+        .no-data {
+            background: #f8fafc;
+            border-color: #e2e8f0;
+        }
+
+        .no-data::before {
+            content: "📚";
+            display: block;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.5;
+        }
+
+        /* Dashboard container responsive styles */
         .dashboard-container {
             margin-left: 280px;
             transition: all 0.3s ease;
             position: relative;
-            height: 100vh;
+            min-height: 100vh;
             overflow-y: auto;
-            /* Keep some padding if needed, or rely on child elements */
             padding: 2rem;
+        }
+
+        /* Quick stats responsive grid */
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Filters container responsive */
+        .filters-container {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+
+        .filter {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            background-color: white;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.75rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            transition: all 0.2s ease;
+            min-height: 44px;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        /* Search container */
+        .search-container {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 2.5rem 0.75rem 0.75rem;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+            background-color: white;
+            min-height: 44px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .search-input::placeholder {
+            color: #9ca3af;
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 1.25rem;
+            height: 1.25rem;
+            color: #6b7280;
+        }
+
+        /* Button styles */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            font-size: 0.875rem;
+            min-height: 44px;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background-color: #4f46e5;
+            color: white;
+            box-shadow: 0 1px 3px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn-primary:hover {
+            background-color: #4338ca;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(79, 70, 229, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 3px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn-icon {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        /* Card styles */
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border: 1px solid #f3f4f6;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #f3f4f6;
+            background: #fafbfc;
+        }
+
+        .card-title {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+            background: white;
+        }
+
+        /* Homework card content */
+        .homework-card-header {
+            padding: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .homework-card-title {
+            margin: 0;
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1f2937;
+            line-height: 1.4;
+        }
+
+        .homework-card-class {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+
+        .homework-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .homework-card-body {
+            padding: 1rem;
+        }
+
+        .homework-card-description {
+            margin-bottom: 1rem;
+            color: #4b5563;
+            line-height: 1.5;
+        }
+
+        .homework-card-details {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 0.5rem 1rem;
+            align-items: center;
+        }
+
+        .detail-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #6b7280;
+        }
+
+        .detail-value {
+            font-size: 0.875rem;
+            color: #1f2937;
+        }
+
+        /* Stat card styles */
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .stat-title {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-trend {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 4px;
+            background-color: #e5e7eb;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: #4f46e5;
+            transition: width 0.3s ease;
+        }
+
+        /* Header styles */
+        .dashboard-header {
+            margin-bottom: 2rem;
+        }
+
+        .header-title {
+            margin: 0 0 0.5rem 0;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .header-subtitle {
+            margin: 0;
+            color: #6b7280;
+            font-size: 1rem;
+        }
+
+        /* Hamburger button */
+        .hamburger-btn {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 1001;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 0.5rem;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .hamburger-icon {
+            width: 1.5rem;
+            height: 1.5rem;
+            color: #374151;
+        }
+
+        /* Tablet responsive styles */
+        @media (max-width: 1024px) {
+            .dashboard-container {
+                margin-left: 60px;
+                padding: 1.5rem;
+            }
+
+            .quick-stats {
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                gap: 1rem;
+            }
+
+            .filters-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter {
+                min-width: auto;
+            }
+
+            #applyFiltersBtn {
+                margin-left: 0 !important;
+                margin-top: 0.5rem;
+            }
+        }
+
+        /* Mobile responsive styles */
+        @media (max-width: 768px) {
+            .hamburger-btn {
+                display: block;
+            }
+
+            .dashboard-container {
+                margin-left: 0;
+                padding: 1rem;
+                padding-top: 4rem; /* Account for hamburger button */
+            }
+
+            .header-title {
+                font-size: 1.75rem;
+            }
+
+            .quick-stats {
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+                gap: 0.75rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .stat-card {
+                padding: 1rem;
+            }
+
+            .stat-value {
+                font-size: 1.5rem;
+            }
+
+            .tabs {
+                border-bottom: 1px solid #e5e7eb;
+                margin-bottom: 1rem;
+                padding-bottom: 0;
+            }
+
+            .tab {
+                padding: 0.625rem 1rem;
+                font-size: 0.875rem;
+            }
+
+            .card-header, .card-body {
+                padding: 1rem;
+            }
+
+            .homework-card-header {
+                padding: 0.75rem;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .homework-card-title {
+                font-size: 1rem;
+            }
+
+            .homework-status {
+                align-self: flex-start;
+            }
+
+            .homework-card-body {
+                padding: 0.75rem;
+            }
+
+            .homework-card-details {
+                grid-template-columns: 1fr;
+                gap: 0.25rem;
+            }
+
+            .detail-label {
+                font-weight: 600;
+                color: #374151;
+            }
+
+            .detail-value {
+                margin-bottom: 0.5rem;
+            }
+
+            .filters-container {
+                gap: 0.75rem;
+                margin-bottom: 1rem;
+            }
+
+            .btn {
+                padding: 0.75rem 1rem;
+                min-height: 48px;
+                font-size: 0.9375rem;
+                border-radius: 10px;
+            }
+
+            .form-select {
+                padding: 0.75rem;
+                min-height: 48px;
+                border-radius: 10px;
+                font-size: 0.9375rem;
+            }
+
+            .search-input {
+                padding: 0.75rem 2.25rem 0.75rem 0.75rem;
+                min-height: 48px;
+                border-radius: 10px;
+                font-size: 0.9375rem;
+            }
+
+            .search-icon {
+                right: 0.625rem;
+                width: 1.125rem;
+                height: 1.125rem;
+            }
+
+            #applyFiltersBtn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Small mobile responsive styles */
+        @media (max-width: 480px) {
+            .dashboard-container {
+                padding: 0.75rem;
+                padding-top: 3.5rem;
+            }
+
+            .header-title {
+                font-size: 1.5rem;
+            }
+
+            .header-subtitle {
+                font-size: 0.875rem;
+            }
+
+            .quick-stats {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.5rem;
+            }
+
+            .stat-card {
+                padding: 0.75rem;
+            }
+
+            .stat-title {
+                font-size: 0.75rem;
+            }
+
+            .stat-value {
+                font-size: 1.25rem;
+            }
+
+            .card-header, .card-body {
+                padding: 0.75rem;
+            }
+
+            .homework-card-header {
+                padding: 0.625rem;
+            }
+
+            .homework-card-body {
+                padding: 0.625rem;
+            }
+
+            .homework-card-title {
+                font-size: 0.875rem;
+                line-height: 1.3;
+            }
+
+            .homework-status {
+                padding: 0.125rem 0.5rem;
+                font-size: 0.625rem;
+            }
+
+            .subject-header {
+                font-size: 1.125rem;
+            }
+
+            .tab {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.8125rem;
+            }
+        }
+
+        /* Sidebar overlay for mobile */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+        }
+
+        @media (max-width: 768px) {
+            body.sidebar-open .sidebar-overlay {
+                display: block;
+            }
+        }
+
+        /* Ensure sidebar is in front of overlay */
+        .sidebar {
+            z-index: 1000;
+        }
+
+        .sidebar.show {
+            z-index: 1000;
+        }
+
+        /* Fix for very small screens */
+        @media (max-width: 320px) {
+            .dashboard-container {
+                padding: 0.5rem;
+                padding-top: 3rem;
+            }
+
+            .quick-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .homework-card-title {
+                font-size: 0.8125rem;
+            }
+
+            .tab {
+                padding: 0.5rem;
+                font-size: 0.75rem;
+            }
+        }
+
+        /* Ensure proper text wrapping */
+        .homework-card-title,
+        .homework-card-description,
+        .detail-value {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        /* Loading states for mobile */
+        @media (max-width: 768px) {
+            .loading, .error, .no-data {
+                padding: 2rem 1rem;
+                font-size: 0.875rem;
+                margin: 1.5rem 0;
+            }
+
+            .no-data::before {
+                font-size: 1.5rem;
+            }
         }
     </style>
 </head>
