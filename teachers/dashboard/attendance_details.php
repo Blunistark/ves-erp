@@ -29,7 +29,8 @@ $accessQuery = "SELECT COUNT(*) as count, c.name as class_name, s.name as sectio
                JOIN sections s ON c.id = s.class_id 
                LEFT JOIN teacher_subjects ts ON ts.teacher_user_id = ? 
                LEFT JOIN class_subjects cs ON cs.subject_id = ts.subject_id AND cs.class_id = c.id
-               WHERE c.id = ? AND s.id = ? AND (s.class_teacher_user_id = ? OR cs.class_id IS NOT NULL)";
+               WHERE c.id = ? AND s.id = ? AND (s.class_teacher_user_id = ? OR cs.class_id IS NOT NULL)
+               GROUP BY c.id, c.name, s.id, s.name";
 
 $stmt = $conn->prepare($accessQuery);
 $stmt->bind_param("iiii", $teacher_user_id, $class_id, $section_id, $teacher_user_id);

@@ -494,28 +494,28 @@ $user_role = $_SESSION['role'] ?? 'student';
             <span class="header-date"><?php echo date('F j, Y'); ?></span>
             
             <!-- Notification Bell -->
-            <div class="notification-bell" id="notificationBell">
-                <div class="notification-icon" onclick="toggleNotificationDropdown()">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                    </svg>
-                    <span class="notification-badge" id="notificationBadge">0</span>
-                </div>
-                
-                <div class="notification-dropdown" id="notificationDropdown">
-                    <div class="notification-header">
-                        <h3>Notifications</h3>
-                        <button class="mark-all-read" onclick="markAllAsRead()">Mark all as read</button>
-                    </div>
-                    <div class="notification-list" id="notificationList">
-                        <div class="notification-loading">Loading notifications...</div>
-                    </div>
-                    <div class="notification-footer">
-                        <a href="notifications.php" class="view-all-btn">View All Notifications</a>
-                    </div>
-                </div>
-            </div>
+           <div class="notification-bell" id="notificationBell" style="position: fixed; top: 20px; right: 20px; z-index: 1000;">
+    <div class="notification-icon" onclick="toggleNotificationDropdown()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span class="notification-badge" id="notificationBadge">0</span>
+    </div>
+    
+    <div class="notification-dropdown" id="notificationDropdown">
+        <div class="notification-header">
+            <h3>Notifications</h3>
+            <button class="mark-all-read" onclick="markAllAsRead()">Mark all as read</button>
+        </div>
+        <div class="notification-list" id="notificationList">
+            <div class="notification-loading">Loading notifications...</div>
+        </div>
+        <div class="notification-footer">
+            <a href="notifications.php" class="view-all-btn">View All Notifications</a>
+        </div>
+    </div>
+</div>
         </div>
     </header>
 

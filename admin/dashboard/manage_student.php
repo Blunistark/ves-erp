@@ -312,16 +312,19 @@
                 filtered.forEach(student => {
                             const tr = document.createElement('tr');
                     
+                    // Create avatar from student name
+                    const fullName = student.full_name || `${student.first_name || ''} ${student.last_name || ''}`.trim();
+                    const nameParts = fullName.split(' ');
+                    const avatar = nameParts.length >= 2 ? (nameParts[0][0] + nameParts[1][0]).toUpperCase() : nameParts[0] ? nameParts[0][0].toUpperCase() : 'S';
+                    
                     // Student Cell
                     const nameCell = document.createElement('td');
                     nameCell.className = 'student-cell';
                     nameCell.innerHTML = `
                         <div class="student-info">
-                            <div class="student-photo">
-                                <img src="${student.photo || 'assets/default-avatar.png'}" alt="Student Photo">
-                            </div>
+                            <div class="student-avatar">${avatar}</div>
                                         <div class="student-details">
-                                <div class="student-name">${student.full_name || `${student.first_name || ''} ${student.last_name || ''}`}</div>
+                                <div class="student-name">${fullName}</div>
                                 <div class="student-id">#${student.admission_number}</div>
                                         </div>
                                     </div>
