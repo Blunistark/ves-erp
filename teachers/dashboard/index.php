@@ -187,6 +187,17 @@ if (!isset($stats['attendance_marked'])) {
             padding: 0 !important;
         }
 
+        .user-welcome {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
         .dashboard-container {
             margin-left: 280px !important;
             padding: 2rem !important;
