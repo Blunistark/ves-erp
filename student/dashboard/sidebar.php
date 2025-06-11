@@ -64,8 +64,8 @@ if (isset($_SESSION['user_id'])) {
 <div class="sidebar <?php echo isset($_COOKIE['sidebar_collapsed']) && $_COOKIE['sidebar_collapsed'] === 'true' ? 'collapsed' : ''; ?>" id="sidebar">
 <div class="sidebar-header">
     <div class="logo-container">
-    <img src="https://lh3.googleusercontent.com/-aDvI5uiAJ4pvFRPUoTjzNYt5LH4UvFiSM6OGAL5dQMlzNrzWqVhSFRTRXZ3UWrzDHvR9az0dkffr9t0P39bHbAJb0pbfG-sahO2oKU" height="20px" width="20px" alt="Logo" class="logo">
-    <span class="logo-text">VES Portal</span>
+    <img src="../../assets/images/school-logo.png" height="20px" width="20px" alt="Logo" class="logo">
+    <span class="logo-text">VES Student Portal</span>
     </div>
 </div>
 
@@ -135,9 +135,6 @@ if (isset($_SESSION['user_id'])) {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
         </svg>
         <span>School Notifications</span>
-        <?php if ($unread_notifications > 0): ?>
-            <span class="notification-badge"><?php echo $unread_notifications; ?></span>
-        <?php endif; ?>
     </a>
 
     <!-- Announcements -->

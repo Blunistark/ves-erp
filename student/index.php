@@ -22,6 +22,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $sats_number = sanitizeInput($_POST['sats_number'] ?? '');
         $dob = sanitizeInput($_POST['dob'] ?? '');
         
+        // Convert date from DD/MM/YYYY to YYYY-MM-DD format
+        if ($dob && preg_match('/^(\d{2})\/(\d{2})\/(\d{4})$/', $dob, $matches)) {
+            $dob = $matches[3] . '-' . $matches[2] . '-' . $matches[1]; // Convert to YYYY-MM-DD
+        }
+        
         // Authenticate student using SATS number and DOB
         $student = authenticateStudent($sats_number, $dob);
         
@@ -779,8 +784,11 @@ $csrf_token = generateCSRFToken();
 
                     <div class="input-group">
                         <label for="dob">Date of Birth</label>
-                        <input type="date" id="dob" name="dob" required 
-                               title="Select your date of birth"
+                        <input type="text" id="dob" name="dob" required 
+                               placeholder="DD/MM/YYYY"
+                               pattern="^(0[1-9]|[12][0-9]|3[01])/(0[1-9]|1[012])/[0-9]{4}$"
+                               title="Please enter date in DD/MM/YYYY format"
+                               maxlength="10"
                                autocomplete="bday">
                     </div>                    <div class="remember-forgot">
                         <label class="remember-me">
@@ -831,8 +839,28 @@ $csrf_token = generateCSRFToken();
             this.value = this.value.replace(/[^0-9]/g, '');
         });
 
-        // Set max date for DOB (students shouldn't be born in the future)
-        document.getElementById('dob').setAttribute('max', new Date().toISOString().split('T')[0]);
+        // Date of birth input formatting
+        document.getElementById('dob').addEventListener('input', function(e) {
+            let value = this.value.replace(/[^0-9]/g, ''); // Remove non-numeric characters
+            
+            // Add slashes at appropriate positions
+            if (value.length >= 2) {
+                value = value.substring(0, 2) + '/' + value.substring(2);
+            }
+            if (value.length >= 5) {
+                value = value.substring(0, 5) + '/' + value.substring(5, 9);
+            }
+            
+            this.value = value;
+        });
+
+        // Prevent calendar from opening on date input
+        document.getElementById('dob').addEventListener('focus', function(e) {
+            this.setAttribute('readonly', true);
+            setTimeout(() => {
+                this.removeAttribute('readonly');
+            }, 100);
+        });
 
         // Handle window resize for responsive behavior
         window.addEventListener('resize', function() {

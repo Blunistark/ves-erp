@@ -31,9 +31,6 @@ if (!isLoggedIn() || !hasRole(['teacher', 'headmaster'])) {
     exit;
 }
 
-// Get unread notification counts
-$unread_notifications = 0;
-$unread_announcements = 0;
 
 // Connect to the database
 include 'con.php';
@@ -83,7 +80,7 @@ if (isset($is_ajax) && $is_ajax) {
 <div class="sidebar <?php echo isset($_COOKIE['sidebar_collapsed']) && $_COOKIE['sidebar_collapsed'] === 'true' ? 'collapsed' : ''; ?>" id="sidebar">
 <div class="sidebar-header">
     <div class="logo-container">
-    <img src="https://lh3.googleusercontent.com/-aDvI5uiAJ4pvFRPUoTjzNYt5LH4UvFiSM6OGAL5dQMlzNrzWqVhSFRTRXZ3UWrzDHvR9az0dkffr9t0P39bHbAJb0pbfG-sahO2oKU" height="20px" width="20px" alt="Logo" class="logo">
+    <img src="../../assets/images/school-logo.png" height="20px" width="20px" alt="Logo" class="logo">
     <span class="logo-text">Teacher Portal</span>
     </div>
 </div>
@@ -130,6 +127,29 @@ if (isset($is_ajax) && $is_ajax) {
                     <a href="timetablemanage.php" class="nav-subitem">Manage Timetables</a>
                 </div>
             </div>
+
+            <!-- Academic Structure -->
+                <div class="nav-group">
+                    <button class="nav-group-toggle">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                            <span>Academic Structure</span>
+                        </div>
+                        <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <div class="nav-group-content">
+                        <a href="academic_years.php" class="nav-subitem">Academic Years & Terms</a>
+                        <a href="classesmanage.php" class="nav-subitem">Manage Classes</a>
+                        <a href="classessections.php" class="nav-subitem">Manage Sections</a>
+                        <a href="subject_manage.php" class="nav-subitem">Manage Subjects</a>
+                        <a href="class_subjects.php" class="nav-subitem">Manage Class Subjects</a>
+                        <a href="teacher_subject_assign.php" class="nav-subitem">Teacher Subject Assignment</a>
+                    </div>
+                </div>
             
             
             <!-- School Reports -->
@@ -207,9 +227,6 @@ if (isset($is_ajax) && $is_ajax) {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
             </svg>
             <span>Notifications</span>
-            <?php if ($unread_notifications + $unread_announcements > 0): ?>
-                <span class="notification-badge"><?php echo $unread_notifications + $unread_announcements; ?></span>
-            <?php endif; ?>
             <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
             </svg>
@@ -217,12 +234,7 @@ if (isset($is_ajax) && $is_ajax) {
         <div class="nav-group-content">
             <a href="notifications.php" class="nav-subitem">Class Notifications</a>
             <a href="school-notifications.php" class="nav-subitem">School Notifications</a>
-            <a href="announcements.php" class="nav-subitem">
-                Announcements
-                <?php if ($unread_announcements > 0): ?>
-                    <span class="notification-badge"><?php echo $unread_announcements; ?></span>
-                <?php endif; ?>
-            </a>
+
         </div>
     </div>
 
@@ -282,7 +294,7 @@ if (isset($is_ajax) && $is_ajax) {
         <span>Marks Entry Manager</span>
     </a>
 </div>
-            </div>
+            <!-- </div> -->
 
             <div class="sidebar-footer">
                 <a href="profile.php" class="nav-item">
