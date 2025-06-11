@@ -112,8 +112,10 @@ $stats = mysqli_fetch_assoc($stats_result);
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     
-    <style>
+   <style>
         .notification-management {
+            margin-left: 280px;
+            transition: all 0.3s ease;
             padding: 2rem;
             background-color: #f8fafc;
             min-height: 100vh;
@@ -172,6 +174,14 @@ $stats = mysqli_fetch_assoc($stats_result);
             border-radius: 12px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             margin-bottom: 2rem;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .content-tabs::-webkit-scrollbar {
+            display: none;
         }
         
         .tab-button {
@@ -184,6 +194,8 @@ $stats = mysqli_fetch_assoc($stats_result);
             color: #6b7280;
             transition: all 0.3s ease;
             border-radius: 12px;
+            white-space: nowrap;
+            min-width: 200px;
         }
         
         .tab-button.active {
@@ -221,6 +233,9 @@ $stats = mysqli_fetch_assoc($stats_result);
             border-radius: 8px;
             font-size: 1rem;
             transition: border-color 0.3s ease;
+            background-color: white;
+            min-height: 44px;
+            box-sizing: border-box;
         }
         
         .form-control:focus {
@@ -266,6 +281,7 @@ $stats = mysqli_fetch_assoc($stats_result);
         
         .targeting-option input[type="radio"] {
             margin-right: 1rem;
+            min-width: 16px;
         }
         
         .option-details {
@@ -293,6 +309,12 @@ $stats = mysqli_fetch_assoc($stats_result);
             cursor: pointer;
             transition: all 0.3s ease;
             background: white;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            min-width: 100px;
         }
         
         .priority-option.normal {
@@ -323,9 +345,12 @@ $stats = mysqli_fetch_assoc($stats_result);
             cursor: pointer;
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 0.5rem;
             transition: all 0.3s ease;
             text-decoration: none;
+            min-height: 44px;
+            font-size: 0.875rem;
         }
         
         .btn-primary {
@@ -335,6 +360,8 @@ $stats = mysqli_fetch_assoc($stats_result);
         
         .btn-primary:hover {
             background-color: #4338ca;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(79, 70, 229, 0.4);
         }
         
         .btn-success {
@@ -372,12 +399,14 @@ $stats = mysqli_fetch_assoc($stats_result);
             justify-content: space-between;
             align-items: flex-start;
             margin-bottom: 0.5rem;
+            gap: 1rem;
         }
         
         .notification-title {
             font-weight: 600;
             color: #111827;
             margin: 0;
+            line-height: 1.4;
         }
         
         .notification-meta {
@@ -386,6 +415,7 @@ $stats = mysqli_fetch_assoc($stats_result);
             font-size: 0.875rem;
             color: #6b7280;
             margin-bottom: 1rem;
+            flex-wrap: wrap;
         }
         
         .notification-content {
@@ -423,6 +453,7 @@ $stats = mysqli_fetch_assoc($stats_result);
             font-size: 0.75rem;
             font-weight: 600;
             text-transform: uppercase;
+            white-space: nowrap;
         }
         
         .priority-normal {
@@ -464,22 +495,344 @@ $stats = mysqli_fetch_assoc($stats_result);
             gap: 0.5rem;
             margin-top: 1rem;
         }
-        
-        @media (max-width: 768px) {
+
+        .checkbox-group input[type="checkbox"] {
+            min-width: 16px;
+            height: 16px;
+        }
+
+        /* Hamburger button */
+        .hamburger-btn {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 1001;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 0.5rem;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .hamburger-icon {
+            width: 1.5rem;
+            height: 1.5rem;
+            color: #374151;
+        }
+
+        /* Sidebar overlay for mobile */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+        }
+
+        /* Ensure sidebar is in front of overlay */
+        .sidebar {
+            z-index: 1000;
+        }
+
+        .sidebar.show {
+            z-index: 1000;
+        }
+
+        /* Tablet responsive styles */
+        @media (max-width: 1024px) {
             .notification-management {
+                margin-left: 60px;
+                padding: 1.5rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                gap: 1rem;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .tab-button {
+                padding: 0.75rem 1.5rem;
+                min-width: 160px;
+            }
+
+            .priority-selector {
+                flex-direction: column;
+            }
+
+            .priority-option {
+                min-width: auto;
+            }
+        }
+
+        /* Mobile responsive styles */
+        @media (max-width: 768px) {
+            .hamburger-btn {
+                display: block;
+            }
+
+            body.sidebar-open .sidebar-overlay {
+                display: block;
+            }
+
+            .notification-management {
+                margin-left: 0;
+                padding: 1rem;
+                padding-top: 4rem; /* Account for hamburger button */
+            }
+
+            .header-section {
+                padding: 1.5rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .header-section h1 {
+                font-size: 1.75rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+                gap: 0.75rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .stat-card {
                 padding: 1rem;
             }
-            
+
+            .stat-number {
+                font-size: 1.5rem;
+            }
+
+            .content-tabs {
+                margin-bottom: 1.5rem;
+            }
+
+            .tab-button {
+                padding: 0.75rem 1rem;
+                font-size: 0.875rem;
+                min-width: 120px;
+            }
+
+            .tab-content {
+                padding: 1rem;
+            }
+
             .form-row {
                 grid-template-columns: 1fr;
             }
-            
+
+            .priority-selector {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .priority-option {
+                min-width: auto;
+                padding: 0.75rem 1rem;
+            }
+
+            .targeting-section {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+
+            .targeting-option {
+                padding: 0.75rem;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .targeting-option input[type="radio"] {
+                margin-right: 0;
+                margin-bottom: 0.5rem;
+            }
+
+            .notification-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .notification-meta {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .notification-analytics {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+                padding: 0.75rem;
+            }
+
+            .analytics-item {
+                font-size: 0.75rem;
+            }
+
+            .btn {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+
+            .form-control {
+                font-size: 16px; /* Prevent zoom on iOS */
+            }
+        }
+
+        /* Small mobile responsive styles */
+        @media (max-width: 480px) {
+            .notification-management {
+                padding: 0.75rem;
+                padding-top: 3.5rem;
+            }
+
+            .header-section {
+                padding: 1rem;
+            }
+
+            .header-section h1 {
+                font-size: 1.5rem;
+            }
+
+            .header-section p {
+                font-size: 0.875rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.5rem;
+            }
+
+            .stat-card {
+                padding: 0.75rem;
+            }
+
+            .stat-number {
+                font-size: 1.25rem;
+            }
+
+            .stat-label {
+                font-size: 0.75rem;
+            }
+
+            .tab-button {
+                padding: 0.625rem 0.75rem;
+                font-size: 0.8125rem;
+                min-width: 100px;
+            }
+
+            .tab-content {
+                padding: 0.75rem;
+            }
+
+            .form-group {
+                margin-bottom: 1rem;
+            }
+
+            .targeting-section {
+                padding: 0.75rem;
+            }
+
+            .targeting-option {
+                padding: 0.625rem;
+            }
+
+            .notification-item {
+                padding: 1rem;
+            }
+
+            .notification-analytics {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+                padding: 0.5rem;
+            }
+
+            .btn {
+                padding: 0.75rem 1rem;
+                font-size: 0.875rem;
+            }
+        }
+
+        /* Fix for very small screens */
+        @media (max-width: 320px) {
+            .notification-management {
+                padding: 0.5rem;
+                padding-top: 3rem;
+            }
+
             .stats-grid {
                 grid-template-columns: 1fr;
             }
-            
+
             .tab-button {
-                padding: 0.75rem 1rem;
+                padding: 0.5rem;
+                font-size: 0.75rem;
+                min-width: 80px;
+            }
+
+            .priority-option {
+                padding: 0.5rem;
+                font-size: 0.875rem;
+            }
+        }
+
+        /* Select2 responsive fixes */
+        @media (max-width: 768px) {
+            .select2-container {
+                width: 100% !important;
+            }
+
+            .select2-selection {
+                min-height: 44px !important;
+                padding: 0.5rem !important;
+            }
+        }
+
+        /* Summernote responsive fixes */
+        @media (max-width: 768px) {
+            .note-editor {
+                border: 2px solid #e5e7eb !important;
+                border-radius: 8px !important;
+            }
+
+            .note-toolbar {
+                padding: 0.5rem !important;
+                flex-wrap: wrap !important;
+            }
+
+            .note-editing-area {
+                min-height: 150px !important;
+            }
+        }
+
+        /* Ensure proper text wrapping */
+        .notification-title,
+        .notification-content,
+        .targeting-option div {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        /* Loading and empty states */
+        .empty-state {
+            text-align: center;
+            color: #6b7280;
+            padding: 3rem 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .empty-state {
+                padding: 2rem 1rem;
                 font-size: 0.875rem;
             }
         }
