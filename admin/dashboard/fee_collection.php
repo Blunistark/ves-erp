@@ -8,74 +8,127 @@
     <title>Fee Collection</title>
     
     <link rel="stylesheet" href="css/sidebar.css">
-    <style>
+   <style>
+        /* Dashboard container responsive styles */
+        .dashboard-container {
+            margin-left: 280px;
+            transition: all 0.3s ease;
+            position: relative;
+            min-height: 100vh;
+            overflow-y: auto;
+            background-color: #f8fafc;
+        }
+
+        /* Header styles */
+        .dashboard-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-title {
+            margin: 0 0 0.5rem 0;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .header-path {
+            opacity: 0.9;
+            font-size: 0.875rem;
+        }
+
         .dashboard-content {
-            padding: 20px;
+            padding: 2rem;
         }
         
         .action-bar {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
+            align-items: flex-start;
+            margin-bottom: 2rem;
+            gap: 1rem;
+        }
+
+        .action-bar h2 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .action-bar p {
+            margin: 0;
+            color: #6b7280;
+            font-size: 0.875rem;
         }
         
         .card {
             background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border: 1px solid #f3f4f6;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
         }
         
         .card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #f3f4f6;
         }
         
         .card-title {
-            font-size: 18px;
+            font-size: 1.125rem;
             font-weight: 600;
-            color: #333;
+            color: #1f2937;
             margin: 0;
         }
         
         .form-row {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 20px;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
         }
         
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 1rem;
         }
         
         .form-label {
             display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-            color: #555;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.875rem;
         }
         
         .form-select,
         .form-input,
         .form-textarea {
             width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-            transition: border-color 0.2s;
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+            background-color: white;
+            min-height: 44px;
+            box-sizing: border-box;
         }
         
         .form-select:focus,
         .form-input:focus,
         .form-textarea:focus {
-            border-color: #4a6cf7;
+            border-color: #4f46e5;
             outline: none;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
         }
         
         .form-textarea {
@@ -87,43 +140,54 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 8px 16px;
-            border-radius: 4px;
-            font-weight: 500;
-            font-size: 14px;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.875rem;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
             border: none;
+            text-decoration: none;
+            min-height: 44px;
+            gap: 0.5rem;
         }
         
         .btn-icon {
-            width: 18px;
-            height: 18px;
-            margin-right: 8px;
+            width: 1rem;
+            height: 1rem;
         }
         
         .btn-sm {
-            padding: 6px 12px;
-            font-size: 12px;
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+            min-height: 36px;
+        }
+
+        .btn-sm .btn-icon {
+            width: 0.875rem;
+            height: 0.875rem;
         }
         
         .btn-primary {
-            background-color: #4a6cf7;
+            background-color: #4f46e5;
             color: white;
         }
         
         .btn-primary:hover {
-            background-color: #3a5bd9;
+            background-color: #4338ca;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(79, 70, 229, 0.4);
         }
         
         .btn-outline {
             background-color: transparent;
-            border: 1px solid #ddd;
-            color: #555;
+            border: 2px solid #e5e7eb;
+            color: #6b7280;
         }
         
         .btn-outline:hover {
-            background-color: #f5f5f5;
+            background-color: #f9fafb;
+            border-color: #d1d5db;
         }
         
         .btn-success {
@@ -132,7 +196,7 @@
         }
         
         .btn-success:hover {
-            background-color: #0ea271;
+            background-color: #059669;
         }
         
         .btn-danger {
@@ -147,18 +211,26 @@
         table {
             width: 100%;
             border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
         
         th, td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #eee;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #f3f4f6;
             text-align: left;
+            font-size: 0.875rem;
         }
         
         th {
             font-weight: 600;
-            color: #333;
+            color: #374151;
             background-color: #f9fafb;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
         
         tbody tr:hover {
@@ -167,10 +239,12 @@
         
         .badge {
             display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 500;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
         }
         
         .badge-success {
@@ -197,85 +271,96 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
+            overflow-y: auto;
         }
         
         .modal-content {
             background-color: #fff;
-            margin: 10% auto;
-            padding: 20px;
-            border-radius: 8px;
-            width: 80%;
+            margin: 2rem auto;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
             max-width: 600px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
         }
         
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #f3f4f6;
         }
         
         .modal-title {
-            font-size: 18px;
+            font-size: 1.25rem;
             font-weight: 600;
-            color: #333;
+            color: #1f2937;
             margin: 0;
         }
         
         .close {
-            font-size: 24px;
+            font-size: 1.5rem;
             font-weight: bold;
-            color: #555;
+            color: #6b7280;
             cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+            transition: all 0.2s ease;
         }
         
         .close:hover {
-            color: #000;
+            color: #374151;
+            background-color: #f3f4f6;
         }
         
         .empty-state {
             text-align: center;
-            padding: 40px 0;
-            color: #777;
+            padding: 3rem 2rem;
+            color: #6b7280;
         }
         
         .empty-state-icon {
-            width: 60px;
-            height: 60px;
-            margin-bottom: 20px;
-            color: #ddd;
+            width: 3.75rem;
+            height: 3.75rem;
+            margin: 0 auto 1.5rem;
+            color: #d1d5db;
         }
         
         .fee-summary {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 15px;
-            padding: 15px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+            padding: 1.5rem;
             background-color: #f9fafb;
-            border-radius: 4px;
+            border-radius: 8px;
+            border: 1px solid #f3f4f6;
         }
         
         .fee-summary-item {
-            flex: 1;
-            min-width: 150px;
-            padding: 10px;
+            padding: 1rem;
             background-color: #fff;
-            border-radius: 4px;
+            border-radius: 8px;
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            text-align: center;
         }
         
         .fee-summary-label {
-            font-size: 12px;
-            color: #666;
-            margin-bottom: 5px;
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
         }
         
         .fee-summary-value {
-            font-size: 18px;
-            font-weight: 600;
-            color: #333;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1f2937;
         }
         
         .fee-summary-value.due {
@@ -287,26 +372,422 @@
         }
         
         .payment-history {
-            margin-top: 20px;
+            margin-top: 1.5rem;
         }
         
         .payment-history h3 {
-            margin-bottom: 10px;
-        }
-        
-        .payment-history table {
-            margin-top: 10px;
+            margin-bottom: 1rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1f2937;
         }
         
         .search-container {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
         }
         
         .search-container .form-input {
             flex: 1;
+        }
+
+        /* Hamburger button */
+        .hamburger-btn {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 1001;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 0.5rem;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .hamburger-icon {
+            width: 1.5rem;
+            height: 1.5rem;
+            color: #374151;
+        }
+
+        /* Sidebar overlay for mobile */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+        }
+
+        /* Ensure sidebar is in front of overlay */
+        .sidebar {
+            z-index: 1000;
+        }
+
+        .sidebar.show {
+            z-index: 1000;
+        }
+
+        /* Tablet responsive styles */
+        @media (max-width: 1024px) {
+            .dashboard-container {
+                margin-left: 60px;
+            }
+
+            .dashboard-content {
+                padding: 1.5rem;
+            }
+
+            .dashboard-header {
+                padding: 1.5rem;
+            }
+
+            .action-bar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .fee-summary {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 0.75rem;
+                padding: 1rem;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 1rem auto;
+                padding: 1.5rem;
+            }
+        }
+
+        /* Mobile responsive styles */
+        @media (max-width: 768px) {
+            .hamburger-btn {
+                display: block;
+            }
+
+            body.sidebar-open .sidebar-overlay {
+                display: block;
+            }
+
+            .dashboard-container {
+                margin-left: 0;
+                padding-top: 4rem; /* Account for hamburger button */
+            }
+
+            .dashboard-content {
+                padding: 1rem;
+            }
+
+            .dashboard-header {
+                padding: 1rem;
+                margin-bottom: 1rem;
+                border-radius: 0;
+            }
+
+            .header-title {
+                font-size: 1.5rem;
+            }
+
+            .action-bar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .action-bar h2 {
+                font-size: 1.25rem;
+            }
+
+            .card {
+                padding: 1rem;
+                margin-bottom: 1rem;
+                border-radius: 8px;
+            }
+
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+                margin-bottom: 1rem;
+                padding-bottom: 0.75rem;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .form-group {
+                margin-bottom: 1rem;
+            }
+
+            .fee-summary {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.5rem;
+                padding: 1rem;
+            }
+
+            .fee-summary-item {
+                padding: 0.75rem;
+            }
+
+            .fee-summary-label {
+                font-size: 0.625rem;
+            }
+
+            .fee-summary-value {
+                font-size: 1rem;
+            }
+
+            .search-container {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .search-container .form-input,
+            .search-container .btn {
+                width: 100%;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 0.5rem auto;
+                padding: 1rem;
+                border-radius: 8px;
+            }
+
+            .modal-header {
+                margin-bottom: 1rem;
+                padding-bottom: 0.75rem;
+            }
+
+            .modal-title {
+                font-size: 1.125rem;
+            }
+
+            /* Table responsive */
+            table {
+                font-size: 0.75rem;
+            }
+
+            th, td {
+                padding: 0.5rem 0.75rem;
+            }
+
+            /* Make table horizontally scrollable */
+            .payment-history {
+                overflow-x: auto;
+            }
+
+            .payment-history table {
+                min-width: 600px;
+            }
+
+            .form-control {
+                font-size: 16px; /* Prevent zoom on iOS */
+            }
+        }
+
+        /* Small mobile responsive styles */
+        @media (max-width: 480px) {
+            .dashboard-container {
+                padding-top: 3.5rem;
+            }
+
+            .dashboard-content {
+                padding: 0.75rem;
+            }
+
+            .dashboard-header {
+                padding: 0.75rem;
+            }
+
+            .header-title {
+                font-size: 1.25rem;
+            }
+
+            .header-path {
+                font-size: 0.75rem;
+            }
+
+            .action-bar h2 {
+                font-size: 1.125rem;
+            }
+
+            .action-bar p {
+                font-size: 0.75rem;
+            }
+
+            .card {
+                padding: 0.75rem;
+            }
+
+            .card-title {
+                font-size: 1rem;
+            }
+
+            .fee-summary {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+                padding: 0.75rem;
+            }
+
+            .fee-summary-item {
+                padding: 0.5rem;
+            }
+
+            .fee-summary-label {
+                font-size: 0.625rem;
+                margin-bottom: 0.25rem;
+            }
+
+            .fee-summary-value {
+                font-size: 0.875rem;
+            }
+
+            .btn {
+                padding: 0.75rem 1rem;
+                font-size: 0.8125rem;
+            }
+
+            .btn-sm {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.6875rem;
+                min-height: 32px;
+            }
+
+            .modal-content {
+                margin: 0.25rem auto;
+                padding: 0.75rem;
+            }
+
+            .modal-title {
+                font-size: 1rem;
+            }
+
+            .form-label {
+                font-size: 0.75rem;
+            }
+
+            .form-select,
+            .form-input,
+            .form-textarea {
+                padding: 0.625rem;
+                font-size: 0.8125rem;
+            }
+
+            table {
+                font-size: 0.6875rem;
+            }
+
+            th, td {
+                padding: 0.375rem 0.5rem;
+            }
+
+            .badge {
+                font-size: 0.625rem;
+                padding: 0.125rem 0.5rem;
+            }
+        }
+
+        /* Fix for very small screens */
+        @media (max-width: 320px) {
+            .dashboard-container {
+                padding-top: 3rem;
+            }
+
+            .dashboard-content {
+                padding: 0.5rem;
+            }
+
+            .fee-summary {
+                grid-template-columns: 1fr;
+                padding: 0.5rem;
+            }
+
+            .fee-summary-item {
+                padding: 0.375rem;
+            }
+
+            .btn {
+                padding: 0.625rem 0.75rem;
+                font-size: 0.75rem;
+            }
+
+            .modal-content {
+                margin: 0.125rem auto;
+                padding: 0.5rem;
+            }
+        }
+
+        /* Ensure proper text wrapping */
+        .card-title,
+        .modal-title,
+        .action-bar h2,
+        .fee-summary-label,
+        .fee-summary-value {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        /* Loading and empty states */
+        @media (max-width: 768px) {
+            .empty-state {
+                padding: 2rem 1rem;
+                font-size: 0.875rem;
+            }
+
+            .empty-state-icon {
+                width: 3rem;
+                height: 3rem;
+                margin-bottom: 1rem;
+            }
+        }
+
+        /* Form validation styles */
+        .form-select:invalid,
+        .form-input:invalid {
+            border-color: #ef4444;
+        }
+
+        .form-select:valid,
+        .form-input:valid {
+            border-color: #10b981;
+        }
+
+        /* Button loading state */
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Responsive modal for very small screens */
+        @media (max-height: 600px) {
+            .modal-content {
+                margin: 0.5rem auto;
+                max-height: 95vh;
+                overflow-y: auto;
+            }
         }
     </style>
 </head>
