@@ -166,16 +166,105 @@ outline: none;
     border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
 
+/* Hamburger Button Styles */
+.hamburger-btn {
+    width: 42px;
+    height: 42px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    cursor: pointer;
+    position: fixed;
+    top: 1.25rem;
+    left: 1.25rem;
+    z-index: 60;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.hamburger-icon {
+    width: 24px;
+    height: 24px;
+    color: #4b5563;
+    transition: transform 0.3s ease;
+}
+
+.hamburger-btn:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+}
+
+.hamburger-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Hamburger icon animation when sidebar is open */
+.sidebar.show ~ .hamburger-btn .hamburger-icon {
+    transform: rotate(90deg);
+}
+
+/* Overlay styles */
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.93);
+    z-index: 45;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+/* When sidebar is shown */
+.sidebar.show ~ .sidebar-overlay {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Freeze background when sidebar is open */
+body.sidebar-open {
+    overflow: hidden;
+}
+
+/* Update sidebar z-index to be above overlay */
+.sidebar {
+    z-index: 55;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .sidebar {
         transform: translateX(-100%);
-        box-shadow: none;
+        width: 280px;
     }
-    
+
     .sidebar.show {
         transform: translateX(0);
-        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .hamburger-btn {
+        display: flex;
+    }
+
+    .sidebar.show ~ .hamburger-btn {
+        left: 300px; /* Move hamburger when sidebar is open */
+    }
+
+    .dashboard-container {
+        margin-left: 0;
+        padding-left: 0;
+    }
+
+    .dashboard-header {
+        padding-left: 5rem; /* Add space for hamburger button */
     }
 }
 

@@ -378,6 +378,15 @@ function validateCSRFToken($token) {
 function logAudit($table_name, $record_id, $action) {
     $user_id = $_SESSION['user_id'] ?? null;
     
+    // Validate that user_id exists in users table to prevent foreign key constraint violation
+    if ($user_id !== null) {
+        $userExists = executeQuery("SELECT id FROM users WHERE id = ?", "i", [$user_id]);
+        if (!$userExists || empty($userExists)) {
+            // User doesn't exist, log with null user_id instead
+            $user_id = null;
+        }
+    }
+    
     $sql = "INSERT INTO audit_logs (user_id, table_name, record_id, action, timestamp) 
             VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)";
     executeQuery($sql, "isis", [$user_id, $table_name, $record_id, $action]);

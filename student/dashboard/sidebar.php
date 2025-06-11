@@ -247,11 +247,21 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('click', function(e) {
         if (window.innerWidth <= 768 && 
             !sidebar.contains(e.target) && 
-            !e.target.classList.contains('hamburger-btn') &&
+            !e.target.closest('.hamburger-btn') &&
             sidebar.classList.contains('show')) {
             toggleSidebar();
         }
     });
+
+    // Close sidebar when clicking overlay
+    const overlay = document.querySelector('.sidebar-overlay');
+    if (overlay) {
+        overlay.addEventListener('click', function() {
+            if (sidebar.classList.contains('show')) {
+                toggleSidebar();
+            }
+        });
+    }
     
     // Check if any nav-group should be initially active
     navGroups.forEach(group => {

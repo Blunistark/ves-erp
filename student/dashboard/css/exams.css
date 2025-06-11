@@ -697,27 +697,91 @@
         @media (max-width: 768px) {
             .dashboard-container {
                 margin-left: 0;
+                padding-left: 0;
             }
 
             .dashboard-header {
-                padding: 1.5rem;
-                padding-left: 5rem;
+                padding: 1.25rem 1.5rem;
+                padding-left: 5rem; /* Space for hamburger button */
+            }
+
+            .header-title {
+                font-size: 1.5rem;
+            }
+
+            .header-date {
+                font-size: 0.875rem;
             }
 
             .dashboard-content {
-                padding: 1.5rem;
-            }
-
-            .card {
-                padding: 1.5rem;
+                padding: 1rem;
             }
 
             .exam-selector {
-                justify-content: center;
+                flex-direction: column;
+                gap: 0.5rem;
             }
 
-            .calendar-grid {
-                grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+            .exam-option {
+                text-align: center;
+                padding: 0.75rem 1rem;
+                font-size: 0.875rem;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .exam-schedule-card {
+                padding: 1rem;
+            }
+
+            .card-title {
+                font-size: 1.25rem;
+            }
+
+            .exam-table {
+                font-size: 0.875rem;
+            }
+
+            .exam-table th,
+            .exam-table td {
+                padding: 0.75rem 0.5rem;
+            }
+
+            .subject-column {
+                min-width: 120px;
+            }
+
+            .time-column {
+                min-width: 150px;
+            }
+
+            .syllabus-column {
+                display: none; /* Hide syllabus on mobile for better layout */
+            }
+
+            .download-column {
+                min-width: 80px;
+            }
+
+            .tips-section {
+                padding: 1rem;
+            }
+
+            .tips-title {
+                font-size: 1.25rem;
+            }
+
+            .tips-item {
+                flex-direction: column;
+                text-align: left;
+                gap: 0.5rem;
+            }
+
+            .tips-item svg {
+                align-self: flex-start;
             }
         }
 

@@ -2,22 +2,81 @@
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-// Include the variables file
-include 'setup.php';
+
+// if (session_status() === PHP_SESSION_NONE) { // This line will be removed
+//     session_start(); // This line will be removed
+// }
+
+require_once 'includes/config.php';
+require_once 'includes/connection.php';
+require_once 'includes/functions.php';
+
+$error = '';
+$success = '';
+
+ob_start(); // Ensure headers can be sent later
+
+if (isset($_SESSION['user_id'])) {
+    header('Location: pages/dashboard.php');
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $username = trim($_POST['username'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $remember = isset($_POST['remember']);
+
+    try {
+        if (empty($username) || empty($password)) {
+            throw new Exception('Please enter both username and password.');
+        }
+
+        $user = $db->fetchOne(
+            'SELECT * FROM users WHERE (username = ? OR email = ?) AND is_active = 1',
+            [$username, $username]
+        );
+
+        if (!$user || !password_verify($password, $user['password'])) {
+            logActivity('Failed Login Attempt', "Username: $username, IP: " . getClientIP());
+            throw new Exception('Invalid username or password.');
+        }
+
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['username'] = $user['username'];
+        $_SESSION['full_name'] = $user['full_name'];
+        $_SESSION['role'] = $user['role'];
+        $_SESSION['authenticated'] = true;
+
+        if ($remember) {
+            $token = bin2hex(random_bytes(32));
+            setcookie('remember_token', $token, time() + (86400 * 30), '/', '', false, true);
+        }
+
+        $db->query('UPDATE users SET updated_at = ? WHERE id = ?', [date('Y-m-d H:i:s'), $user['id']]);
+        logActivity('Successful Login', "User: {$user['username']}, Role: {$user['role']}");
+
+        session_write_close();
+        echo "<script>window.location.href = 'pages/dashboard.php';</script>";
+        exit;
+
+    } catch (Exception $e) {
+        $error = $e->getMessage();
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $companyname; ?></title>
+    <title>Login - School Admin System</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet">
     <style>
         /* Root variables for consistent colors */
         :root {
-            --primary: #fd5d5d; /* Bright red from Get Started button */
-            --secondary: #5856d6; /* Purple from notification */
-            --accent: #26e7a6; /* Green from background elements */
+            --primary: #fd5d5d; /* Bright red */
+            --secondary: #5856d6; /* Purple */
+            --accent: #26e7a6; /* Green */
             --background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
         }
         
@@ -38,7 +97,6 @@ include 'setup.php';
             outline: none;
         }
 
-        /* Optional gradient background */
         body {
             min-height: 100vh;
             display: flex;
@@ -59,17 +117,20 @@ include 'setup.php';
             position: relative;
         }
 
-        /* Logo container that moves */
+        /* Logo container */
         .logo-container {
             position: absolute;
+            left: 0;
+            width: 50%;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             text-align: center;
-            transition: all 1.5s ease-in-out;
             z-index: 1;
             padding: 2.5rem;
+            opacity: 0;
+            animation: slideInLeft 1s ease-out 0.5s forwards;
         }
 
         .logo {
@@ -89,213 +150,183 @@ include 'setup.php';
             object-fit: contain;
         }
 
-        .slogan {
-            font-size: 1.8rem;
+        .welcome-text {
+            font-size: 2.2rem;
             color: #18181B;
             text-align: center;
             font-weight: 700;
-            opacity: 1;
-            position: relative;
-            white-space: nowrap;
-            overflow: hidden;
-            margin: 0 auto;
-            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
             font-family: 'Montserrat', sans-serif;
-        }
-
-        .slogan span {
-            display: inline-block;
             opacity: 0;
-            transform: translateY(20px);
-            filter: blur(10px);
-            transition: opacity 0.6s, transform 0.6s, filter 0.6s;
+            animation: fadeInUp 1s ease-out 1s forwards;
         }
 
-        .slogan span.visible {
-            opacity: 1;
-            transform: translateY(0);
-            filter: blur(0);
+        .subtitle {
+            font-size: 1.1rem;
+            color: #71717A;
+            text-align: center;
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 1.2s forwards;
         }
 
-        /* Options section */
-        .options-section {
+        /* Login form section */
+        .login-section {
             position: absolute;
             right: 0;
             width: 50%;
+            padding: 2rem;
             opacity: 0;
-            visibility: hidden;
-            transition: opacity 1s ease-in-out, visibility 1s ease-in-out;
-            padding: 1rem;
+            animation: slideInRight 1s ease-out 0.8s forwards;
         }
 
-        h1 {
-            font-size: 1.75rem;
-            color: #18181B;
-            margin-bottom: 1.5rem;
-            font-weight: 600;
-        }
-
-        .cards-container {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            width: 100%;
-        }
-
-        /* Enhanced cards styling */
-        .login-card {
+        .login-form {
             background: white;
-            border-radius: 16px;
-            padding: 1.5rem;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-radius: 24px;
+            padding: 3rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
             border: 1px solid #E4E4E7;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            animation: fadeIn 0.5s ease-out forwards;
-            animation-delay: calc(var(--index) * 0.2s);
-            opacity: 0;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
-            margin-bottom: 1rem;
-            text-decoration: none;
-        }
-
-        .login-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 5px;
-            height: 100%;
-            background: var(--primary);
-            transform: scaleY(0);
-            transform-origin: bottom;
-            transition: transform 0.3s ease;
-        }
-
-        .login-card:hover {
-            transform: translateX(8px) scale(1.02);
-            border-color: var(--primary);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-        }
-
-        .login-card:hover::before {
-            transform: scaleY(1);
-        }
-
-        .login-card:focus {
-            outline: 2px solid var(--primary);
-            transform: translateX(5px);
-        }
-
-        .login-card.active {
-            transform: scale(1.03);
-            border-color: var(--primary);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Icon styling enhancements */
-        .icon-wrapper {
-            width: 56px;
-            height: 56px;
-            border-radius: 16px;
-            background: #F4F4F5;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 1.25rem;
-            transition: all 0.3s ease;
-            flex-shrink: 0;
-            transform: rotate(0deg);
             position: relative;
             overflow: hidden;
         }
-        
-        .icon-wrapper::after {
+
+        .login-form::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0));
-            opacity: 0;
-            transition: opacity 0.3s ease;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
         }
 
-        .login-card:hover .icon-wrapper {
-            background: var(--primary);
-            transform: rotate(-5deg) scale(1.1);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        
-        .login-card:hover .icon-wrapper::after {
-            opacity: 1;
-        }
-
-        .icon-wrapper svg {
-            width: 24px;
-            height: 24px;
-            color: var(--primary);
-            transition: color 0.3s ease;
-        }
-
-        .login-card:hover .icon-wrapper svg {
-            color: white;
-        }
-
-        .card-content {
-            flex: 1;
-        }
-
-        .login-card h3 {
-            font-size: 1rem;
+        .form-title {
+            font-size: 1.8rem;
             color: #18181B;
-            margin-bottom: 0.25rem;
-            text-align: left;
-        }
-
-        .login-card p {
-            color: #71717A;
-            font-size: 0.875rem;
-            margin-bottom: 0;
-            text-align: left;
-        }
-
-        /* Button styling enhancements */
-        .action-btn {
-            margin-top: 12px;
-            padding: 8px 20px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 8px;
+            margin-bottom: 0.5rem;
             font-weight: 600;
-            font-size: 0.875rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            transform: translateY(10px);
-            opacity: 0;
+            text-align: center;
+        }
+
+        .form-subtitle {
+            color: #71717A;
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
             position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 12px rgba(253, 93, 93, 0.2);
         }
 
-        .login-card:hover .action-btn {
-            opacity: 1;
-            transform: translateY(0);
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #374151;
+            font-weight: 500;
+            font-size: 0.9rem;
         }
 
-        .action-btn:hover {
-            background: #e64545;
-            box-shadow: 0 6px 16px rgba(253, 93, 93, 0.4);
+        .input-group input {
+            width: 100%;
+            padding: 1rem 1.25rem;
+            border: 2px solid #E5E7EB;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #F9FAFB;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(253, 93, 93, 0.1);
             transform: translateY(-2px);
         }
 
-        .action-btn::after {
+        .password-input-wrapper {
+            position: relative;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #9CA3AF;
+            transition: color 0.3s ease;
+        }
+
+        .password-toggle:hover {
+            color: var(--primary);
+        }
+
+        .password-toggle svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .remember-forgot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            color: #374151;
+        }
+
+        .remember-me input {
+            margin-right: 0.5rem;
+            width: auto;
+        }
+
+        .forgot-password {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .forgot-password:hover {
+            color: #e64545;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--primary), #e64545);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(253, 93, 93, 0.3);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .login-btn::after {
             content: '';
             position: absolute;
             width: 30px;
@@ -306,68 +337,44 @@ include 'setup.php';
             transition: 0.5s;
             animation: shine 3s infinite;
         }
-        
-        @keyframes shine {
-            0% {
-                left: -100px;
-            }
-            20% {
-                left: 100%;
-            }
-            100% {
-                left: 100%;
-            }
-        }
 
-        /* Success popup */
-        .success-popup {
-            position: fixed;
-            bottom: -100px;
-            right: 30px;
-            background: white;
+        .back-btn {
+            width: 100%;
+            padding: 1rem;
+            background: #F3F4F6;
+            color: #374151;
+            border: none;
             border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            display: flex;
-            align-items: center;
-            padding: 16px;
-            z-index: 10;
-            opacity: 0;
-            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
-        .success-popup.show {
-            bottom: 30px;
-            opacity: 1;
+        .back-btn:hover {
+            background: #E5E7EB;
+            transform: translateY(-1px);
         }
 
-        .success-icon {
-            width: 40px;
-            height: 40px;
-            background: var(--accent);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 12px;
+        .error-alert {
+            background: #FEF2F2;
+            border: 1px solid #FECACA;
+            color: #DC2626;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            animation: shake 0.5s ease-in-out;
         }
 
-        .success-icon svg {
-            color: white;
-            width: 24px;
-            height: 24px;
-        }
-
-        .success-message h3 {
-            margin: 0 0 4px 0;
-            color: #18181B;
-        }
-
-        .success-message p {
-            margin: 0;
+        .copyright {
+            text-align: center;
+            margin-top: 2rem;
             color: #71717A;
+            font-size: 0.85rem;
         }
 
-        /* Background shapes with more animation */
+        /* Background shapes */
         .shape {
             position: absolute;
             z-index: -1;
@@ -416,22 +423,40 @@ include 'setup.php';
             animation: morphAnimation 10s ease-in-out infinite alternate;
         }
 
-        /* Animation classes */
-        .show {
-            opacity: 1;
-        }
-
-        .move-to-left {
-            transform: translateX(-45%);
-        }
-
-        .show-options {
-            opacity: 1;
-            visibility: visible;
-        }
-
         /* Animations */
-        /* Enhanced animation set */
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         @keyframes floatAnimation {
             0%, 100% {
                 transform: translateY(0) rotate(0deg);
@@ -452,17 +477,6 @@ include 'setup.php';
             }
         }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-        
         @keyframes morphAnimation {
             0% {
                 border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
@@ -480,7 +494,31 @@ include 'setup.php';
                 border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
             }
         }
-        
+
+        @keyframes shine {
+            0% {
+                left: -100px;
+            }
+            20% {
+                left: 100%;
+            }
+            100% {
+                left: 100%;
+            }
+        }
+
+        @keyframes shake {
+            0%, 100% {
+                transform: translateX(0);
+            }
+            25% {
+                transform: translateX(-5px);
+            }
+            75% {
+                transform: translateX(5px);
+            }
+        }
+
         /* Responsive design */
         @media (max-width: 768px) {
             body {
@@ -494,22 +532,25 @@ include 'setup.php';
             .logo-container {
                 position: relative;
                 width: 100%;
-                transition: all 1.5s ease-in-out;
+                margin-bottom: 2rem;
             }
 
-            .move-to-left {
-                transform: translateY(-30%);
-            }
-
-            .options-section {
+            .login-section {
                 position: relative;
                 width: 100%;
-                margin-top: 18rem;
             }
 
             .logo {
-                width: 150px;
-                height: 150px;
+                width: 120px;
+                height: 120px;
+            }
+
+            .welcome-text {
+                font-size: 1.8rem;
+            }
+
+            .login-form {
+                padding: 2rem;
             }
             
             .shape {
@@ -521,72 +562,57 @@ include 'setup.php';
 <body>
     <div class="main-container">
         <!-- Logo section -->
-        <div class="logo-container" id="logoContainer">
+        <div class="logo-container">
             <div class="logo">
-                <img src="assets/images/school-logo.png" alt="Educational Platform Logo">
+                <img src="assets/images/school-logo.png" alt="School Logo">
             </div>
-            <div class="slogan" id="slogan">Your child future as a new address</div>
+            <div class="welcome-text">Welcome Back</div>
+            <div class="subtitle">Access your admin dashboard</div>
         </div>
 
-        <!-- Options section -->
-        <div class="options-section" id="optionsSection">
-            <h1>Choose Your Role</h1>
-            <div class="cards-container">
-                <a href="student/" class="login-card" id="studentCard" style="--index: 1" tabindex="0" role="button" aria-label="Login as Student">
-                    <div class="icon-wrapper">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                        </svg>
+        <!-- Login form section -->
+        <div class="login-section">
+            <div class="login-form">
+                <h1 class="form-title">Sign In</h1>
+                <p class="form-subtitle">Enter your credentials to continue</p>
+
+                <?php if ($error): ?>
+                    <div class="error-alert"><?php echo htmlspecialchars($error); ?></div>
+                <?php endif; ?>
+
+                <form method="POST" id="loginForm">
+                    <div class="input-group">
+                        <label for="username">Username or Email</label>
+                        <input type="text" id="username" name="username" value="<?= htmlspecialchars($_POST['username'] ?? '') ?>" required autocomplete="username">
                     </div>
-                    <div class="card-content">
-                        <h3>Student & Parent</h3>
-                        <p>Access your courses, assignments, and grades</p>
-                        <button class="action-btn">Get Started</button>
+
+                    <div class="input-group">
+                        <label for="password">Password</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="password" name="password" required autocomplete="current-password">
+                            <button type="button" class="password-toggle" onclick="togglePassword()">
+                                <svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                     viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                          d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
-                </a>
-                
-                <a href="teachers/" class="login-card" id="teacherCard" style="--index: 2" tabindex="0" role="button" aria-label="Login as Teacher">
-                    <div class="icon-wrapper">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                        </svg>
+
+                    <div class="remember-forgot">
+                        <label class="remember-me">
+                            <input type="checkbox" name="remember" <?php if (!empty($_POST['remember'])) echo 'checked'; ?> id="remember">
+                            Remember Me
+                        </label>
+                        <a href="#" class="forgot-password">Forgot password?</a>
                     </div>
-                    <div class="card-content">
-                        <h3>Teacher</h3>
-                        <p>Manage your classes, create assignments, and grade work</p>
-                        <button class="action-btn">Get Started</button>
-                    </div>
-                </a>
-                
-                <a href="admin/" class="login-card" id="adminCard" style="--index: 3" tabindex="0" role="button" aria-label="Login as Admin">
-                    <div class="icon-wrapper">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                    </div>
-                    <div class="card-content">
-                        <h3>Admin</h3>
-                        <p>Manage users, configure system settings, and monitor activity</p>
-                        <button class="action-btn">Get Started</button>
-                    </div>
-                </a>
-            </div>
-            <p class="signup-prompt" style="text-align: center; margin-top: 2rem; color: #71717A;">
-                &copy; 2025 <?php echo $name; ?> & Digitar App LLP
-            </p>
-        </div>
-        
-        <!-- Success notification -->
-        <div class="success-popup" id="successPopup">
-            <div class="success-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-            </div>
-            <div class="success-message">
-                <h3>Redirecting</h3>
-                <p>Taking you to login page</p>
+
+                    <button type="submit" class="login-btn">Sign In</button>
+                    <button type="button" onclick="window.location.href='index.php'" class="back-btn">← Go Back</button>
+                </form>
             </div>
         </div>
         
@@ -596,93 +622,30 @@ include 'setup.php';
         <div class="shape shape-3"></div>
         <div class="shape shape-4"></div>
     </div>
-    
-    <script>
-        window.onload = function() {
-            // Get elements
-            const logoContainer = document.getElementById('logoContainer');
-            const slogan = document.getElementById('slogan');
-            const optionsSection = document.getElementById('optionsSection');
-            const cards = document.querySelectorAll('.login-card');
-            const successPopup = document.getElementById('successPopup');
-            
-            // Show slogan with letter-by-letter animation
-            let sloganText = "Your child future as a new address";
-            slogan.textContent = "";
-            
-            // Create individual spans for each letter
-            Array.from(sloganText).forEach(char => {
-                const span = document.createElement('span');
-                span.textContent = char === " " ? "\u00A0" : char; // Use non-breaking space for spaces
-                slogan.appendChild(span);
-            });
-            
-            // Animate each letter with a staggered delay
-            const letters = slogan.querySelectorAll('span');
-            function animateLetters(index) {
-                if (index < letters.length) {
-                    letters[index].classList.add('visible');
-                    setTimeout(() => animateLetters(index + 1), 80);
-                } else {
-                    // Move logo after all letters are visible
-                    setTimeout(() => {
-                        logoContainer.classList.add('move-to-left');
-                        
-                        // Show options
-                        setTimeout(() => {
-                            optionsSection.classList.add('show-options');
-                            
-                            // Animate each card
-                            cards.forEach(card => {
-                                const index = card.style.getPropertyValue('--index');
-                                setTimeout(() => {
-                                    card.style.opacity = '1';
-                                    card.classList.add('card-animated');
-                                }, index * 200);
-                            });
-                        }, 800);
-                    }, 1000);
-                }
-            }
-            
-            // Start animating letters after a delay
-            setTimeout(() => {
-                animateLetters(0);
-            }, 1000);
 
-            // Add hover behavior for cards
-            cards.forEach(card => {
-                // Optional: Add hover sound effect (uncomment if you have the sound file)
-                /*
-                card.addEventListener('mouseenter', () => {
-                    const hoverSound = new Audio('assets/sounds/hover.mp3');
-                    hoverSound.volume = 0.2;
-                    hoverSound.play().catch(e => console.log('Audio play failed: Browser requires user interaction first'));
-                });
-                */
-                
-                card.addEventListener('click', function(e) {
-                    e.preventDefault(); // Prevent immediate navigation
-                    
-                    // Add active state
-                    cards.forEach(c => c.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    // Show success message
-                    setTimeout(() => {
-                        successPopup.classList.add('show');
-                    }, 300);
-                    
-                    // Get the href from the card
-                    const href = this.getAttribute('href');
-                    
-                    // Redirect after animation
-                    setTimeout(() => {
-                        window.location.href = href;
-                    }, 1500);
-                });
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            passwordInput.type = passwordInput.type === 'password' ? 'text' : 'password';
+        }
+
+        // Add form submission animation
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            const submitBtn = this.querySelector('.login-btn');
+            submitBtn.style.transform = 'scale(0.95)';
+            submitBtn.innerHTML = 'Signing In...';
+        });
+
+        // Focus animation for inputs
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.style.transform = 'translateY(-2px)';
             });
-        };
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.style.transform = 'translateY(0)';
+            });
+        });
     </script>
 </body>
 </html>

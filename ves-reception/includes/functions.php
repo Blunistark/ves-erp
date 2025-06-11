@@ -356,11 +356,6 @@ function logout() {
         );
     }
     
-    // Clear remember me cookie
-    if (isset($_COOKIE['remember_token'])) {
-        setcookie('remember_token', '', time() - 42000, '/', '', false, true);
-    }
-    
     // Destroy session
     session_destroy();
     
