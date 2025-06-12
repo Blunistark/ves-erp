@@ -154,15 +154,13 @@ include 'sidebar.php';
             right: 0;
             height: 2px;
             background: var(--primary-color);
-        }
-
-        .tab-content {
+        }        .tab-content {
             display: none;
             padding: 24px;
         }
 
         .tab-content.active {
-            display: block;
+            display: block !important;
         }
 
         .form-grid {
@@ -406,7 +404,6 @@ include 'sidebar.php';
         .headmaster-restricted {
             <?php if ($user_role === 'headmaster'): ?>
             opacity: 0.5;
-            pointer-events: none;
             <?php endif; ?>
         }
 
@@ -764,7 +761,209 @@ include 'sidebar.php';
             }
         }
 
-        /* ...existing styles... */
+        /* Teacher Schedule Editor Styles */
+        .schedule-editor-section {
+            background: var(--bg-white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 20px;
+        }
+
+        .schedule-grid-container {
+            overflow-x: auto;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .schedule-grid-table {
+            min-width: 800px;
+            font-size: 14px;
+        }
+
+        .schedule-grid-table th {
+            background-color: #f8fafc;
+            color: #374151;
+            font-weight: 600;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .period-cell-empty {
+            background-color: #f9fafb;
+            transition: all 0.2s ease;
+        }
+
+        .period-cell-empty:hover {
+            background-color: #f3f4f6;
+            cursor: pointer;
+        }
+
+        .period-cell-filled {
+            background-color: #dbeafe;
+            border-color: #3b82f6;
+            transition: all 0.2s ease;
+        }
+
+        .period-cell-filled:hover {
+            background-color: #bfdbfe;
+            cursor: pointer;
+        }
+
+        .period-cell-selected {
+            box-shadow: 0 0 0 2px #4f46e5 !important;
+        }
+
+        .period-content {
+            line-height: 1.4;
+        }
+
+        .schedule-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: var(--border-radius);
+            margin-bottom: 16px;
+        }
+
+        .alert-warning {
+            background-color: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+        }
+
+        .alert h6 {
+            margin: 0 0 8px 0;
+            font-weight: 600;
+        }
+
+        .alert ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .alert li {
+            margin-bottom: 4px;
+        }
+
+        /* Loading animation */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .fa-spinner.fa-spin {
+            animation: spin 1s linear infinite;
+        }
+
+        /* Quick actions buttons */
+        .quick-actions .btn {
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+
+        /* Period editor form */
+        #periodEditorForm {
+            background-color: #f8fafc;
+            border: 1px solid #e5e7eb;
+        }
+
+        #periodEditorForm .form-row {
+            display: flex;
+            align-items: end;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        #periodEditorForm .form-group {
+            margin-bottom: 0;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .schedule-grid-table {
+                font-size: 12px;
+            }
+            
+            .schedule-grid-table th,
+            .schedule-grid-table td {
+                padding: 6px !important;
+            }
+            
+            .period-content {
+                font-size: 11px;
+            }
+            
+            #periodEditorForm .form-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .quick-actions {
+                flex-direction: column;
+            }
+            
+            .quick-actions .btn {
+                margin-right: 0;
+                width: 100%;
+            }
+        }
+
+        /* Additional improvements */
+        .section-header {
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 16px;
+        }
+
+        .schedule-header {
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 12px;
+        }
+
+        .form-row {
+            display: flex;
+            align-items: end;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        /* Notification styles */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            padding: 12px 16px;
+            border-radius: var(--border-radius);
+            color: white;
+            font-weight: 500;
+            max-width: 400px;
+            box-shadow: var(--shadow-md);
+            display: none;
+        }
+
+        .notification.success {
+            background-color: #10b981;
+        }
+
+        .notification.error {
+            background-color: #ef4444;
+        }
+
+        .notification.warning {
+            background-color: #f59e0b;
+        }
+
+        .notification.info {
+            background-color: #3b82f6;
+        }
     </style>
 </head>
 <body>
@@ -775,6 +974,9 @@ include 'sidebar.php';
     </button>
 
     <div class="unified-container">
+        <!-- Notification Element -->
+        <div id="notification" class="notification"></div>
+        
         <!-- Header Section -->
         <div class="header-section">
             <h1 class="header-title">
@@ -788,9 +990,6 @@ include 'sidebar.php';
                 <?php endif; ?>
             </p>
         </div>
-
-        <!-- Notification Area -->
-        <div id="notification" class="notification"></div>
 
         <!-- Main Content Tabs -->
         <div class="tabs-container">
@@ -906,9 +1105,10 @@ include 'sidebar.php';
                             <table class="data-table">
                                 <thead>
                                     <tr>
-                                        <th>Name</th>
                                         <th>Employee ID</th>
+                                        <th>Name</th>
                                         <th>Email</th>
+                                        <th>Role</th>
                                         <th>Status</th>
                                         <th>Actions</th>
                                     </tr>
@@ -1231,9 +1431,7 @@ include 'sidebar.php';
                         <div id="adminTeacherTimetableOverview" style="margin-bottom: 32px;">
                              <p class="help-text">Loading teacher schedules...</p>
                         </div>
-                        <div id="adminTeacherTimetableOverviewLoading" class="loading" style="display:none;"><div class="spinner"></div><p>Loading Teacher Schedules...</p></div>
-
-                        <!-- Class Timetable Status -->
+                        <div id="adminTeacherTimetableOverviewLoading" class="loading" style="display:none;"><div class="spinner"></div><p>Loading Teacher Schedules...</p></div>                        <!-- Class Timetable Status -->
                         <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; margin-top: 32px;">
                             <h4 class="section-title" style="font-size: 1.1rem; font-weight: 600; margin:0;">
                                 <i class="fas fa-chalkboard"></i>
@@ -1244,516 +1442,300 @@ include 'sidebar.php';
                             <p class="help-text">Loading class timetable statuses...</p>
                         </div>
                         <div id="adminClassTimetableStatusLoading" class="loading" style="display:none;"><div class="spinner"></div><p>Loading Class Timetable Status...</p></div>
+
+                        <!-- Individual Teacher Schedule Editor -->
+                        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; margin-top: 32px;">
+                            <h4 class="section-title" style="font-size: 1.1rem; font-weight: 600; margin:0;">
+                                <i class="fas fa-user-edit"></i>
+                                Individual Teacher Schedule Editor
+                            </h4>
+                            <button class="btn btn-primary btn-sm" id="teacherScheduleEditorToggle">
+                                <i class="fas fa-calendar-plus"></i>
+                                Open Schedule Editor
+                            </button>
+                        </div>
+                        <div id="teacherScheduleEditor" style="display: none;">                            <!-- Teacher Selection -->
+                            <div class="form-row" style="margin-bottom: 20px;">
+                                <div class="form-group" style="margin-right: 20px;">
+                                    <label for="selectedTeacher" class="form-label">Select Teacher</label>
+                                    <select id="selectedTeacher" class="form-select" style="min-width: 250px;">
+                                        <option value="">Choose a teacher...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="display: flex; align-items: end;">
+                                    <button class="btn btn-outline" id="loadTeacherSchedule">
+                                        <i class="fas fa-download"></i>
+                                        Load Complete Schedule
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Teacher Schedule Grid -->
+                            <div id="teacherScheduleGrid" style="display: none;">
+                                <div class="schedule-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                                    <h5 id="currentTeacherName" style="margin: 0; color: #374151;">Teacher Schedule</h5>
+                                    <div class="schedule-actions">
+                                        <button class="btn btn-sm btn-outline" id="scheduleConflictCheck">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            Check Conflicts
+                                        </button>
+                                        <button class="btn btn-sm btn-success" id="saveScheduleChanges" style="display: none;">
+                                            <i class="fas fa-save"></i>
+                                            Save Changes
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Schedule Grid Table -->
+                                <div class="schedule-grid-container">
+                                    <table class="schedule-grid-table" style="width: 100%; border-collapse: collapse; border: 1px solid #e5e7eb;">
+                                        <thead>
+                                            <tr style="background-color: #f9fafb;">
+                                                <th style="border: 1px solid #e5e7eb; padding: 12px; text-align: center; font-weight: 600;">Time</th>
+                                                <th style="border: 1px solid #e5e7eb; padding: 12px; text-align: center; font-weight: 600;">Monday</th>
+                                                <th style="border: 1px solid #e5e7eb; padding: 12px; text-align: center; font-weight: 600;">Tuesday</th>
+                                                <th style="border: 1px solid #e5e7eb; padding: 12px; text-align: center; font-weight: 600;">Wednesday</th>
+                                                <th style="border: 1px solid #e5e7eb; padding: 12px; text-align: center; font-weight: 600;">Thursday</th>
+                                                <th style="border: 1px solid #e5e7eb; padding: 12px; text-align: center; font-weight: 600;">Friday</th>
+                                                <th style="border: 1px solid #e5e7eb; padding: 12px; text-align: center; font-weight: 600;">Saturday</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="scheduleGridBody">
+                                            <!-- Schedule periods will be populated here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Period Editor Form -->                                <div id="periodEditorForm" style="display: none; margin-top: 20px; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px; background-color: #f9fafc;">
+                                    <h6 style="margin-bottom: 16px; color: #374151;">Edit Period: <span id="editingPeriodInfo">Monday, Period 1</span></h6>
+                                    <div class="form-row" style="margin-bottom: 15px;">
+                                        <div class="form-group" style="margin-right: 15px;">
+                                            <label for="periodClass" class="form-label">Class</label>
+                                            <select id="periodClass" class="form-select" style="min-width: 150px;">
+                                                <option value="">Select class...</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group" style="margin-right: 15px;">
+                                            <label for="periodSection" class="form-label">Section</label>
+                                            <select id="periodSection" class="form-select" style="min-width: 150px;">
+                                                <option value="">Select section...</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group" style="margin-right: 15px;">
+                                            <label for="periodSubject" class="form-label">Subject</label>
+                                            <select id="periodSubject" class="form-select" style="min-width: 200px;">
+                                                <option value="">Select subject...</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group" style="margin-right: 15px;">
+                                            <label for="periodNotes" class="form-label">Notes</label>
+                                            <input type="text" id="periodNotes" class="form-input" placeholder="Optional notes" style="width: 300px;">
+                                        </div>
+                                        <div class="form-group" style="display: flex; align-items: end; gap: 10px;">
+                                            <button class="btn btn-primary btn-sm" id="savePeriodChanges">
+                                                <i class="fas fa-check"></i>
+                                                Save
+                                            </button>
+                                            <button class="btn btn-outline btn-sm" id="clearPeriod">
+                                                <i class="fas fa-trash"></i>
+                                                Clear
+                                            </button>
+                                            <button class="btn btn-outline btn-sm" id="cancelPeriodEdit">
+                                                <i class="fas fa-times"></i>
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Quick Actions -->
+                                <div class="quick-actions" style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+                                    <button class="btn btn-outline btn-sm" id="viewAvailableSlots">
+                                        <i class="fas fa-clock"></i>
+                                        View Available Slots
+                                    </button>
+                                    <button class="btn btn-outline btn-sm" id="bulkAssignPeriods">
+                                        <i class="fas fa-layer-group"></i>
+                                        Bulk Assign
+                                    </button>
+                                    <button class="btn btn-outline btn-sm" id="exportTeacherSchedule">
+                                        <i class="fas fa-download"></i>
+                                        Export Schedule
+                                    </button>
+                                    <button class="btn btn-outline btn-sm" id="resetScheduleChanges">
+                                        <i class="fas fa-undo"></i>
+                                        Reset Changes
+                                    </button>
+                                </div>                                <!-- Conflict Display -->
+                                <div id="scheduleConflicts" style="display: none; margin-top: 20px;">
+                                    <div class="alert alert-warning">
+                                        <h6><i class="fas fa-exclamation-triangle"></i> Schedule Conflicts Detected</h6>
+                                        <ul id="conflictsList" style="margin-bottom: 0;">
+                                            <!-- Conflicts will be listed here -->
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Teacher Schedule Placeholder -->
+                            <div id="teacher-schedule-placeholder" style="text-align: center; padding: 40px; color: #6b7280;">
+                                <p class="help-text">Select a teacher to view their schedule</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- JavaScript -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>        // Global variables
+        </div>    </div>
+      <!-- JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>    <script>
         // Global variables
         const userRole = <?php echo json_encode($user_role); ?>;
         const sectionsData = <?php echo json_encode($sections, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
-
-        // Utility functions - defined early to avoid reference errors
-        function debounce(func, wait) {
-            let timeout;
-            return function executedFunction(...args) {
-                const later = () => {
-                    clearTimeout(timeout);
-                    func(...args);
-                };
-                clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
-            };
-        }
-
-        function escapeHtml(unsafe) {
-            if (unsafe == null) return '';
-            return unsafe.toString()
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
-
-        function generateEmployeeNumber() {
-            // Simple employee number generator - you may want to implement this via AJAX call
-            const year = new Date().getFullYear();
-            const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-            const empNumber = `VES${year}T${randomNum}`;
-            const empNumberField = document.getElementById('employeeNumber');
-            if (empNumberField) {
-                empNumberField.value = empNumber;
-            }
-        }
-
-        function showNotification(message, type = 'info') {
-            const notification = document.getElementById('notification');
-            if (notification) {
-                notification.textContent = message;
-                notification.className = `notification ${type}`;
-                notification.style.display = 'block';
-                setTimeout(() => {
-                    notification.style.display = 'none';
-                }, 5000);
-            } else {
-                // Fallback to console if notification element doesn't exist
-                console.log(`${type.toUpperCase()}: ${message}`);
-            }
-        }
-
-        function loadStatisticsForBulk() {
-            // Placeholder function for bulk operations statistics
-            console.log('Loading bulk operations statistics...');
-        }
-
-        // Search functionality for teachers
-        function searchTeachers() {
-            const searchTerm = $('#teacherSearch').val().toLowerCase();
-            
-            if (!searchTerm) {
-                // If no search term, reload all teachers
-                loadTeachers();
-                return;
-            }
-            
-            // Filter displayed teachers based on search term
-            $('#teachersTable tbody tr').each(function() {
-                const row = $(this);
-                const text = row.text().toLowerCase();
-                
-                if (text.includes(searchTerm)) {
-                    row.show();
-                } else {
-                    row.hide();
-                }
-            });
-        }
-
-        // Modal functions
-        function showModal(title, content) {
-            // Create a simple modal overlay
-            const modalHtml = `
-                <div id="modalOverlay" class="modal-overlay" style="
-                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                    background: rgba(0,0,0,0.5); z-index: 9999; display: flex;
-                    justify-content: center; align-items: center;
-                ">
-                    <div class="modal-content" style="
-                        background: white; padding: 20px; border-radius: 8px;
-                        max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;
-                        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                    ">
-                        <div class="modal-header" style="
-                            display: flex; justify-content: space-between; align-items: center;
-                            margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee;
-                        ">
-                            <h3 style="margin: 0;">${title}</h3>
-                            <button onclick="closeModal()" style="
-                                background: none; border: none; font-size: 20px; cursor: pointer;
-                                padding: 0; width: 30px; height: 30px; display: flex;
-                                justify-content: center; align-items: center;
-                            ">&times;</button>
-                        </div>
-                        <div class="modal-body">
-                            ${content}
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            // Remove existing modal if any
-            closeModal();
-            
-            // Add to body
-            $('body').append(modalHtml);
-            
-            // Close on overlay click
-            $('#modalOverlay').click(function(e) {
-                if (e.target === this) {
-                    closeModal();
-                }
-            });
-        }
-
-        function closeModal() {
-            $('#modalOverlay').remove();
-        }
-
-        // Initialize the application
-        $(document).ready(function() {
-            // --- DEBUGGING CONSOLE LOGS ---
-            console.log("Document ready. Initializing Headmaster Portal scripts.");
-            
-            if (typeof $ === 'undefined') {
-                console.error("CRITICAL: jQuery is not loaded!");
-                alert("Critical error: jQuery is not loaded. Page functionality will be severely impaired.");
-                throw new Error("jQuery is not loaded");
-            } else {
-                // ✅ ALL INITIALIZATION CODE GOES INSIDE THIS ELSE BLOCK
-                console.log("jQuery is loaded successfully. Proceeding with initialization...");
-                
-                if (typeof sectionsData === 'undefined') {
-                    console.error("CRITICAL: sectionsData is undefined. This usually means an issue with PHP generating the data for JavaScript.");
-                    $('#notification').text("Error: Page data (sectionsData) could not be loaded. Check browser console.").addClass('error').show();
-                } else {
-                    console.log("sectionsData loaded:", sectionsData);
-                }
-                console.log("userRole loaded:", userRole);
-
-                if ($('.tabs-nav .tab-button').length === 0) {
-                    console.warn("No tab buttons found. Check HTML structure.");
-                }
-                if ($('.tab-content').length === 0) {
-                    console.warn("No tab content areas found. Check HTML structure.");
-                }
-                // --- END DEBUGGING CONSOLE LOGS ---
-
-                initializeTabs();
-                initializeFormHandlers();
-
-                // Determine the initially active tab from HTML, or default to 'manage-teachers'
-                // .first() is added in case multiple buttons somehow get the active class
-                const initialTabId = $('.tabs-nav .tab-button.active').first().data('tab') || (userRole === 'admin' ? 'add-teacher' : 'manage-teachers');
-                console.log("Attempting to activate initial tab ID:", initialTabId);
-                
-                if ($(`#${initialTabId}`).length === 0) {
-                    console.error("CRITICAL: Initial tab content area #" + initialTabId + " not found in the DOM!");
-                    $('#notification').text("Error: Initial tab content area not found. Page may not display correctly.").addClass('error').show();
-                    // Fallback to the first available tab if the intended one is missing
-                    const firstAvailableTab = $('.tabs-nav .tab-button').first().data('tab');
-                    if (firstAvailableTab && $(`#${firstAvailableTab}`).length > 0) {
-                        console.log("Falling back to first available tab:", firstAvailableTab);
-                        switchTab(firstAvailableTab);
-                    } else {
-                        console.error("CRITICAL: No fallback tab content area found either.");
-                    }
-                } else {
-                    switchTab(initialTabId); // This will also trigger data loading for the active tab
-                }
-                
-                console.log("JavaScript initialization sequence complete. UI should be interactive if no errors occurred.");
-            }
-        });
-
-        // Tab management
-        function initializeTabs() {
-            $('.tab-button').click(function() {
-                const tabId = $(this).data('tab');
-                switchTab(tabId);
-            });
-        }
-
+        let currentTab = null;
+        
         function switchTab(tabId) {
-            console.log("Switching to tab:", tabId);
-            // Update active states
+            console.log(`Attempting to switch to tab: ${tabId}`);            const $targetContent = $('#' + tabId);
+            const $targetButton = $('.tab-button[data-tab="' + tabId + '"]');
+
+            if ($targetContent.length === 0) {
+                console.error(`Tab content not found for ID: #${tabId}`);
+                showNotification(`Error: Content for tab ${tabId} not found.`, 'error');
+                // Do not proceed if content area doesn't exist
+                // Attempt to switch to a default valid tab if the current one is problematic
+                // This prevents getting stuck on a non-existent tab from localStorage
+                if (localStorage.getItem('activeTeacherManagementTab') === tabId) {
+                    localStorage.removeItem('activeTeacherManagementTab');
+                    // Try to re-initialize with default if this was an attempt to load a bad stored tab
+                    console.warn(`Invalid tab ${tabId} was stored. Clearing and attempting to re-initialize.`);
+                    // Find a sensible default (first non-admin or first overall)
+                    const defaultFallbackTab = $('<?php echo $user_role; ?>' === 'admin' ? '.tab-button' : '.tab-button:not(.admin-only)').first().data('tab');
+                    if (defaultFallbackTab && defaultFallbackTab !== tabId) { // Avoid recursion if the default is also bad
+                        return switchTab(defaultFallbackTab); // Recursive call, ensure base case
+                    }
+                }
+                return false; 
+            }
+              // Role-based access check for tabs marked as 'admin-only'
+            if ($targetButton.hasClass('admin-only') && userRole !== 'admin') {
+                console.warn(`Access denied: Tab "${tabId}" is admin-only. Current role: "${userRole}".`);
+                showNotification('Access denied to this section.', 'error');
+                // Fallback to a default accessible tab
+                const fallbackTab = $('<?php echo $user_role; ?>' === 'admin' ? '.tab-button' : '.tab-button:not(.admin-only)').first().data('tab');
+                if (fallbackTab && fallbackTab !== tabId) { // Avoid recursion
+                    return switchTab(fallbackTab);
+                }
+                return false; // Could not find a fallback
+            }            // Hide all tab content and remove active class from buttons
+            $('.tab-content').removeClass('active').hide();
             $('.tab-button').removeClass('active');
-            $('.tab-content').removeClass('active');
             
-            $(`[data-tab="${tabId}"]`).addClass('active');
-            $(`#${tabId}`).addClass('active');
-              // Load tab-specific data
-            switch(tabId) {
-                case 'add-teacher':
-                    // Form is static, no specific data to load on switch
-                    generateEmployeeNumber(); // Ensure emp number is fresh if admin switches back
-                    break;
-                case 'manage-teachers':
-                    loadTeachers();
-                    break;
-                case 'class-assignments':
-                    loadClassAssignments();
-                    break;
-                case 'subject-assignments':
-                    // Load both individual teacher subjects and all assignments data
-                    if ($('#subjectTeacher').val()) {
-                        loadTeacherSubjects();
-                    }
-                    loadSubjectAssignmentsTabData();
-                    break;
-                case 'timetable-management':
-                    loadAdminTimetableManagementData();
-                    break;
-                case 'bulk-operations':
-                    loadStatisticsForBulk(); // Example: load stats if needed here
-                    break;
-                default:
-                    console.warn("No specific data loading logic for tab:", tabId);
+            // Show target content and add active classes
+            $targetContent.addClass('active').show();
+            $targetButton.addClass('active');
+
+            // Store the successfully switched tabId
+            try {
+                localStorage.setItem('activeTeacherManagementTab', tabId);
+            } catch (e) {
+                console.warn("Could not save active tab to localStorage after switch:", e);
             }
-        }
 
-        // Alias for compatibility - some parts of the code expect showTab function
-        function showTab(tabId) {
-            switchTab(tabId);
-        }
-
-        // Form handlers
-        function initializeFormHandlers() {
-            // Add teacher form
-            $('#addTeacherForm').submit(handleAddTeacher);
-            
-            // Class assignment
-            $('#assignClass').change(updateSections);
-            $('#assignClassTeacher').click(handleClassAssignment);
-            
-            // Subject assignment
-            $('#subjectTeacher').change(loadTeacherSubjects);
-            $('#updateSubjectAssignments').click(handleSubjectAssignment);
-            $('#clearSubjectAssignments').click(clearSubjectSelections);
-            
-            // Search
-            $('#teacherSearch').on('input', debounce(searchTeachers, 300));
-            
-            // Bulk operations
-            $('#executeBulkAssignment').click(handleBulkAssignment);
-            
-            // Timetable specific handlers
-            $('#adminRefreshConflictsBtn').off('click').on('click', loadAdminTimetableConflicts);
-        }
-
-        // Add teacher functionality
-        function handleAddTeacher(e) {
-            e.preventDefault();
-            
-            if (userRole !== 'admin') {
-                showNotification('Only administrators can add new teachers', 'error');
-                return;
-            }
-            
-            const formData = new FormData(this);
-            
-            $.ajax({
-                url: 'teacher_management_api.php',
-                method: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(response) {
-                    if (response.success) {
-                        showNotification('Teacher added successfully!', 'success');
-                        $('#addTeacherForm')[0].reset();
-                        loadTeachers();
-                    } else {
-                        showNotification(response.message || 'Failed to add teacher', 'error');
-                    }
-                },
-                error: function() {
-                    showNotification('An error occurred while adding the teacher', 'error');
-                }
-            });
-        }
-
-        // Load teachers
-        function loadTeachers() {
-            $('#teachersLoading').show();
-            $('#teachersTableBody').empty();
-            
-            $.ajax({
-                url: 'teacher_management_api.php',
-                method: 'GET',
-                data: { action: 'get_teachers' },
-                success: function(response) {
-                    $('#teachersLoading').hide();
-                    
-                    if (response.success) {
-                        displayTeachers(response.data);
-                    } else {
-                        showNotification('Failed to load teachers', 'error');
-                    }
-                },
-                error: function() {
-                    $('#teachersLoading').hide();
-                    showNotification('An error occurred while loading teachers', 'error');
-                }
-            });
-        }
-
-        function displayTeachers(teachers) {
-            const tbody = $('#teachersTableBody');
-            tbody.empty();
-            teachers.forEach(teacher => {
-                const row = `
-                    <tr>
-                        <td>${escapeHtml(teacher.full_name)}</td>
-                        <td>${escapeHtml(teacher.employee_number)}</td>
-                        <td>${escapeHtml(teacher.email)}</td>
-                        <td><span class="status-badge status-${teacher.status}">${teacher.status}</span></td>
-                        <td class="actions">
-                            <button class="btn btn-outline btn-sm" onclick="viewTeacher(${teacher.id})">
-                                <i class="fas fa-eye"></i> View
-                            </button>
-                            ${userRole === 'admin' ? `
-                                <button class="btn btn-primary btn-sm" onclick="editTeacher(${teacher.id})">
-                                    <i class="fas fa-edit"></i> Edit
-                                </button>
-                            ` : ''}
-                        </td>
-                    </tr>
-                `;
-                tbody.append(row);
-            });
-        }
-
-        // Class assignment functionality with enhanced section handling
-        function updateSections() {
-            const classId = $('#assignClass').val();
-            const sectionSelect = $('#assignSection');
-            
-            sectionSelect.empty().append('<option value="">Select Section</option>');
-            
-            if (classId) {
-                // Load sections with current teacher info via AJAX
-                $.ajax({
-                    url: 'teacher_management_api.php',
-                    method: 'GET',
-                    data: { action: 'get_sections', class_id: classId },
-                    success: function(response) {
-                        if (response.success) {
-                            response.data.forEach(section => {
-                                let optionText = escapeHtml(section.name);
-                                if (section.current_teacher_name) {
-                                    optionText += ` (Currently: ${section.current_teacher_name})`;
-                                }
-                                sectionSelect.append(`<option value="${section.id}">${optionText}</option>`);
-                            });
-                            sectionSelect.prop('disabled', false);
+            console.log(`Loading content for tab: ${tabId}`);
+            try {
+                switch (tabId) {
+                    case 'add-teacher':
+                        if (typeof generateEmployeeNumber === 'function') {
+                            const addTeacherForm = $('#addTeacherForm');
+                            if (addTeacherForm.length) addTeacherForm[0].reset();
+                            generateEmployeeNumber();
                         }
-                    }
-                });
-            } else {
-                sectionSelect.prop('disabled', true);
-            }
-        }
-
-        function handleClassAssignment() {
-            const data = {
-                action: 'assign_class_teacher',
-                teacher_id: $('#assignTeacher').val(),
-                class_id: $('#assignClass').val(),
-                section_id: $('#assignSection').val()
-            };
-            
-            if (!data.teacher_id || !data.class_id || !data.section_id) {
-                showNotification('Please select teacher, class, and section', 'error');
-                return;
-            }
-            
-            // First check for conflicts
-            checkAssignmentConflicts(data);
-        }
-
-        function checkAssignmentConflicts(assignmentData) {
-            $.ajax({
-                url: 'teacher_management_api.php',
-                method: 'POST',
-                data: {
-                    action: 'check_conflicts',
-                    teacher_id: assignmentData.teacher_id,
-                    section_id: assignmentData.section_id
-                },
-                success: function(response) {
-                    if (response.success && response.conflicts.length > 0) {
-                        showConflictDialog(response.conflicts, response.workload, assignmentData);
-                    } else {
-                        // No conflicts, proceed with assignment
-                        executeClassAssignment(assignmentData);
-                    }
-                },
-                error: function() {
-                    showNotification('Error checking conflicts', 'error');
-                }
-            });
-        }
-
-        function showConflictDialog(conflicts, workload, assignmentData) {
-            let conflictHtml = '<div class="conflict-dialog"><h4>Assignment Conflicts Detected</h4>';
-            
-            conflicts.forEach(conflict => {
-                conflictHtml += `<div class="conflict-item"><strong>${conflict.type.replace(/_/g, ' ').toUpperCase()}:</strong> ${conflict.message}</div>`;
-            });
-            
-            if (workload.class_teacher_count > 0) {
-                conflictHtml += `<div class="workload-info"><h5>Current Workload:</h5>`;
-                conflictHtml += `<p>Class Teacher: ${workload.class_teacher_count} class(es)</p>`;
-                conflictHtml += `<p>Subject Assignments: ${workload.subject_count} subject(s)</p></div>`;
-            }
-            
-            conflictHtml += '<div class="conflict-actions">';
-            conflictHtml += '<button class="btn btn-primary" onclick="forceAssignment()">Force Assignment</button>';
-            conflictHtml += '<button class="btn btn-secondary" onclick="closeConflictDialog()">Cancel</button>';
-            conflictHtml += '</div></div>';
-            
-            // Store assignment data for force assignment
-            window.pendingAssignment = assignmentData;
-            
-            // Show modal or inline conflict display
-            showModal('Assignment Conflicts', conflictHtml);
-        }
-
-        function forceAssignment() {
-            if (window.pendingAssignment) {
-                window.pendingAssignment.force_assign = true;
-                executeClassAssignment(window.pendingAssignment);
-                closeConflictDialog();
-            }
-        }
-
-        function closeConflictDialog() {
-            window.pendingAssignment = null;
-            closeModal();
-        }
-
-        function executeClassAssignment(data) {
-            $.ajax({
-                url: 'teacher_management_api.php',
-                method: 'POST',
-                data: data,
-                success: function(response) {
-                    if (response.success) {
-                        showNotification(response.message || 'Class teacher assigned successfully!', 'success');
-                        if (response.conflicts_resolved > 0) {
-                            showNotification(`${response.conflicts_resolved} conflicts were resolved`, 'info');
+                        break;
+                    case 'manage-teachers':
+                        if (typeof loadTeachers === 'function') loadTeachers();
+                        break;
+                    case 'class-assignments':
+                        if (typeof loadClassAssignments === 'function') loadClassAssignments();
+                        if (typeof loadTeachersForDropdowns === 'function') loadTeachersForDropdowns('assignTeacher', false); // For assign class teacher
+                        if (typeof loadClassesForDropdowns === 'function') loadClassesForDropdowns('assignClass', false); // For assign class
+                        // Initial call to updateSections if a class might be pre-selected or to set initial state
+                        if (typeof updateSections === 'function') updateSections($('#assignClass').val(), 'assignSection');
+                        break;
+                    case 'subject-assignments':
+                        if (typeof loadTeachersForDropdowns === 'function') {
+                            loadTeachersForDropdowns('subjectTeacher', false); // For individual assignment
+                            loadTeachersForDropdowns('filterTeacher'); // For 'All Assignments' filter
                         }
-                        loadClassAssignments();
-                        // Reset form
-                        $('#assignClass, #assignSection, #assignTeacher').val('');
-                        $('#assignSection').prop('disabled', true);
-                    } else if (response.require_confirmation) {
-                        showConflictDialog(response.conflicts, {}, data);
-                    } else {
-                        showNotification(response.message || 'Failed to assign class teacher', 'error');
-                    }
-                },
-                error: function() {
-                    showNotification('An error occurred while assigning class teacher', 'error');
+                        if (typeof loadSubjectsForDropdowns === 'function') {
+                           // loadSubjectsForDropdowns('assignSubjectSubject'); // This was for a direct subject dropdown, now using checkboxes
+                           loadSubjectsForDropdowns('filterSubject'); // For 'All Assignments' filter
+                        }
+                         // Populate checkboxes when tab is switched, not just on teacher selection
+                        if (typeof populateSubjectCheckboxes === 'function') {
+                            // Pass null or undefined if no teacher is initially selected, or the ID of a default/selected teacher
+                            populateSubjectCheckboxes($('#subjectTeacher').val() || null);
+                        }
+                        if (typeof loadAssignmentFilters === 'function') loadAssignmentFilters(); // This might be redundant if dropdowns are loaded directly
+                        if (typeof loadAllSubjectAssignments === 'function') loadAllSubjectAssignments();
+                        break;
+                    case 'timetable-management':
+                        if (typeof loadAdminTimetableManagementData === 'function') loadAdminTimetableManagementData();
+                        break;
+                    case 'bulk-operations':
+                        if (typeof loadBulkOperationsData === 'function') loadBulkOperationsData();
+                        if (typeof loadStatisticsForBulk === 'function') loadStatisticsForBulk();
+                        break;
+                    default:
+                        console.warn('Unknown tab ID in switchTab:', tabId);
+                        return false; // Unknown tab
                 }
-            });
-        }
-
+                console.log(`Successfully processed logic for tab: ${tabId}`);
+                return true; // Signal success
+            } catch (error) {
+                console.error(`Error loading content for tab ${tabId}:`, error);
+                showNotification(`Error loading tab ${tabId}: ${error.message}`, 'error');
+                return false; // Signal failure
+            }
+        }        // --- IMPLEMENTED FUNCTIONS ---
+        
+        /**
+         * Load and display class teacher assignments
+         */
         function loadClassAssignments() {
+            console.log('Loading class assignments...');
+            const container = $('#classAssignmentsTable');
+            const loading = $('<div class="loading"><div class="spinner"></div><p>Loading assignments...</p></div>');
+            
+            container.html(loading);
+            
             $.ajax({
                 url: 'teacher_management_api.php',
-                method: 'GET',
+                type: 'GET',
                 data: { action: 'get_class_assignments' },
+                dataType: 'json',
                 success: function(response) {
-                    if (response.success) {
-                        displayClassAssignments(response.data);
+                    console.log('Class assignments loaded:', response);
+                    
+                    if (response.success && response.data) {
+                        displayClassAssignments(response.data, container);
+                    } else {
+                        container.html('<p class="help-text">No class assignments found</p>');
                     }
                 },
-                error: function() {
-                    showNotification('An error occurred while loading class assignments', 'error');
+                error: function(xhr, status, error) {
+                    console.error('Error loading class assignments:', error);
+                    container.html('<p class="help-text text-danger">Error loading assignments</p>');
+                    showNotification('Failed to load class assignments', 'error');
                 }
             });
         }
-
-        function displayClassAssignments(assignments) {
-            const container = $('#classAssignmentsTable');
-            
-            if (assignments.length === 0) {
+        
+        /**
+         * Display class assignments in a table
+         */
+        function displayClassAssignments(assignments, container) {
+            if (!assignments || assignments.length === 0) {
                 container.html('<p class="help-text">No class teacher assignments found</p>');
                 return;
             }
@@ -1766,8 +1748,8 @@ include 'sidebar.php';
                             <th>Section</th>
                             <th>Teacher</th>
                             <th>Employee ID</th>
-                            <th>Workload</th>
-                            <th>Actions</th>
+                            <th>Status</th>
+                            <th class="admin-only">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1780,25 +1762,18 @@ include 'sidebar.php';
                         <td><span class="section-badge">${escapeHtml(assignment.section_name)}</span></td>
                         <td>
                             <div class="teacher-info">
-                                <div class="teacher-name">${escapeHtml(assignment.teacher_name)}</div>
-                                <div class="teacher-email">${escapeHtml(assignment.employee_number)}</div>
+                                <span class="teacher-name">${escapeHtml(assignment.teacher_name)}</span>
                             </div>
                         </td>
                         <td><code>${escapeHtml(assignment.employee_number)}</code></td>
-                        <td>
-                            <button class="btn btn-outline btn-sm" onclick="showTeacherWorkload(${assignment.teacher_id})">
-                                <i class="fas fa-chart-bar"></i> View
-                            </button>
-                        </td>
-                        <td class="actions">
-                            <button class="btn btn-outline btn-sm" onclick="reassignClassTeacher(${assignment.section_id}, '${escapeHtml(assignment.class_name)} - ${escapeHtml(assignment.section_name)}')">
+                        <td><span class="status-badge status-${assignment.teacher_status}">${assignment.teacher_status}</span></td>
+                        <td class="actions admin-only">
+                            <button class="btn btn-sm btn-outline" onclick="reassignClassTeacher(${assignment.section_id})">
                                 <i class="fas fa-exchange-alt"></i> Reassign
                             </button>
-                            ${userRole === 'admin' ? `
-                                <button class="btn btn-secondary btn-sm" onclick="removeClassTeacher(${assignment.section_id}, '${escapeHtml(assignment.teacher_name)}', '${escapeHtml(assignment.class_name)} - ${escapeHtml(assignment.section_name)}')">
-                                    <i class="fas fa-times"></i> Remove
-                                </button>
-                            ` : ''}
+                            <button class="btn btn-sm btn-secondary" onclick="removeClassTeacher(${assignment.section_id})">
+                                <i class="fas fa-times"></i> Remove
+                            </button>
                         </td>
                     </tr>
                 `;
@@ -1807,212 +1782,487 @@ include 'sidebar.php';
             html += '</tbody></table>';
             container.html(html);
         }
-
-        function showTeacherWorkload(teacherId) {
-            console.log('Showing teacher workload for teacher ID:', teacherId);
+        
+        /**
+         * Load admin timetable management data
+         */
+        function loadAdminTimetableManagementData() {
+            console.log('Loading admin timetable management data...');
+            
+            // Load conflicts
+            loadTimetableConflicts();
+            
+            // Load teacher schedules overview
+            loadTeacherSchedulesOverview();
+            
+            // Load class timetable status
+            loadClassTimetableStatus();
+            
+            // Load teacher dropdown for schedule editor
+            loadTeachersForDropdowns('selectedTeacher', false);
+        }
+        
+        /**
+         * Load timetable conflicts
+         */
+        function loadTimetableConflicts() {
+            const container = $('#adminTimetableConflicts');
+            const loading = $('#adminTimetableConflictsLoading');
+            
+            container.hide();
+            loading.show();
+            
             $.ajax({
                 url: 'teacher_management_api.php',
-                method: 'GET',
-                data: { action: 'get_teacher_workload', teacher_id: teacherId },
+                type: 'GET',
+                data: { action: 'get_timetable_conflicts' },
                 dataType: 'json',
                 success: function(response) {
-                    console.log('Workload API response:', response);
-                    if (response.success) {
-                        displayWorkloadModal(response.data);
+                    loading.hide();
+                    container.show();
+                    
+                    if (response.success && response.data && response.data.length > 0) {
+                        displayTimetableConflicts(response.data, container);
                     } else {
-                        showModal('Error', '<p>Failed to load teacher workload data.</p>');
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error loading teacher workload:', error);
-                    showModal('Error', '<p>Error loading teacher workload data. Please try again.</p>');
-                }
-            });
-        }
-        
-
-        function displayWorkloadModal(workload) {
-            console.log('Displaying workload modal with data:', workload);
-            
-            let html = '<div class="workload-details">';
-            html += `<h4>Teacher Workload Summary</h4>`;
-            html += `<div class="workload-stats">`;
-            html += `<div class="stat-item"><span class="stat-label">Class Teacher Assignments:</span> <span class="stat-value">${workload.class_assignments || 0} class(es)</span></div>`;
-            html += `<div class="stat-item"><span class="stat-label">Subject Assignments:</span> <span class="stat-value">${workload.subject_assignments || 0} subject(s)</span></div>`;
-            html += `<div class="stat-item"><span class="stat-label">Timetable Periods:</span> <span class="stat-value">${workload.timetable_periods || 0} period(s)</span></div>`;
-            html += `</div>`;
-            
-            // Note: The current API only returns counts, not detailed lists
-            // We would need to modify the API to get detailed lists if needed
-            if (workload.class_assignments > 0) {
-                html += `<p><small><em>Note: This teacher is assigned as class teacher to ${workload.class_assignments} class(es).</em></small></p>`;
-            }
-            
-            if (workload.subject_assignments > 0) {
-                html += `<p><small><em>Note: This teacher has ${workload.subject_assignments} subject assignment(s).</em></small></p>`;
-            }
-              if (workload.timetable_periods > 0) {
-                html += `<p><small><em>Note: This teacher has ${workload.timetable_periods} period(s) in published timetables.</em></small></p>`;
-            }
-            
-            html += '</div>';
-            showModal('Teacher Workload', html);
-        }
-        
-
-        // Reassignment functionality
-        function reassignClassTeacher(sectionId, sectionInfo) {
-            // First load available teachers, then show the modal
-            $.ajax({
-                url: 'teacher_management_api.php',
-                method: 'GET',
-                data: { action: 'get_teachers' },
-                success: function(response) {
-                    if (response.success) {
-                        showReassignmentModal(sectionId, sectionInfo, response.data);
-                    } else {
-                        showNotification('Failed to load teachers', 'error');
+                        container.html('<div class="alert alert-success"><i class="fas fa-check-circle"></i> No timetable conflicts detected</div>');
                     }
                 },
                 error: function() {
-                    showNotification('Error loading teachers for reassignment', 'error');
+                    loading.hide();
+                    container.show().html('<div class="alert alert-error">Error loading conflicts</div>');
                 }
             });
         }
-
-        function showReassignmentModal(sectionId, sectionInfo, teachers) {
-            let html = `
-                <div class="reassign-form">
-                    <h4 class="reassign-title">Reassign Class Teacher for ${sectionInfo}</h4>
-                    <div class="form-group">
-                        <label>Select New Teacher:</label>
-                        <select id="newTeacherSelect" class="form-select">
-                            <option value="">Select Teacher</option>`;
+        
+        /**
+         * Display timetable conflicts
+         */
+        function displayTimetableConflicts(conflicts, container) {
+            let html = '<div class="alert alert-warning"><h6><i class="fas fa-exclamation-triangle"></i> Conflicts Detected</h6><ul>';
             
-            // Populate with teachers from API response
-            teachers.forEach(teacher => {
-                html += `<option value="${teacher.id}">${escapeHtml(teacher.full_name)} (${escapeHtml(teacher.employee_number || 'N/A')})</option>`;
+            conflicts.forEach(conflict => {
+                html += `<li>${conflict.message} - ${conflict.details || ''}</li>`;
             });
             
-            html += `
-                        </select>
+            html += '</ul></div>';
+            container.html(html);
+        }
+        
+        /**
+         * Load teacher schedules overview
+         */
+        function loadTeacherSchedulesOverview() {
+            const container = $('#adminTeacherTimetableOverview');
+            const loading = $('#adminTeacherTimetableOverviewLoading');
+            
+            container.hide();
+            loading.show();
+            
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'GET',
+                data: { action: 'get_teacher_schedules' },
+                dataType: 'json',
+                success: function(response) {
+                    loading.hide();
+                    container.show();
+                    
+                    if (response.success && response.data) {
+                        displayTeacherSchedulesOverview(response.data, container);
+                    } else {
+                        container.html('<p class="help-text">No teacher schedules found</p>');
+                    }
+                },
+                error: function() {
+                    loading.hide();
+                    container.show().html('<p class="help-text text-danger">Error loading teacher schedules</p>');
+                }
+            });
+        }
+        
+        /**
+         * Display teacher schedules overview
+         */
+        function displayTeacherSchedulesOverview(schedules, container) {
+            let html = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Teacher</th>
+                            <th>Employee ID</th>
+                            <th>Schedule Summary</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            schedules.forEach(schedule => {
+                const scheduleCount = schedule.schedule ? schedule.schedule.length : 0;
+                html += `
+                    <tr>
+                        <td>${escapeHtml(schedule.teacher_name)}</td>
+                        <td><code>${escapeHtml(schedule.employee_number)}</code></td>
+                        <td>${scheduleCount} periods assigned</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline" onclick="viewTeacherSchedule(${schedule.teacher_id})">
+                                <i class="fas fa-calendar-alt"></i> View Schedule
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            container.html(html);
+        }
+        
+        /**
+         * Load class timetable status
+         */
+        function loadClassTimetableStatus() {
+            const container = $('#adminClassTimetableStatus');
+            const loading = $('#adminClassTimetableStatusLoading');
+            
+            container.hide();
+            loading.show();
+            
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'GET',
+                data: { action: 'get_class_timetable_status' },
+                dataType: 'json',
+                success: function(response) {
+                    loading.hide();
+                    container.show();
+                    
+                    if (response.success && response.data) {
+                        displayClassTimetableStatus(response.data, container);
+                    } else {
+                        container.html('<p class="help-text">No class timetable data found</p>');
+                    }
+                },
+                error: function() {
+                    loading.hide();
+                    container.show().html('<p class="help-text text-danger">Error loading class timetable status</p>');
+                }
+            });
+        }
+        
+        /**
+         * Display class timetable status
+         */
+        function displayClassTimetableStatus(classes, container) {
+            let html = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Class</th>
+                            <th>Section</th>
+                            <th>Status</th>
+                            <th>Completion</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            classes.forEach(cls => {
+                const statusClass = cls.status === 'published' ? 'status-active' : 'status-inactive';
+                const completionPercent = cls.completion_percentage || 0;
+                
+                html += `
+                    <tr>
+                        <td><strong>${escapeHtml(cls.class_name)}</strong></td>
+                        <td><span class="section-badge">${escapeHtml(cls.section_name)}</span></td>
+                        <td><span class="status-badge ${statusClass}">${cls.status || 'Draft'}</span></td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div style="flex: 1; background: #f0f0f0; border-radius: 4px; height: 6px;">
+                                    <div style="background: var(--primary-color); height: 100%; border-radius: 4px; width: ${completionPercent}%;"></div>
+                                </div>
+                                <span style="font-size: 0.875rem;">${completionPercent}%</span>
+                            </div>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline" onclick="editClassTimetable(${cls.class_id}, ${cls.section_id})">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            container.html(html);
+        }
+        
+        /**
+         * Load bulk operations data
+         */
+        function loadBulkOperationsData() {
+            console.log('Loading bulk operations data...');
+            loadStatisticsForBulk();
+        }
+        
+        /**
+         * Load statistics for bulk operations
+         */
+        function loadStatisticsForBulk() {
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'GET',
+                data: { action: 'get_statistics' },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success && response.data) {
+                        displayBulkStatistics(response.data);
+                    }
+                },
+                error: function() {
+                    console.error('Error loading bulk statistics');
+                }
+            });
+        }
+        
+        /**
+         * Display bulk statistics
+         */
+        function displayBulkStatistics(stats) {
+            const container = $('#statisticsContent');
+            const html = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
+                    <div class="stat-item">
+                        <div class="stat-label">Total Teachers</div>
+                        <div class="stat-value">${stats.total_teachers}</div>
                     </div>
-                    <div class="form-actions">
-                        <button class="btn btn-primary" onclick="executeReassignment(${sectionId})">Reassign</button>
-                        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                    <div class="stat-item">
+                        <div class="stat-label">Active Teachers</div>
+                        <div class="stat-value">${stats.active_teachers}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Assigned Teachers</div>
+                        <div class="stat-value">${stats.assigned_teachers}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Unassigned Teachers</div>
+                        <div class="stat-value">${stats.unassigned_teachers}</div>
                     </div>
                 </div>
             `;
-            
-            showModal('Reassign Class Teacher', html);
+            container.html(html);
         }
 
-        function executeReassignment(sectionId) {
-            const newTeacherId = $('#newTeacherSelect').val();
-            if (!newTeacherId) {
-                showNotification('Please select a teacher', 'error');
+        /**
+         * Initialize form handlers
+         */
+        function initializeFormHandlers() {
+            console.log('Initializing form handlers...');
+            
+            // Add teacher form
+            $('#addTeacherForm').on('submit', handleAddTeacher);
+            $('#generateEmpNumber').on('click', generateEmployeeNumber);
+            
+            // Class assignment form
+            $('#assignClass').on('change', function() {
+                updateSections($(this).val(), 'assignSection');
+            });
+            $('#assignClassTeacher').on('click', handleClassTeacherAssignment);
+            
+            // Subject assignment form  
+            $('#subjectTeacher').on('change', handleTeacherSubjectSelection);
+            $('#updateSubjectAssignments').on('click', handleSubjectAssignmentUpdate);
+            
+            // Refresh buttons
+            $('#adminRefreshConflictsBtn').on('click', loadTimetableConflicts);
+            $('#refreshAllAssignments').on('click', loadAllSubjectAssignments);
+            
+            // Teacher schedule editor
+            $('#teacherScheduleEditorToggle').on('click', toggleScheduleEditor);
+            $('#loadTeacherSchedule').on('click', loadSelectedTeacherSchedule);
+            
+            console.log('Form handlers initialized');
+        }
+
+        /**
+         * Initialize search handlers
+         */
+        function initializeSearchHandlers() {
+            console.log('Initializing search handlers...');
+            
+            // Teacher search
+            $('#teacherSearch').on('input', debounce(searchTeachers, 300));
+            
+            // Assignment filters
+            $('#filterTeacher, #filterSubject').on('change', filterAllAssignments);
+            $('#assignmentSearchInput').on('input', debounce(searchAllAssignments, 300));
+            $('#clearAllFilters').on('click', clearAllAssignmentFilters);
+            
+            console.log('Search handlers initialized');
+        }
+        
+        /**
+         * Handle add teacher form submission
+         */
+        function handleAddTeacher(e) {
+            e.preventDefault();
+            
+            const formData = {
+                action: 'add_teacher',
+                full_name: $('#fullName').val(),
+                email: $('#email').val(),
+                phone: $('#phone').val(),
+                password: $('#password').val()
+            };
+            
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'POST',
+                data: formData,
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        showNotification('Teacher added successfully!', 'success');
+                        $('#addTeacherForm')[0].reset();
+                        loadTeachers(); // Refresh teacher list
+                    } else {
+                        showNotification(response.message || 'Failed to add teacher', 'error');
+                    }
+                },
+                error: function() {
+                    showNotification('Error adding teacher', 'error');
+                }
+            });
+        }
+        
+        /**
+         * Handle class teacher assignment
+         */
+        function handleClassTeacherAssignment() {
+            const classId = $('#assignClass').val();
+            const sectionId = $('#assignSection').val();
+            const teacherId = $('#assignTeacher').val();
+            
+            if (!classId || !sectionId || !teacherId) {
+                showNotification('Please select class, section, and teacher', 'error');
                 return;
             }
             
             $.ajax({
                 url: 'teacher_management_api.php',
-                method: 'POST',
+                type: 'POST',
                 data: {
-                    action: 'reassign_class_teacher',
+                    action: 'assign_class_teacher',
                     section_id: sectionId,
-                    new_teacher_id: newTeacherId
+                    teacher_id: teacherId
                 },
+                dataType: 'json',
                 success: function(response) {
                     if (response.success) {
-                        showNotification('Class teacher reassigned successfully!', 'success');
-                        loadClassAssignments();
-                        closeModal();
+                        showNotification('Class teacher assigned successfully!', 'success');
+                        $('#assignClass, #assignSection, #assignTeacher').val('');
+                        $('#assignSection').prop('disabled', true);
+                        loadClassAssignments(); // Refresh assignments
                     } else {
-                        showNotification(response.message || 'Failed to reassign teacher', 'error');
+                        showNotification(response.message || 'Failed to assign teacher', 'error');
                     }
+                },
+                error: function() {
+                    showNotification('Error assigning class teacher', 'error');
                 }
             });
-        }        // Subject assignment functionality
-        function loadTeacherSubjects() {
-            const teacherId = $('#subjectTeacher').val();
+        }
+        
+        /**
+         * Handle teacher selection for subject assignments
+         */
+        function handleTeacherSubjectSelection() {
+            const teacherId = $(this).val();
             
             if (!teacherId) {
                 $('#subjectAssignmentsDisplay').html('<p class="help-text">Select a teacher to view their subject assignments</p>');
-                $('input[name="subjects[]"]').prop('checked', false);
                 return;
             }
             
-            // Show loading state
-            $('#subjectAssignmentsDisplay').html('<p class="help-text">Loading current subject assignments...</p>');
-            
+            loadTeacherSubjects(teacherId);
+        }
+        
+        /**
+         * Load teacher subjects for assignment
+         */
+        function loadTeacherSubjects(teacherId) {
             $.ajax({
                 url: 'teacher_management_api.php',
-                method: 'GET',
-                data: { action: 'get_teacher_subjects', teacher_id: teacherId },
+                type: 'GET',
+                data: {
+                    action: 'get_teacher_subjects',
+                    teacher_id: teacherId
+                },
                 dataType: 'json',
                 success: function(response) {
-                    console.log('Teacher subjects response:', response); // Debug log
                     if (response.success) {
-                        // Update checkboxes
-                        $('input[name="subjects[]"]').prop('checked', false);
-                        if (response.data && response.data.length > 0) {
-                            response.data.forEach(subject => {
-                                $(`input[name="subjects[]"][value="${subject.subject_id}"]`).prop('checked', true);
-                            });
-                        }
-                        
-                        // Display current assignments
-                        displayTeacherSubjects(response.data || []);
+                        displayTeacherSubjects(response.data, teacherId);
                     } else {
-                        console.error('API returned error:', response.message);
-                        $('#subjectAssignmentsDisplay').html('<p class="help-text text-danger">Failed to load subject assignments: ' + (response.message || 'Unknown error') + '</p>');
-                        showNotification(response.message || 'Failed to load teacher subjects', 'error');
+                        showNotification('Error loading teacher subjects', 'error');
                     }
                 },
-                error: function(xhr, status, error) {
-                    console.error('AJAX Error loading teacher subjects:', {
-                        status: status,
-                        error: error,
-                        responseText: xhr.responseText
-                    });
-                    $('#subjectAssignmentsDisplay').html('<p class="help-text text-danger">Error loading subject assignments. Please try again.</p>');
-                    showNotification('Failed to load teacher subjects: ' + error, 'error');
+                error: function() {
+                    showNotification('Error loading teacher subjects', 'error');
                 }
             });
-        }        function displayTeacherSubjects(subjects) {
-            const container = $('#subjectAssignmentsDisplay');
+        }
+        
+        /**
+         * Display teacher subjects with checkboxes
+         */
+        function displayTeacherSubjects(assignedSubjects, teacherId) {
+            let html = '<div class="subject-checkboxes" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 16px 0;">';
             
-            if (!subjects || subjects.length === 0) {
-                container.html('<p class="help-text">No subjects assigned to this teacher</p>');
-                return;
-            }
+            // Get all subjects and mark assigned ones
+            const allSubjects = <?php echo json_encode($subjects); ?>;
             
-            let html = '<div style="display: flex; flex-wrap: wrap; gap: 8px;">';
-            subjects.forEach(subject => {
-                // Handle class and section names safely
-                const className = subject.class_name ? ` - ${escapeHtml(subject.class_name)}` : '';
-                const sectionName = subject.section_name ? ` (${escapeHtml(subject.section_name)})` : '';
-                const subjectName = subject.subject_name ? escapeHtml(subject.subject_name) : 'Unknown Subject';
-                
-                html += `<span class="status-badge status-active">${subjectName}${className}${sectionName}</span>`;
+            allSubjects.forEach(subject => {
+                const isAssigned = assignedSubjects.includes(subject.id);
+                html += `
+                    <label style="display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid #e2e8f0; border-radius: 4px; cursor: pointer;">
+                        <input type="checkbox" name="subjects[]" value="${subject.id}" ${isAssigned ? 'checked' : ''}>
+                        <span>${escapeHtml(subject.name)} (${escapeHtml(subject.code)})</span>
+                    </label>
+                `;
             });
+            
             html += '</div>';
+            html += `
+                <div class="actions" style="margin-top: 16px;">
+                    <button class="btn btn-primary" id="updateSubjectAssignments">
+                        <i class="fas fa-save"></i> Update Assignments
+                    </button>
+                    <button class="btn btn-outline" onclick="clearSubjectSelections()">
+                        <i class="fas fa-times"></i> Clear All
+                    </button>
+                </div>
+            `;
             
-            container.html(html);
-        }        function handleSubjectAssignment() {
-            const teacherId = $('#subjectTeacher').val();
-            const selectedSubjects = $('input[name="subjects[]"]:checked').map(function() {
-                return this.value;
-            }).get();
+            $('#subjectAssignmentsDisplay').html(html);
             
-            if (!teacherId) {
-                showNotification('Please select a teacher', 'error');
-                return;
-            }
+            // Re-bind the update button
+            $('#updateSubjectAssignments').off('click').on('click', function() {
+                handleSubjectAssignmentUpdate(teacherId);
+            });
+        }
+        
+        /**
+         * Handle subject assignment update
+         */
+        function handleSubjectAssignmentUpdate(teacherId) {
+            const selectedSubjects = [];
+            $('input[name="subjects[]"]:checked').each(function() {
+                selectedSubjects.push($(this).val());
+            });
             
             $.ajax({
                 url: 'teacher_management_api.php',
-                method: 'POST',
+                type: 'POST',
                 data: {
                     action: 'update_subject_assignments',
                     teacher_id: teacherId,
@@ -2022,619 +2272,2378 @@ include 'sidebar.php';
                 success: function(response) {
                     if (response.success) {
                         showNotification('Subject assignments updated successfully!', 'success');
-                        loadTeacherSubjects(); // Refresh display
+                        loadAllSubjectAssignments(); // Refresh all assignments view
                     } else {
-                        showNotification(response.message || 'Failed to update subject assignments', 'error');
+                        showNotification(response.message || 'Failed to update assignments', 'error');
                     }
                 },
-                error: function(xhr, status, error) {
-                    console.error('AJAX Error updating subject assignments:', {
-                        status: status,
-                        error: error,
-                        responseText: xhr.responseText
-                    });
-                    showNotification('An error occurred while updating subject assignments', 'error');
+                error: function() {
+                    showNotification('Error updating subject assignments', 'error');
                 }
             });
         }
-
+        
+        /**
+         * Clear subject selections
+         */
         function clearSubjectSelections() {
             $('input[name="subjects[]"]').prop('checked', false);
         }
-
-        // Bulk operations
-        function handleBulkAssignment() {
-            const classId = $('#bulkAssignClass').val();
-            const subjectId = $('#bulkAssignSubject').val();
-            const teacherIds = $('input[name="bulkTeachers[]"]:checked').map(function() {
-                return this.value;
-            }).get();
-            
-            const data = {
-                action: 'bulk_assignment',
-                class_id: classId,
-                subject_id: subjectId,
-                teacher_ids: teacherIds
-            };
-            
-            if (!classId || !subjectId || teacherIds.length === 0) {
-                showNotification('Please select class, subject, and at least one teacher', 'error');
-                return;
-            }
-            
-            $.ajax({
-                url: 'teacher_management_api.php',
-                method: 'POST',
-                data: data,
-                success: function(response) {
-                    if (response.success) {
-                        showNotification('Bulk assignment completed successfully!', 'success');
-                        // Reset form
-                        $('#bulkAssignClass, #bulkAssignSubject').val('');
-                        $('input[name="bulkTeachers[]"]').prop('checked', false);
-                    } else {
-                        showNotification(response.message || 'Failed to execute bulk assignment', 'error');
-                    }
-                },
-                error: function() {
-                    showNotification('An error occurred during bulk assignment', 'error');
-                }
-            });
-        }
-
-        // TIMETABLE MANAGEMENT FUNCTIONS (Admin version)
-        function loadAdminTimetableManagementData() {
-            console.log("Loading all admin timetable management data...");
-            loadAdminTimetableConflicts();
-            loadAdminTeacherSchedules();
-            loadAdminClassTimetableStatus();
-        }
-
-        function loadAdminTimetableConflicts() {
-            $('#adminTimetableConflictsLoading').show();
-            $('#adminTimetableConflicts').html('<p class="help-text">Loading conflicts...</p>');
-            $.ajax({
-                url: 'teacher_management_api.php',
-                method: 'GET',
-                data: { action: 'get_timetable_conflicts' }, // Reusing API action
-                success: function(response) {
-                    $('#adminTimetableConflictsLoading').hide();
-                    if (response.success && response.data) {
-                        displayAdminTimetableConflicts(response.data);
-                    } else {
-                        $('#adminTimetableConflicts').html(`<p class="help-text text-danger">Failed to load conflicts: ${response.message || 'Unknown error'}</p>`);
-                        showNotification(response.message || 'Failed to load timetable conflicts', 'error');
-                    }
-                },
-                error: function(jqXHR, textStatus, errorThrown) {
-                    $('#adminTimetableConflictsLoading').hide();
-                    $('#adminTimetableConflicts').html('<p class="help-text text-danger">Error loading conflicts. Please try again.</p>');
-                    showNotification('Error loading timetable conflicts: ' + errorThrown, 'error');
-                    console.error("AJAX error get_timetable_conflicts (admin):", textStatus, errorThrown, jqXHR.responseText);
-                }
-            });
-        }
-
-        function displayAdminTimetableConflicts(conflicts) {
-            const container = $('#adminTimetableConflicts');
-            container.empty();
-            if (conflicts.length === 0) {
-                container.html('<p class="help-text">No schedule conflicts found.</p>');
-                return;
-            }
-            let html = '<ul class="list-group">';
-            conflicts.forEach(conflict => {
-                html += `<li class="list-group-item list-group-item-warning">
-                            <strong>Conflict:</strong> ${escapeHtml(conflict.description || 'N/A')} <br>
-                            <strong>Teacher:</strong> ${escapeHtml(conflict.teacher_name || 'N/A')} <br>
-                            <strong>Details:</strong> Class ${escapeHtml(conflict.class_name || 'N/A')} - ${escapeHtml(conflict.subject_name || 'N/A')} at ${escapeHtml(conflict.time_slot || 'N/A')} on ${escapeHtml(conflict.day_of_week || 'N/A')}
-                        </li>`;
-            });
-            html += '</ul>';
-            container.html(html);
-        }
-
-        function loadAdminTeacherSchedules() {
-            $('#adminTeacherTimetableOverviewLoading').show();
-            $('#adminTeacherTimetableOverview').html('<p class="help-text">Loading teacher schedules...</p>');
-            $.ajax({
-                url: 'teacher_management_api.php',
-                method: 'GET',
-                data: { action: 'get_teacher_schedules' }, // Reusing API action
-                success: function(response) {
-                    $('#adminTeacherTimetableOverviewLoading').hide();
-                    if (response.success && response.data) {
-                        displayAdminTeacherSchedules(response.data);
-                    } else {
-                        $('#adminTeacherTimetableOverview').html(`<p class="help-text text-danger">Failed to load teacher schedules: ${response.message || 'Unknown error'}</p>`);
-                        showNotification(response.message || 'Failed to load teacher schedules', 'error');
-                    }
-                },
-                error: function(jqXHR, textStatus, errorThrown) {
-                    $('#adminTeacherTimetableOverviewLoading').hide();
-                    $('#adminTeacherTimetableOverview').html('<p class="help-text text-danger">Error loading teacher schedules. Please try again.</p>');
-                    showNotification('Error loading teacher schedules: ' + errorThrown, 'error');
-                    console.error("AJAX error get_teacher_schedules (admin):", textStatus, errorThrown, jqXHR.responseText);
-                }
-            });
-        }
-
-        function displayAdminTeacherSchedules(schedules) {
-            const container = $('#adminTeacherTimetableOverview');
-            container.empty();
-            if (schedules.length === 0) {
-                container.html('<p class="help-text">No teacher schedules available.</p>');
-                return;
-            }
-            let html = '<div class="accordion" id="adminTeacherScheduleAccordion">';
-            schedules.forEach((teacherSchedule, index) => {
-                html += `
-                    <div class="card">
-                        <div class="card-header" id="headingAdminTeacher${index}">
-                            <h5 class="mb-0">
-                                <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseAdminTeacher${index}" aria-expanded="true" aria-controls="collapseAdminTeacher${index}">
-                                    ${escapeHtml(teacherSchedule.teacher_name)} (${escapeHtml(teacherSchedule.employee_number || 'N/A')})
-                                </button>
-                            </h5>
-                        </div>
-                        <div id="collapseAdminTeacher${index}" class="collapse" aria-labelledby="headingAdminTeacher${index}" data-parent="#adminTeacherScheduleAccordion">
-                            <div class="card-body">
-                                <table class="data-table table-sm">
-                                    <thead><tr><th>Day</th><th>Time</th><th>Class</th><th>Section</th><th>Subject</th></tr></thead>
-                                    <tbody>`;
-                if (teacherSchedule.schedule && teacherSchedule.schedule.length > 0) {
-                    teacherSchedule.schedule.forEach(entry => {
-                        html += `<tr>
-                                    <td>${escapeHtml(entry.day_of_week)}</td>
-                                    <td>${escapeHtml(entry.time_slot)}</td>
-                                    <td>${escapeHtml(entry.class_name)}</td>
-                                    <td>${escapeHtml(entry.section_name)}</td>
-                                    <td>${escapeHtml(entry.subject_name)}</td>
-                                </tr>`;
-                    });
-                } else {
-                    html += '<tr><td colspan="5" class="text-center">No schedule entries found for this teacher.</td></tr>';
-                }
-                html +=       `</tbody></table>
-                            </div>
-                        </div>
-                    </div>`;
-            });
-            html += '</div>';
-            container.html(html);
-            // Initialize Bootstrap collapse if you're using it and it's available
-            // if (typeof $.fn.collapse === 'function') {
-            //    $('#adminTeacherScheduleAccordion .collapse').collapse(); 
-            // }
-        }
-
-        function loadAdminClassTimetableStatus() {
-            $('#adminClassTimetableStatusLoading').show();
-            $('#adminClassTimetableStatus').html('<p class="help-text">Loading class timetable statuses...</p>');
-            $.ajax({
-                url: 'teacher_management_api.php',
-                method: 'GET',
-                data: { action: 'get_class_timetable_status' }, // Reusing API action
-                success: function(response) {
-                    $('#adminClassTimetableStatusLoading').hide();
-                    if (response.success && response.data) {
-                        displayAdminClassTimetableStatus(response.data);
-                    } else {
-                        $('#adminClassTimetableStatus').html(`<p class="help-text text-danger">Failed to load class timetable status: ${response.message || 'Unknown error'}</p>`);
-                        showNotification(response.message || 'Failed to load class timetable status', 'error');
-                    }
-                },
-                error: function(jqXHR, textStatus, errorThrown) {
-                    $('#adminClassTimetableStatusLoading').hide();
-                    $('#adminClassTimetableStatus').html('<p class="help-text text-danger">Error loading class timetable status. Please try again.</p>');
-                    showNotification('Error loading class timetable status: ' + errorThrown, 'error');
-                    console.error("AJAX error get_class_timetable_status (admin):", textStatus, errorThrown, jqXHR.responseText);
-                }
-            });
-        }
-
-        function displayAdminClassTimetableStatus(statuses) {
-            const container = $('#adminClassTimetableStatus');
-            container.empty();
-            if (statuses.length === 0) {
-                container.html('<p class="help-text">No class timetable statuses available.</p>');
-                return;
-            }
-            let html = '<table class="data-table"><thead><tr><th>Class</th><th>Section</th><th>Status</th><th>Coverage</th><th>Issues</th></tr></thead><tbody>';
-            statuses.forEach(status => {
-                html += `<tr>
-                            <td>${escapeHtml(status.class_name)}</td>
-                            <td>${escapeHtml(status.section_name)}</td>
-                            <td><span class="status-badge status-${status.is_complete ? 'active' : 'inactive'}">${status.is_complete ? 'Complete' : 'Incomplete'}</span></td>
-                            <td>${escapeHtml(status.coverage_percentage || '0')}%</td>
-                            <td>${escapeHtml(status.issues_count || '0')}</td>
-                        </tr>`;
-            });
-            html += '</tbody></table>';
-            container.html(html);
-        }
-
-        // Bulk operations helper function
-        function loadStatisticsForBulk() {
-            // Load basic statistics for bulk operations display
-            $.ajax({
-                url: 'teacher_management_api.php',
-                method: 'GET',
-                data: { action: 'get_statistics' },
-                success: function(response) {
-                    if (response.success) {
-                        // Update any statistics displays in bulk operations tab
-                        console.log('Bulk statistics loaded:', response.data);
-                    }
-                },
-                error: function() {
-                    console.warn('Failed to load bulk statistics');
-                }
-            });
-        }
-
-        // Additional helper functions that might be called from HTML
-
-        function viewTeacher(teacherId) {
-            // Implementation for viewing teacher details
-            $.ajax({
-                url: 'teacher_management_api.php',
-                method: 'GET',
-                data: { action: 'get_teacher_details', teacher_id: teacherId },
-                success: function(response) {
-                    if (response.success) {
-                        showTeacherDetailsModal(response.data);
-                    } else {
-                        showNotification('Failed to load teacher details', 'error');
-                    }
-                },
-                error: function() {
-                    showNotification('Error loading teacher details', 'error');
-                }
-            });
-        }
-
-        function editTeacher(teacherId) {
-            // Implementation for editing teacher
-            console.log('Edit teacher:', teacherId);
-            showNotification('Edit teacher functionality to be implemented', 'info');
-        }
-
-        function removeClassTeacher(sectionId, teacherName, sectionInfo) {
-            if (confirm(`Are you sure you want to remove ${teacherName} as class teacher for ${sectionInfo}?`)) {
-                $.ajax({
-                    url: 'teacher_management_api.php',
-                    method: 'POST',
-                    data: {
-                        action: 'remove_class_teacher',
-                        section_id: sectionId
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            showNotification('Class teacher removed successfully!', 'success');
-                            loadClassAssignments();
-                        } else {
-                            showNotification(response.message || 'Failed to remove class teacher', 'error');
-                        }
-                    },
-                    error: function() {
-                        showNotification('Error removing class teacher', 'error');
-                    }
-                });
-            }
-        }
-
-        function showTeacherDetailsModal(teacher) {
-            let html = `
-                <div class="teacher-details">
-                    <h4>Teacher Details</h4>
-                    <div class="details-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                        <div><strong>Name:</strong> ${escapeHtml(teacher.full_name)}</div>
-                        <div><strong>Employee ID:</strong> ${escapeHtml(teacher.employee_number || 'N/A')}</div>
-                        <div><strong>Email:</strong> ${escapeHtml(teacher.email)}</div>
-                        <div><strong>Phone:</strong> ${escapeHtml(teacher.phone || 'N/A')}</div>
-                        <div><strong>Status:</strong> <span class="status-badge status-${teacher.status}">${teacher.status}</span></div>
-                        <div><strong>Created:</strong> ${escapeHtml(teacher.created_at || 'N/A')}</div>
-                    </div>
-                    <div style="margin-top: 16px;">
-                        <strong>Class Assignments:</strong> ${teacher.classes || 'None'}
-                    </div>
-                </div>
-            `;
-            
-            showModal('Teacher Details', html);
-        }
         
-        // Load all subject assignments
+        /**
+         * Load all subject assignments
+         */
         function loadAllSubjectAssignments() {
-            $('#allAssignmentsLoading').show();
-            $('#allAssignmentsTable').hide();
-            $('#allAssignmentsEmpty').hide();
+            const container = $('#allAssignmentsTable');
+            const loading = $('#allAssignmentsLoading');
+            const empty = $('#allAssignmentsEmpty');
             
-            const searchTerm = $('#allAssignmentsSearch').val();
-            const teacherId = $('#filterTeacher').val();
-            const subjectId = $('#filterSubject').val();
-            
-            const params = {
-                action: 'get_all_subject_assignments'
-            };
-            
-            if (searchTerm) params.search = searchTerm;
-            if (teacherId) params.teacher_id = teacherId;
-            if (subjectId) params.subject_id = subjectId;
+            container.hide();
+            empty.hide();
+            loading.show();
             
             $.ajax({
                 url: 'teacher_management_api.php',
-                method: 'GET',
-                data: params,
+                type: 'GET',
+                data: { action: 'get_all_subject_assignments' },
                 dataType: 'json',
                 success: function(response) {
-                    $('#allAssignmentsLoading').hide();
+                    loading.hide();
                     
-                    if (response.success) {
-                        displayAllAssignments(response.data);
-                        updateAssignmentStatistics(response.data.statistics);
+                    if (response.success && response.data && response.data.assignments && response.data.assignments.length > 0) {
+                        displayAllSubjectAssignments(response.data.assignments);
+                        displayAssignmentStatistics(response.data.statistics);
+                        container.show();
                     } else {
-                        showNotification('Failed to load subject assignments: ' + (response.message || 'Unknown error'), 'error');
-                        $('#allAssignmentsEmpty').show();
+                        empty.show();
                     }
                 },
-                error: function(xhr, status, error) {
-                    $('#allAssignmentsLoading').hide();
-                    $('#allAssignmentsEmpty').show();
-                    console.error('Error loading all subject assignments:', error);
-                    showNotification('Error loading subject assignments: ' + error, 'error');
+                error: function() {
+                    loading.hide();
+                    container.show();
+                    $('#allAssignmentsTableBody').html('<tr><td colspan="7" class="text-center text-danger">Error loading assignments</td></tr>');
                 }
             });
         }
-
-        // Display all assignments in the table
-        function displayAllAssignments(data) {
+        
+        /**
+         * Display all subject assignments
+         */
+        function displayAllSubjectAssignments(assignments) {
             const tbody = $('#allAssignmentsTableBody');
             tbody.empty();
             
-            if (!data.assignments || data.assignments.length === 0) {
-                $('#allAssignmentsTable').hide();
-                $('#allAssignmentsEmpty').show();
-                return;
-            }
-            
-            $('#allAssignmentsEmpty').hide();
-            $('#allAssignmentsTable').show();
-            
-            data.assignments.forEach(teacher => {
-                if (teacher.assignments && teacher.assignments.length > 0) {
-                    // First row for teacher info
-                    let isFirstRow = true;
-                    
-                    teacher.assignments.forEach(assignment => {                        const row = $(`
+            assignments.forEach(teacher => {
+                const teacherInfo = teacher.teacher_info;
+                const teacherAssignments = teacher.assignments;
+                
+                if (teacherAssignments.length === 0) {
+                    // Show teacher with no assignments
+                    tbody.append(`
+                        <tr>
+                            <td><code>${escapeHtml(teacherInfo.employee_number)}</code></td>
+                            <td>${escapeHtml(teacherInfo.name)}</td>
+                            <td colspan="3"><em>No subject assignments</em></td>
+                            <td><span class="status-badge status-${teacherInfo.status}">${teacherInfo.status}</span></td>
+                            <td>-</td>
+                        </tr>
+                    `);
+                } else {
+                    // Show each assignment
+                    teacherAssignments.forEach((assignment, index) => {
+                        tbody.append(`
                             <tr>
-                                <td><code>${escapeHtml(teacher.teacher_info.employee_number || 'N/A')}</code></td>
+                                ${index === 0 ? `<td rowspan="${teacherAssignments.length}"><code>${escapeHtml(teacherInfo.employee_number)}</code></td>` : ''}
+                                ${index === 0 ? `<td rowspan="${teacherAssignments.length}">${escapeHtml(teacherInfo.name)}</td>` : ''}
+                                <td>${escapeHtml(assignment.subject_name)}</td>
+                                <td><code>${escapeHtml(assignment.subject_code)}</code></td>
+                                <td><span class="assignment-scope-badge ${assignment.assignment_scope}">${assignment.assignment_scope}</span></td>
+                                ${index === 0 ? `<td rowspan="${teacherAssignments.length}"><span class="status-badge status-${teacherInfo.status}">${teacherInfo.status}</span></td>` : ''}
                                 <td>
-                                    <div class="teacher-info-cell">
-                                        <div class="teacher-name">${escapeHtml(teacher.teacher_info.name)}</div>
-                                        <div class="teacher-email">${escapeHtml(teacher.teacher_info.email)}</div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="subject-info-cell">
-                                        <div class="subject-name">${escapeHtml(assignment.subject_name)}</div>
-                                        ${assignment.subject_code ? `<div class="subject-code">${escapeHtml(assignment.subject_code)}</div>` : ''}
-                                    </div>
-                                </td>
-                                <td><code>${escapeHtml(assignment.subject_code || 'N/A')}</code></td>
-                                <td>
-                                    <span class="assignment-scope-badge ${assignment.assignment_scope === 'All Classes' ? 'all-classes' : 'specific-class'}">
-                                        ${escapeHtml(assignment.assignment_scope)}
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="status-badge status-${teacher.teacher_info.status}">
-                                        ${teacher.teacher_info.status}
-                                    </span>
-                                </td>
-                                <td class="actions">
-                                    <button class="btn btn-outline btn-sm" onclick="viewAssignmentDetails(${assignment.assignment_id})" title="View Details">
-                                        <i class="fas fa-eye"></i>
+                                    <button class="btn btn-sm btn-outline" onclick="removeSubjectAssignment(${assignment.assignment_id})">
+                                        <i class="fas fa-times"></i>
                                     </button>
-                                    ${userRole === 'admin' ? `
-                                        <button class="btn btn-secondary btn-sm" onclick="removeSpecificAssignment(${assignment.assignment_id}, '${escapeHtml(teacher.teacher_info.name)}', '${escapeHtml(assignment.subject_name)}')" title="Remove Assignment">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    ` : ''}
                                 </td>
                             </tr>
                         `);
-                        
-                        tbody.append(row);
-                        isFirstRow = false;
                     });
-                } else {                    // Teacher with no assignments
-                    const row = $(`
-                        <tr>
-                            <td><code>${escapeHtml(teacher.teacher_info.employee_number || 'N/A')}</code></td>
-                            <td>
-                                <div class="teacher-info-cell">
-                                    <div class="teacher-name">${escapeHtml(teacher.teacher_info.name)}</div>
-                                    <div class="teacher-email">${escapeHtml(teacher.teacher_info.email)}</div>
-                                </div>
-                            </td>
-                            <td colspan="3" class="text-center" style="color: var(--text-secondary); font-style: italic;">
-                                No subject assignments
-                            </td>
-                            <td>
-                                <span class="status-badge status-${teacher.teacher_info.status}">
-                                    ${teacher.teacher_info.status}
-                                </span>
-                            </td>
-                            <td class="actions">
-                                <button class="btn btn-primary btn-sm" onclick="assignSubjectToTeacher(${teacher.teacher_info.id}, '${escapeHtml(teacher.teacher_info.name)}')" title="Assign Subject">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    `);
-                    
-                    tbody.append(row);
                 }
             });
         }
-
-        // Update statistics display
-        function updateAssignmentStatistics(stats) {
+        
+        /**
+         * Display assignment statistics
+         */
+        function displayAssignmentStatistics(stats) {
             const container = $('#assignmentStatistics');
-            container.empty();
-            
-            const statisticsCards = [
-                { label: 'Total Teachers', value: stats.total_teachers, icon: 'fas fa-users' },
-                { label: 'With Assignments', value: stats.teachers_with_assignments, icon: 'fas fa-user-check' },
-                { label: 'Total Assignments', value: stats.total_assignments, icon: 'fas fa-list' },
-                { label: 'Unique Subjects', value: stats.unique_subjects, icon: 'fas fa-book' }
-            ];
-            
-            statisticsCards.forEach(stat => {
-                const card = $(`
-                    <div class="stat-card">
-                        <i class="${stat.icon}" style="font-size: 1.5rem; color: var(--primary-color); margin-bottom: 8px;"></i>
-                        <span class="stat-number">${stat.value}</span>
-                        <span class="stat-label">${stat.label}</span>
+            const html = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
+                    <div class="stat-item">
+                        <div class="stat-label">Total Teachers</div>
+                        <div class="stat-value">${stats.total_teachers}</div>
                     </div>
-                `);
-                container.append(card);
+                    <div class="stat-item">
+                        <div class="stat-label">Active Teachers</div>
+                        <div class="stat-value">${stats.active_teachers}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Assigned Teachers</div>
+                        <div class="stat-value">${stats.assigned_teachers}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Unassigned Teachers</div>
+                        <div class="stat-value">${stats.unassigned_teachers}</div>
+                    </div>
+                </div>
+            `;
+            container.html(html);
+        }
+
+        /**
+         * Initialize form handlers
+         */
+        function initializeFormHandlers() {
+            console.log('Initializing form handlers...');
+            
+            // Add teacher form
+            $('#addTeacherForm').on('submit', handleAddTeacher);
+            $('#generateEmpNumber').on('click', generateEmployeeNumber);
+            
+            // Class assignment form
+            $('#assignClass').on('change', function() {
+                updateSections($(this).val(), 'assignSection');
             });
-        }
-
-        // Remove specific assignment
-        function removeSpecificAssignment(assignmentId, teacherName, subjectName) {
-            if (confirm(`Are you sure you want to remove ${subjectName} assignment from ${teacherName}?`)) {
-                $.ajax({
-                    url: 'teacher_management_api.php',
-                    method: 'POST',
-                    data: {
-                        action: 'remove_subject_assignment',
-                        assignment_id: assignmentId
-                    },
-                    dataType: 'json',
-                    success: function(response) {
-                        if (response.success) {
-                            showNotification('Subject assignment removed successfully!', 'success');
-                            loadAllSubjectAssignments();
-                            // Also refresh the current teacher's assignments if they're selected
-                            if ($('#subjectTeacher').val()) {
-                                loadTeacherSubjects();
-                            }
-                        } else {
-                            showNotification(response.message || 'Failed to remove assignment', 'error');
-                        }
-                    },
-                    error: function() {
-                        showNotification('Error removing assignment', 'error');
-                    }
-                });
-            }
-        }
-
-        // View assignment details
-        function viewAssignmentDetails(assignmentId) {
-            // Implementation for viewing detailed assignment info
-            showNotification('Assignment details view - to be implemented', 'info');
-        }
-
-        // Assign subject to teacher (quick assign)
-        function assignSubjectToTeacher(teacherId, teacherName) {
-            // Set the teacher in the subject assignment form and scroll to it
-            $('#subjectTeacher').val(teacherId).trigger('change');
+            $('#assignClassTeacher').on('click', handleClassTeacherAssignment);
             
-            // Scroll to the assignment form
-            $('html, body').animate({
-                scrollTop: $('#subjectTeacher').offset().top - 100
-            }, 500);
+            // Subject assignment form  
+            $('#subjectTeacher').on('change', handleTeacherSubjectSelection);
+            $('#updateSubjectAssignments').on('click', handleSubjectAssignmentUpdate);
             
-            showNotification(`Quick assign: ${teacherName} selected in assignment form`, 'info');
+            // Refresh buttons
+            $('#adminRefreshConflictsBtn').on('click', loadTimetableConflicts);
+            $('#refreshAllAssignments').on('click', loadAllSubjectAssignments);
+            
+            // Teacher schedule editor
+            $('#teacherScheduleEditorToggle').on('click', toggleScheduleEditor);
+            $('#loadTeacherSchedule').on('click', loadSelectedTeacherSchedule);
+            
+            console.log('Form handlers initialized');
         }
 
-        // Load filter options
-        function loadAssignmentFilters() {
-            // Load teachers for filter
+        /**
+         * Initialize search handlers
+         */
+        function initializeSearchHandlers() {
+            console.log('Initializing search handlers...');
+            
+            // Teacher search
+            $('#teacherSearch').on('input', debounce(searchTeachers, 300));
+            
+            // Assignment filters
+            $('#filterTeacher, #filterSubject').on('change', filterAllAssignments);
+            $('#assignmentSearchInput').on('input', debounce(searchAllAssignments, 300));
+            $('#clearAllFilters').on('click', clearAllAssignmentFilters);
+            
+            console.log('Search handlers initialized');
+        }
+        
+        /**
+         * Handle add teacher form submission
+         */
+        function handleAddTeacher(e) {
+            e.preventDefault();
+            
+            const formData = {
+                action: 'add_teacher',
+                full_name: $('#fullName').val(),
+                email: $('#email').val(),
+                phone: $('#phone').val(),
+                password: $('#password').val()
+            };
+            
             $.ajax({
                 url: 'teacher_management_api.php',
-                method: 'GET',
-                data: { action: 'get_teachers' },
+                type: 'POST',
+                data: formData,
+                dataType: 'json',
                 success: function(response) {
                     if (response.success) {
-                        const teacherSelect = $('#filterTeacher');
-                        teacherSelect.find('option[value!=""]').remove();
-                        
-                        response.data.forEach(teacher => {
-                            teacherSelect.append(`
-                                <option value="${teacher.id}">
-                                    ${escapeHtml(teacher.full_name)} (${escapeHtml(teacher.employee_number || 'N/A')})
-                                </option>
-                            `);
-                        });
+                        showNotification('Teacher added successfully!', 'success');
+                        $('#addTeacherForm')[0].reset();
+                        loadTeachers(); // Refresh teacher list
+                    } else {
+                        showNotification(response.message || 'Failed to add teacher', 'error');
                     }
+                },
+                error: function() {
+                    showNotification('Error adding teacher', 'error');
                 }
             });
+        }
+        
+        /**
+         * Handle class teacher assignment
+         */
+        function handleClassTeacherAssignment() {
+            const classId = $('#assignClass').val();
+            const sectionId = $('#assignSection').val();
+            const teacherId = $('#assignTeacher').val();
             
-            // Load subjects for filter
-            const subjectSelect = $('#filterSubject');
-            subjectSelect.find('option[value!=""]').remove();
-            
-            // Populate with subjects from the existing subjects data
-            if (typeof subjects !== 'undefined' && subjects.length > 0) {
-                subjects.forEach(subject => {
-                    subjectSelect.append(`
-                        <option value="${subject.id}">
-                            ${escapeHtml(subject.name)} (${escapeHtml(subject.code)})
-                        </option>
-                    `);
-                });
+            if (!classId || !sectionId || !teacherId) {
+                showNotification('Please select class, section, and teacher', 'error');
+                return;
             }
+            
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'POST',
+                data: {
+                    action: 'assign_class_teacher',
+                    section_id: sectionId,
+                    teacher_id: teacherId
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        showNotification('Class teacher assigned successfully!', 'success');
+                        $('#assignClass, #assignSection, #assignTeacher').val('');
+                        $('#assignSection').prop('disabled', true);
+                        loadClassAssignments(); // Refresh assignments
+                    } else {
+                        showNotification(response.message || 'Failed to assign teacher', 'error');
+                    }
+                },
+                error: function() {
+                    showNotification('Error assigning class teacher', 'error');
+                }
+            });
+        }
+        
+        /**
+         * Handle teacher selection for subject assignments
+         */
+        function handleTeacherSubjectSelection() {
+            const teacherId = $(this).val();
+            
+            if (!teacherId) {
+                $('#subjectAssignmentsDisplay').html('<p class="help-text">Select a teacher to view their subject assignments</p>');
+                return;
+            }
+            
+            loadTeacherSubjects(teacherId);
+        }
+        
+        /**
+         * Load teacher subjects for assignment
+         */
+        function loadTeacherSubjects(teacherId) {
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'GET',
+                data: {
+                    action: 'get_teacher_subjects',
+                    teacher_id: teacherId
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        displayTeacherSubjects(response.data, teacherId);
+                    } else {
+                        showNotification('Error loading teacher subjects', 'error');
+                    }
+                },
+                error: function() {
+                    showNotification('Error loading teacher subjects', 'error');
+                }
+            });
+        }
+        
+        /**
+         * Display teacher subjects with checkboxes
+         */
+        function displayTeacherSubjects(assignedSubjects, teacherId) {
+            let html = '<div class="subject-checkboxes" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 16px 0;">';
+            
+            // Get all subjects and mark assigned ones
+            const allSubjects = <?php echo json_encode($subjects); ?>;
+            
+            allSubjects.forEach(subject => {
+                const isAssigned = assignedSubjects.includes(subject.id);
+                html += `
+                    <label style="display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid #e2e8f0; border-radius: 4px; cursor: pointer;">
+                        <input type="checkbox" name="subjects[]" value="${subject.id}" ${isAssigned ? 'checked' : ''}>
+                        <span>${escapeHtml(subject.name)} (${escapeHtml(subject.code)})</span>
+                    </label>
+                `;
+            });
+            
+            html += '</div>';
+            html += `
+                <div class="actions" style="margin-top: 16px;">
+                    <button class="btn btn-primary" id="updateSubjectAssignments">
+                        <i class="fas fa-save"></i> Update Assignments
+                    </button>
+                    <button class="btn btn-outline" onclick="clearSubjectSelections()">
+                        <i class="fas fa-times"></i> Clear All
+                    </button>
+                </div>
+            `;
+            
+            $('#subjectAssignmentsDisplay').html(html);
+            
+            // Re-bind the update button
+            $('#updateSubjectAssignments').off('click').on('click', function() {
+                handleSubjectAssignmentUpdate(teacherId);
+            });
+        }
+        
+        /**
+         * Handle subject assignment update
+         */
+        function handleSubjectAssignmentUpdate(teacherId) {
+            const selectedSubjects = [];
+            $('input[name="subjects[]"]:checked').each(function() {
+                selectedSubjects.push($(this).val());
+            });
+            
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'POST',
+                data: {
+                    action: 'update_subject_assignments',
+                    teacher_id: teacherId,
+                    subject_ids: JSON.stringify(selectedSubjects)
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        showNotification('Subject assignments updated successfully!', 'success');
+                        loadAllSubjectAssignments(); // Refresh all assignments view
+                    } else {
+                        showNotification(response.message || 'Failed to update assignments', 'error');
+                    }
+                },
+                error: function() {
+                    showNotification('Error updating subject assignments', 'error');
+                }
+            });
+        }
+        
+        /**
+         * Clear subject selections
+         */
+        function clearSubjectSelections() {
+            $('input[name="subjects[]"]').prop('checked', false);
+        }
+        
+        /**
+         * Load all subject assignments
+         */
+        function loadAllSubjectAssignments() {
+            const container = $('#allAssignmentsTable');
+            const loading = $('#allAssignmentsLoading');
+            const empty = $('#allAssignmentsEmpty');
+            
+            container.hide();
+            empty.hide();
+            loading.show();
+            
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'GET',
+                data: { action: 'get_all_subject_assignments' },
+                dataType: 'json',
+                success: function(response) {
+                    loading.hide();
+                    
+                    if (response.success && response.data && response.data.assignments && response.data.assignments.length > 0) {
+                        displayAllSubjectAssignments(response.data.assignments);
+                        displayAssignmentStatistics(response.data.statistics);
+                        container.show();
+                    } else {
+                        empty.show();
+                    }
+                },
+                error: function() {
+                    loading.hide();
+                    container.show();
+                    $('#allAssignmentsTableBody').html('<tr><td colspan="7" class="text-center text-danger">Error loading assignments</td></tr>');
+                }
+            });
+        }
+        
+        /**
+         * Display all subject assignments
+         */
+        function displayAllSubjectAssignments(assignments) {
+            const tbody = $('#allAssignmentsTableBody');
+            tbody.empty();
+            
+            assignments.forEach(teacher => {
+                const teacherInfo = teacher.teacher_info;
+                const teacherAssignments = teacher.assignments;
+                
+                if (teacherAssignments.length === 0) {
+                    // Show teacher with no assignments
+                    tbody.append(`
+                        <tr>
+                            <td><code>${escapeHtml(teacherInfo.employee_number)}</code></td>
+                            <td>${escapeHtml(teacherInfo.name)}</td>
+                            <td colspan="3"><em>No subject assignments</em></td>
+                            <td><span class="status-badge status-${teacherInfo.status}">${teacherInfo.status}</span></td>
+                            <td>-</td>
+                        </tr>
+                    `);
+                } else {
+                    // Show each assignment
+                    teacherAssignments.forEach((assignment, index) => {
+                        tbody.append(`
+                            <tr>
+                                ${index === 0 ? `<td rowspan="${teacherAssignments.length}"><code>${escapeHtml(teacherInfo.employee_number)}</code></td>` : ''}
+                                ${index === 0 ? `<td rowspan="${teacherAssignments.length}">${escapeHtml(teacherInfo.name)}</td>` : ''}
+                                <td>${escapeHtml(assignment.subject_name)}</td>
+                                <td><code>${escapeHtml(assignment.subject_code)}</code></td>
+                                <td><span class="assignment-scope-badge ${assignment.assignment_scope}">${assignment.assignment_scope}</span></td>
+                                ${index === 0 ? `<td rowspan="${teacherAssignments.length}"><span class="status-badge status-${teacherInfo.status}">${teacherInfo.status}</span></td>` : ''}
+                                <td>
+                                    <button class="btn btn-sm btn-outline" onclick="removeSubjectAssignment(${assignment.assignment_id})">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `);
+                    });
+                }
+            });
+        }
+        
+        /**
+         * Display assignment statistics
+         */
+        function displayAssignmentStatistics(stats) {
+            const container = $('#assignmentStatistics');
+            const html = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
+                    <div class="stat-item">
+                        <div class="stat-label">Total Teachers</div>
+                        <div class="stat-value">${stats.total_teachers}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Active Teachers</div>
+                        <div class="stat-value">${stats.active_teachers}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Assigned Teachers</div>
+                        <div class="stat-value">${stats.assigned_teachers}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Unassigned Teachers</div>
+                        <div class="stat-value">${stats.unassigned_teachers}</div>
+                    </div>
+                </div>
+            `;
+            container.html(html);
         }
 
-        // Clear all filters
-        function clearAllFilters() {
-            $('#allAssignmentsSearch').val('');
+        /**
+         * Initialize form handlers
+         */
+        function initializeFormHandlers() {
+            console.log('Initializing form handlers...');
+            
+            // Add teacher form
+            $('#addTeacherForm').on('submit', handleAddTeacher);
+            $('#generateEmpNumber').on('click', generateEmployeeNumber);
+            
+            // Class assignment form
+            $('#assignClass').on('change', function() {
+                updateSections($(this).val(), 'assignSection');
+            });
+            $('#assignClassTeacher').on('click', handleClassTeacherAssignment);
+            
+            // Subject assignment form  
+            $('#subjectTeacher').on('change', handleTeacherSubjectSelection);
+            $('#updateSubjectAssignments').on('click', handleSubjectAssignmentUpdate);
+            
+            // Refresh buttons
+            $('#adminRefreshConflictsBtn').on('click', loadTimetableConflicts);
+            $('#refreshAllAssignments').on('click', loadAllSubjectAssignments);
+            
+            // Teacher schedule editor
+            $('#teacherScheduleEditorToggle').on('click', toggleScheduleEditor);
+            $('#loadTeacherSchedule').on('click', loadSelectedTeacherSchedule);
+            
+            console.log('Form handlers initialized');
+        }
+
+        /**
+         * Initialize search handlers
+         */
+        function initializeSearchHandlers() {
+            console.log('Initializing search handlers...');
+            
+            // Teacher search
+            $('#teacherSearch').on('input', debounce(searchTeachers, 300));
+            
+            // Assignment filters
+            $('#filterTeacher, #filterSubject').on('change', filterAllAssignments);
+            $('#assignmentSearchInput').on('input', debounce(searchAllAssignments, 300));
+            $('#clearAllFilters').on('click', clearAllAssignmentFilters);
+            
+            console.log('Search handlers initialized');
+        }
+        
+        /**
+         * Handle add teacher form submission
+         */
+        function handleAddTeacher(e) {
+            e.preventDefault();
+            
+            const formData = {
+                action: 'add_teacher',
+                full_name: $('#fullName').val(),
+                email: $('#email').val(),
+                phone: $('#phone').val(),
+                password: $('#password').val()
+            };
+            
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'POST',
+                data: formData,
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        showNotification('Teacher added successfully!', 'success');
+                        $('#addTeacherForm')[0].reset();
+                        loadTeachers(); // Refresh teacher list
+                    } else {
+                        showNotification(response.message || 'Failed to add teacher', 'error');
+                    }
+                },
+                error: function() {
+                    showNotification('Error adding teacher', 'error');
+                }
+            });
+        }
+        
+        /**
+         * Handle class teacher assignment
+         */
+        function handleClassTeacherAssignment() {
+            const classId = $('#assignClass').val();
+            const sectionId = $('#assignSection').val();
+            const teacherId = $('#assignTeacher').val();
+            
+            if (!classId || !sectionId || !teacherId) {
+                showNotification('Please select class, section, and teacher', 'error');
+                return;
+            }
+            
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'POST',
+                data: {
+                    action: 'assign_class_teacher',
+                    section_id: sectionId,
+                    teacher_id: teacherId
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        showNotification('Class teacher assigned successfully!', 'success');
+                        $('#assignClass, #assignSection, #assignTeacher').val('');
+                        $('#assignSection').prop('disabled', true);
+                        loadClassAssignments(); // Refresh assignments
+                    } else {
+                        showNotification(response.message || 'Failed to assign teacher', 'error');
+                    }
+                },
+                error: function() {
+                    showNotification('Error assigning class teacher', 'error');
+                }
+            });
+        }
+        
+        /**
+         * Handle teacher selection for subject assignments
+         */
+        function handleTeacherSubjectSelection() {
+            const teacherId = $(this).val();
+            
+            if (!teacherId) {
+                $('#subjectAssignmentsDisplay').html('<p class="help-text">Select a teacher to view their subject assignments</p>');
+                return;
+            }
+            
+            loadTeacherSubjects(teacherId);
+        }
+        
+        /**
+         * Load teacher subjects for assignment
+         */
+        function loadTeacherSubjects(teacherId) {
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'GET',
+                data: {
+                    action: 'get_teacher_subjects',
+                    teacher_id: teacherId
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        displayTeacherSubjects(response.data, teacherId);
+                    } else {
+                        showNotification('Error loading teacher subjects', 'error');
+                    }
+                },
+                error: function() {
+                    showNotification('Error loading teacher subjects', 'error');
+                }
+            });
+        }
+        
+        /**
+         * Display teacher subjects with checkboxes
+         */
+        function displayTeacherSubjects(assignedSubjects, teacherId) {
+            let html = '<div class="subject-checkboxes" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 16px 0;">';
+            
+            // Get all subjects and mark assigned ones
+            const allSubjects = <?php echo json_encode($subjects); ?>;
+            
+            allSubjects.forEach(subject => {
+                const isAssigned = assignedSubjects.includes(subject.id);
+                html += `
+                    <label style="display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid #e2e8f0; border-radius: 4px; cursor: pointer;">
+                        <input type="checkbox" name="subjects[]" value="${subject.id}" ${isAssigned ? 'checked' : ''}>
+                        <span>${escapeHtml(subject.name)} (${escapeHtml(subject.code)})</span>
+                    </label>
+                `;
+            });
+            
+            html += '</div>';
+            html += `
+                <div class="actions" style="margin-top: 16px;">
+                    <button class="btn btn-primary" id="updateSubjectAssignments">
+                        <i class="fas fa-save"></i> Update Assignments
+                    </button>
+                    <button class="btn btn-outline" onclick="clearSubjectSelections()">
+                        <i class="fas fa-times"></i> Clear All
+                    </button>
+                </div>
+            `;
+            
+            $('#subjectAssignmentsDisplay').html(html);
+            
+            // Re-bind the update button
+            $('#updateSubjectAssignments').off('click').on('click', function() {
+                handleSubjectAssignmentUpdate(teacherId);
+            });
+        }
+        
+        /**
+         * Handle subject assignment update
+         */
+        function handleSubjectAssignmentUpdate(teacherId) {
+            const selectedSubjects = [];
+            $('input[name="subjects[]"]:checked').each(function() {
+                selectedSubjects.push($(this).val());
+            });
+            
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'POST',
+                data: {
+                    action: 'update_subject_assignments',
+                    teacher_id: teacherId,
+                    subject_ids: JSON.stringify(selectedSubjects)
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        showNotification('Subject assignments updated successfully!', 'success');
+                        loadAllSubjectAssignments(); // Refresh all assignments view
+                    } else {
+                        showNotification(response.message || 'Failed to update assignments', 'error');
+                    }
+                },
+                error: function() {
+                    showNotification('Error updating subject assignments', 'error');
+                }
+            });
+        }
+        
+        /**
+         * Clear subject selections
+         */
+        function clearSubjectSelections() {
+            $('input[name="subjects[]"]').prop('checked', false);
+        }
+        
+        /**
+         * Load all subject assignments
+         */
+        function loadAllSubjectAssignments() {
+            const container = $('#allAssignmentsTable');
+            const loading = $('#allAssignmentsLoading');
+            const empty = $('#allAssignmentsEmpty');
+            
+            container.hide();
+            empty.hide();
+            loading.show();
+            
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'GET',
+                data: { action: 'get_all_subject_assignments' },
+                dataType: 'json',
+                success: function(response) {
+                    loading.hide();
+                    
+                    if (response.success && response.data && response.data.assignments && response.data.assignments.length > 0) {
+                        displayAllSubjectAssignments(response.data.assignments);
+                        displayAssignmentStatistics(response.data.statistics);
+                        container.show();
+                    } else {
+                        empty.show();
+                    }
+                },
+                error: function() {
+                    loading.hide();
+                    container.show();
+                    $('#allAssignmentsTableBody').html('<tr><td colspan="7" class="text-center text-danger">Error loading assignments</td></tr>');
+                }
+            });
+        }
+        
+        /**
+         * Display all subject assignments
+         */
+        function displayAllSubjectAssignments(assignments) {
+            const tbody = $('#allAssignmentsTableBody');
+            tbody.empty();
+            
+            assignments.forEach(teacher => {
+                const teacherInfo = teacher.teacher_info;
+                const teacherAssignments = teacher.assignments;
+                
+                if (teacherAssignments.length === 0) {
+                    // Show teacher with no assignments
+                    tbody.append(`
+                        <tr>
+                            <td><code>${escapeHtml(teacherInfo.employee_number)}</code></td>
+                            <td>${escapeHtml(teacherInfo.name)}</td>
+                            <td colspan="3"><em>No subject assignments</em></td>
+                            <td><span class="status-badge status-${teacherInfo.status}">${teacherInfo.status}</span></td>
+                            <td>-</td>
+                        </tr>
+                    `);
+                } else {
+                    // Show each assignment
+                    teacherAssignments.forEach((assignment, index) => {
+                        tbody.append(`
+                            <tr>
+                                ${index === 0 ? `<td rowspan="${teacherAssignments.length}"><code>${escapeHtml(teacherInfo.employee_number)}</code></td>` : ''}
+                                ${index === 0 ? `<td rowspan="${teacherAssignments.length}">${escapeHtml(teacherInfo.name)}</td>` : ''}
+                                <td>${escapeHtml(assignment.subject_name)}</td>
+                                <td><code>${escapeHtml(assignment.subject_code)}</code></td>
+                                <td><span class="assignment-scope-badge ${assignment.assignment_scope}">${assignment.assignment_scope}</span></td>
+                                ${index === 0 ? `<td rowspan="${teacherAssignments.length}"><span class="status-badge status-${teacherInfo.status}">${teacherInfo.status}</span></td>` : ''}
+                                <td>
+                                    <button class="btn btn-sm btn-outline" onclick="removeSubjectAssignment(${assignment.assignment_id})">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `);
+                    });
+                }
+            });
+        }
+        
+        /**
+         * Display assignment statistics
+         */
+        function displayAssignmentStatistics(stats) {
+            const container = $('#assignmentStatistics');
+            const html = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
+                    <div class="stat-item">
+                        <div class="stat-label">Total Teachers</div>
+                        <div class="stat-value">${stats.total_teachers}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Active Teachers</div>
+                        <div class="stat-value">${stats.active_teachers}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Assigned Teachers</div>
+                        <div class="stat-value">${stats.assigned_teachers}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Unassigned Teachers</div>
+                        <div class="stat-value">${stats.unassigned_teachers}</div>
+                    </div>
+                </div>
+            `;
+            container.html(html);
+        }
+
+        /**
+         * Initialize form handlers
+         */
+        function initializeFormHandlers() {
+            console.log('Initializing form handlers...');
+            
+            // Add teacher form
+            $('#addTeacherForm').on('submit', handleAddTeacher);
+            $('#generateEmpNumber').on('click', generateEmployeeNumber);
+            
+            // Class assignment form
+            $('#assignClass').on('change', function() {
+                updateSections($(this).val(), 'assignSection');
+            });
+            $('#assignClassTeacher').on('click', handleClassTeacherAssignment);
+            
+            // Subject assignment form  
+            $('#subjectTeacher').on('change', handleTeacherSubjectSelection);
+            $('#updateSubjectAssignments').on('click', handleSubjectAssignmentUpdate);
+            
+            // Refresh buttons
+            $('#adminRefreshConflictsBtn').on('click', loadTimetableConflicts);
+            $('#refreshAllAssignments').on('click', loadAllSubjectAssignments);
+            
+            // Teacher schedule editor
+            $('#teacherScheduleEditorToggle').on('click', toggleScheduleEditor);
+            $('#loadTeacherSchedule').on('click', loadSelectedTeacherSchedule);
+            
+            console.log('Form handlers initialized');
+        }
+
+        /**
+         * Initialize search handlers
+         */
+        function initializeSearchHandlers() {
+            console.log('Initializing search handlers...');
+            
+            // Teacher search
+            $('#teacherSearch').on('input', debounce(searchTeachers, 300));
+            
+            // Assignment filters
+            $('#filterTeacher, #filterSubject').on('change', filterAllAssignments);
+            $('#assignmentSearchInput').on('input', debounce(searchAllAssignments, 300));
+            $('#clearAllFilters').on('click', clearAllAssignmentFilters);
+            
+            console.log('Search handlers initialized');
+        }
+        
+        /**
+         * Handle add teacher form submission
+         */
+        function handleAddTeacher(e) {
+            e.preventDefault();
+            
+            const formData = {
+                action: 'add_teacher',
+                full_name: $('#fullName').val(),
+                email: $('#email').val(),
+                phone: $('#phone').val(),
+                password: $('#password').val()
+            };
+            
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'POST',
+                data: formData,
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        showNotification('Teacher added successfully!', 'success');
+                        $('#addTeacherForm')[0].reset();
+                        loadTeachers(); // Refresh teacher list
+                    } else {
+                        showNotification(response.message || 'Failed to add teacher', 'error');
+                    }
+                },
+                error: function() {
+                    showNotification('Error adding teacher', 'error');
+                }
+            });
+        }
+        
+        /**
+         * Handle class teacher assignment
+         */
+        function handleClassTeacherAssignment() {
+            const classId = $('#assignClass').val();
+            const sectionId = $('#assignSection').val();
+            const teacherId = $('#assignTeacher').val();
+            
+            if (!classId || !sectionId || !teacherId) {
+                showNotification('Please select class, section, and teacher', 'error');
+                return;
+            }
+            
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'POST',
+                data: {
+                    action: 'assign_class_teacher',
+                    section_id: sectionId,
+                    teacher_id: teacherId
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        showNotification('Class teacher assigned successfully!', 'success');
+                        $('#assignClass, #assignSection, #assignTeacher').val('');
+                        $('#assignSection').prop('disabled', true);
+                        loadClassAssignments(); // Refresh assignments
+                    } else {
+                        showNotification(response.message || 'Failed to assign teacher', 'error');
+                    }
+                },
+                error: function() {
+                    showNotification('Error assigning class teacher', 'error');
+                }
+            });
+        }
+        
+        /**
+         * Handle teacher selection for subject assignments
+         */
+        function handleTeacherSubjectSelection() {
+            const teacherId = $(this).val();
+            
+            if (!teacherId) {
+                $('#subjectAssignmentsDisplay').html('<p class="help-text">Select a teacher to view their subject assignments</p>');
+                return;
+            }
+            
+            loadTeacherSubjects(teacherId);
+        }
+        
+        /**
+         * Load teacher subjects for assignment
+         */
+        function loadTeacherSubjects(teacherId) {
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'GET',
+                data: {
+                    action: 'get_teacher_subjects',
+                    teacher_id: teacherId
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        displayTeacherSubjects(response.data, teacherId);
+                    } else {
+                        showNotification('Error loading teacher subjects', 'error');
+                    }
+                },
+                error: function() {
+                    showNotification('Error loading teacher subjects', 'error');
+                }
+            });
+        }
+        
+        /**
+         * Display teacher subjects with checkboxes
+         */
+        function displayTeacherSubjects(assignedSubjects, teacherId) {
+            let html = '<div class="subject-checkboxes" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 16px 0;">';
+            
+            // Get all subjects and mark assigned ones
+            const allSubjects = <?php echo json_encode($subjects); ?>;
+            
+            allSubjects.forEach(subject => {
+                const isAssigned = assignedSubjects.includes(subject.id);
+                html += `
+                    <label style="display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid #e2e8f0; border-radius: 4px; cursor: pointer;">
+                        <input type="checkbox" name="subjects[]" value="${subject.id}" ${isAssigned ? 'checked' : ''}>
+                        <span>${escapeHtml(subject.name)} (${escapeHtml(subject.code)})</span>
+                    </label>
+                `;
+            });
+            
+            html += '</div>';
+            html += `
+                <div class="actions" style="margin-top: 16px;">
+                    <button class="btn btn-primary" id="updateSubjectAssignments">
+                        <i class="fas fa-save"></i> Update Assignments
+                    </button>
+                    <button class="btn btn-outline" onclick="clearSubjectSelections()">
+                        <i class="fas fa-times"></i> Clear All
+                    </button>
+                </div>
+            `;
+            
+            $('#subjectAssignmentsDisplay').html(html);
+            
+            // Re-bind the update button
+            $('#updateSubjectAssignments').off('click').on('click', function() {
+                handleSubjectAssignmentUpdate(teacherId);
+            });
+        }
+        
+        /**
+         * Handle subject assignment update
+         */
+        function handleSubjectAssignmentUpdate(teacherId) {
+            const selectedSubjects = [];
+            $('input[name="subjects[]"]:checked').each(function() {
+                selectedSubjects.push($(this).val());
+            });
+            
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'POST',
+                data: {
+                    action: 'update_subject_assignments',
+                    teacher_id: teacherId,
+                    subject_ids: JSON.stringify(selectedSubjects)
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        showNotification('Subject assignments updated successfully!', 'success');
+                        loadAllSubjectAssignments(); // Refresh all assignments view
+                    } else {
+                        showNotification(response.message || 'Failed to update assignments', 'error');
+                    }
+                },
+                error: function() {
+                    showNotification('Error updating subject assignments', 'error');
+                }
+            });
+        }
+        
+        /**
+         * Clear subject selections
+         */
+        function clearSubjectSelections() {
+            $('input[name="subjects[]"]').prop('checked', false);
+        }
+        
+        /**
+         * Load all subject assignments
+         */
+        function loadAllSubjectAssignments() {
+            const container = $('#allAssignmentsTable');
+            const loading = $('#allAssignmentsLoading');
+            const empty = $('#allAssignmentsEmpty');
+            
+            container.hide();
+            empty.hide();
+            loading.show();
+            
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'GET',
+                data: { action: 'get_all_subject_assignments' },
+                dataType: 'json',
+                success: function(response) {
+                    loading.hide();
+                    
+                    if (response.success && response.data && response.data.assignments && response.data.assignments.length > 0) {
+                        displayAllSubjectAssignments(response.data.assignments);
+                        displayAssignmentStatistics(response.data.statistics);
+                        container.show();
+                    } else {
+                        empty.show();
+                    }
+                },
+                error: function() {
+                    loading.hide();
+                    container.show();
+                    $('#allAssignmentsTableBody').html('<tr><td colspan="7" class="text-center text-danger">Error loading assignments</td></tr>');
+                }
+            });
+        }
+        
+        /**
+         * Display all subject assignments
+         */
+        function displayAllSubjectAssignments(assignments) {
+            const tbody = $('#allAssignmentsTableBody');
+            tbody.empty();
+            
+            assignments.forEach(teacher => {
+                const teacherInfo = teacher.teacher_info;
+                const teacherAssignments = teacher.assignments;
+                
+                if (teacherAssignments.length === 0) {
+                    // Show teacher with no assignments
+                    tbody.append(`
+                        <tr>
+                            <td><code>${escapeHtml(teacherInfo.employee_number)}</code></td>
+                            <td>${escapeHtml(teacherInfo.name)}</td>
+                            <td colspan="3"><em>No subject assignments</em></td>
+                            <td><span class="status-badge status-${teacherInfo.status}">${teacherInfo.status}</span></td>
+                            <td>-</td>
+                        </tr>
+                    `);
+                } else {
+                    // Show each assignment
+                    teacherAssignments.forEach((assignment, index) => {
+                        tbody.append(`
+                            <tr>
+                                ${index === 0 ? `<td rowspan="${teacherAssignments.length}"><code>${escapeHtml(teacherInfo.employee_number)}</code></td>` : ''}
+                                ${index === 0 ? `<td rowspan="${teacherAssignments.length}">${escapeHtml(teacherInfo.name)}</td>` : ''}
+                                <td>${escapeHtml(assignment.subject_name)}</td>
+                                <td><code>${escapeHtml(assignment.subject_code)}</code></td>
+                                <td><span class="assignment-scope-badge ${assignment.assignment_scope}">${assignment.assignment_scope}</span></td>
+                                ${index === 0 ? `<td rowspan="${teacherAssignments.length}"><span class="status-badge status-${teacherInfo.status}">${teacherInfo.status}</span></td>` : ''}
+                                <td>
+                                    <button class="btn btn-sm btn-outline" onclick="removeSubjectAssignment(${assignment.assignment_id})">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `);
+                    });
+                }
+            });
+        }
+        
+        /**
+         * Display assignment statistics
+         */
+        function displayAssignmentStatistics(stats) {
+            const container = $('#assignmentStatistics');
+            const html = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
+                    <div class="stat-item">
+                        <div class="stat-label">Total Teachers</div>
+                        <div class="stat-value">${stats.total_teachers}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Active Teachers</div>
+                        <div class="stat-value">${stats.active_teachers}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Assigned Teachers</div>
+                        <div class="stat-value">${stats.assigned_teachers}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Unassigned Teachers</div>
+                        <div class="stat-value">${stats.unassigned_teachers}</div>
+                    </div>
+                </div>
+            `;
+            container.html(html);
+        }
+
+        /**
+         * Initialize form handlers
+         */
+        function initializeFormHandlers() {
+            console.log('Initializing form handlers...');
+            
+            // Add teacher form
+            $('#addTeacherForm').on('submit', handleAddTeacher);
+            $('#generateEmpNumber').on('click', generateEmployeeNumber);
+            
+            // Class assignment form
+            $('#assignClass').on('change', function() {
+                updateSections($(this).val(), 'assignSection');
+            });
+            $('#assignClassTeacher').on('click', handleClassTeacherAssignment);
+            
+            // Subject assignment form  
+            $('#subjectTeacher').on('change', handleTeacherSubjectSelection);
+            $('#updateSubjectAssignments').on('click', handleSubjectAssignmentUpdate);
+            
+            // Refresh buttons
+            $('#adminRefreshConflictsBtn').on('click', loadTimetableConflicts);
+            $('#refreshAllAssignments').on('click', loadAllSubjectAssignments);
+            
+            // Teacher schedule editor
+            $('#teacherScheduleEditorToggle').on('click', toggleScheduleEditor);
+            $('#loadTeacherSchedule').on('click', loadSelectedTeacherSchedule);
+            
+            console.log('Form handlers initialized');
+        }
+
+        /**
+         * Initialize search handlers
+         */
+        function initializeSearchHandlers() {
+            console.log('Initializing search handlers...');
+            
+            // Teacher search
+            $('#teacherSearch').on('input', debounce(searchTeachers, 300));
+            
+            // Assignment filters
+            $('#filterTeacher, #filterSubject').on('change', filterAllAssignments);
+            $('#assignmentSearchInput').on('input', debounce(searchAllAssignments, 300));
+            $('#clearAllFilters').on('click', clearAllAssignmentFilters);
+            
+            console.log('Search handlers initialized');
+        }
+        
+        /**
+         * Handle add teacher form submission
+         */
+        function handleAddTeacher(e) {
+            e.preventDefault();
+            
+            const formData = {
+                action: 'add_teacher',
+                full_name: $('#fullName').val(),
+                email: $('#email').val(),
+                phone: $('#phone').val(),
+                password: $('#password').val()
+            };
+            
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'POST',
+                data: formData,
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        showNotification('Teacher added successfully!', 'success');
+                        $('#addTeacherForm')[0].reset();
+                        loadTeachers(); // Refresh teacher list
+                    } else {
+                        showNotification(response.message || 'Failed to add teacher', 'error');
+                    }
+                },
+                error: function() {
+                    showNotification('Error adding teacher', 'error');
+                }
+            });
+        }
+        
+        /**
+         * Handle class teacher assignment
+         */
+        function handleClassTeacherAssignment() {
+            const classId = $('#assignClass').val();
+            const sectionId = $('#assignSection').val();
+            const teacherId = $('#assignTeacher').val();
+            
+            if (!classId || !sectionId || !teacherId) {
+                showNotification('Please select class, section, and teacher', 'error');
+                return;
+            }
+            
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'POST',
+                data: {
+                    action: 'assign_class_teacher',
+                    section_id: sectionId,
+                    teacher_id: teacherId
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        showNotification('Class teacher assigned successfully!', 'success');
+                        $('#assignClass, #assignSection, #assignTeacher').val('');
+                        $('#assignSection').prop('disabled', true);
+                        loadClassAssignments(); // Refresh assignments
+                    } else {
+                        showNotification(response.message || 'Failed to assign teacher', 'error');
+                    }
+                },
+                error: function() {
+                    showNotification('Error assigning class teacher', 'error');
+                }
+            });
+        }
+        
+        /**
+         * Handle teacher selection for subject assignments
+         */
+        function handleTeacherSubjectSelection() {
+            const teacherId = $(this).val();
+            
+            if (!teacherId) {
+                $('#subjectAssignmentsDisplay').html('<p class="help-text">Select a teacher to view their subject assignments</p>');
+                return;
+            }
+            
+            loadTeacherSubjects(teacherId);
+        }
+        
+        /**
+         * Load teacher subjects for assignment
+         */
+        function loadTeacherSubjects(teacherId) {
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'GET',
+                data: {
+                    action: 'get_teacher_subjects',
+                    teacher_id: teacherId
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        displayTeacherSubjects(response.data, teacherId);
+                    } else {
+                        showNotification('Error loading teacher subjects', 'error');
+                    }
+                },
+                error: function() {
+                    showNotification('Error loading teacher subjects', 'error');
+                }
+            });
+        }
+        
+        /**
+         * Display teacher subjects with checkboxes
+         */
+        function displayTeacherSubjects(assignedSubjects, teacherId) {
+            let html = '<div class="subject-checkboxes" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 16px 0;">';
+            
+            // Get all subjects and mark assigned ones
+            const allSubjects = <?php echo json_encode($subjects); ?>;
+            
+            allSubjects.forEach(subject => {
+                const isAssigned = assignedSubjects.includes(subject.id);
+                html += `
+                    <label style="display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid #e2e8f0; border-radius: 4px; cursor: pointer;">
+                        <input type="checkbox" name="subjects[]" value="${subject.id}" ${isAssigned ? 'checked' : ''}>
+                        <span>${escapeHtml(subject.name)} (${escapeHtml(subject.code)})</span>
+                    </label>
+                `;
+            });
+            
+            html += '</div>';
+            html += `
+                <div class="actions" style="margin-top: 16px;">
+                    <button class="btn btn-primary" id="updateSubjectAssignments">
+                        <i class="fas fa-save"></i> Update Assignments
+                    </button>
+                    <button class="btn btn-outline" onclick="clearSubjectSelections()">
+                        <i class="fas fa-times"></i> Clear All
+                    </button>
+                </div>
+            `;
+            
+            $('#subjectAssignmentsDisplay').html(html);
+            
+            // Re-bind the update button
+            $('#updateSubjectAssignments').off('click').on('click', function() {
+                handleSubjectAssignmentUpdate(teacherId);
+            });
+        }
+        
+        /**
+         * Handle subject assignment update
+         */
+        function handleSubjectAssignmentUpdate(teacherId) {
+            const selectedSubjects = [];
+            $('input[name="subjects[]"]:checked').each(function() {
+                selectedSubjects.push($(this).val());
+            });
+            
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'POST',
+                data: {
+                    action: 'update_subject_assignments',
+                    teacher_id: teacherId,
+                    subject_ids: JSON.stringify(selectedSubjects)
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        showNotification('Subject assignments updated successfully!', 'success');
+                        loadAllSubjectAssignments(); // Refresh all assignments view
+                    } else {
+                        showNotification(response.message || 'Failed to update assignments', 'error');
+                    }
+                },
+                error: function() {
+                    showNotification('Error updating subject assignments', 'error');
+                }
+            });
+        }
+        
+        /**
+         * Clear subject selections
+         */
+        function clearSubjectSelections() {
+            $('input[name="subjects[]"]').prop('checked', false);
+        }
+        
+        /**
+         * Load all subject assignments
+         */
+        function loadAllSubjectAssignments() {
+            const container = $('#allAssignmentsTable');
+            const loading = $('#allAssignmentsLoading');
+            const empty = $('#allAssignmentsEmpty');
+            
+            container.hide();
+            empty.hide();
+            loading.show();
+            
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'GET',
+                data: { action: 'get_all_subject_assignments' },
+                dataType: 'json',
+                success: function(response) {
+                    loading.hide();
+                    
+                    if (response.success && response.data && response.data.assignments && response.data.assignments.length > 0) {
+                        displayAllSubjectAssignments(response.data.assignments);
+                        displayAssignmentStatistics(response.data.statistics);
+                        container.show();
+                    } else {
+                        empty.show();
+                    }
+                },
+                error: function() {
+                    loading.hide();
+                    container.show();
+                    $('#allAssignmentsTableBody').html('<tr><td colspan="7" class="text-center text-danger">Error loading assignments</td></tr>');
+                }
+            });
+        }
+        
+        /**
+         * Display all subject assignments
+         */
+        function displayAllSubjectAssignments(assignments) {
+            const tbody = $('#allAssignmentsTableBody');
+            tbody.empty();
+            
+            assignments.forEach(teacher => {
+                const teacherInfo = teacher.teacher_info;
+                const teacherAssignments = teacher.assignments;
+                
+                if (teacherAssignments.length === 0) {
+                    // Show teacher with no assignments
+                    tbody.append(`
+                        <tr>
+                            <td><code>${escapeHtml(teacherInfo.employee_number)}</code></td>
+                            <td>${escapeHtml(teacherInfo.name)}</td>
+                            <td colspan="3"><em>No subject assignments</em></td>
+                            <td><span class="status-badge status-${teacherInfo.status}">${teacherInfo.status}</span></td>
+                            <td>-</td>
+                        </tr>
+                    `);
+                } else {
+                    // Show each assignment
+                    teacherAssignments.forEach((assignment, index) => {
+                        tbody.append(`
+                            <tr>
+                                ${index === 0 ? `<td rowspan="${teacherAssignments.length}"><code>${escapeHtml(teacherInfo.employee_number)}</code></td>` : ''}
+                                ${index === 0 ? `<td rowspan="${teacherAssignments.length}">${escapeHtml(teacherInfo.name)}</td>` : ''}
+                                <td>${escapeHtml(assignment.subject_name)}</td>
+                                <td><code>${escapeHtml(assignment.subject_code)}</code></td>
+                                <td><span class="assignment-scope-badge ${assignment.assignment_scope}">${assignment.assignment_scope}</span></td>
+                                ${index === 0 ? `<td rowspan="${teacherAssignments.length}"><span class="status-badge status-${teacherInfo.status}">${teacherInfo.status}</span></td>` : ''}
+                                <td>
+                                    <button class="btn btn-sm btn-outline" onclick="removeSubjectAssignment(${assignment.assignment_id})">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `);
+                    });
+                }
+            });
+        }
+        
+        /**
+         * Display assignment statistics
+         */
+        function displayAssignmentStatistics(stats) {
+            const container = $('#assignmentStatistics');
+            const html = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
+                    <div class="stat-item">
+                        <div class="stat-label">Total Teachers</div>
+                        <div class="stat-value">${stats.total_teachers}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Active Teachers</div>
+                        <div class="stat-value">${stats.active_teachers}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Assigned Teachers</div>
+                        <div class="stat-value">${stats.assigned_teachers}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Unassigned Teachers</div>
+                        <div class="stat-value">${stats.unassigned_teachers}</div>
+                    </div>
+                </div>
+            `;
+            container.html(html);
+        }
+
+        /**
+         * Initialize form handlers
+         */
+        function initializeFormHandlers() {
+            console.log('Initializing form handlers...');
+            
+            // Add teacher form
+            $('#addTeacherForm').on('submit', handleAddTeacher);
+            $('#generateEmpNumber').on('click', generateEmployeeNumber);
+            
+            // Class assignment form
+            $('#assignClass').on('change', function() {
+                updateSections($(this).val(), 'assignSection');
+            });
+            $('#assignClassTeacher').on('click', handleClassTeacherAssignment);
+            
+            // Subject assignment form  
+            $('#subjectTeacher').on('change', handleTeacherSubjectSelection);
+            $('#updateSubjectAssignments').on('click', handleSubjectAssignmentUpdate);
+            
+            // Refresh buttons
+            $('#adminRefreshConflictsBtn').on('click', loadTimetableConflicts);
+            $('#refreshAllAssignments').on('click', loadAllSubjectAssignments);
+            
+            // Teacher schedule editor
+            $('#teacherScheduleEditorToggle').on('click', toggleScheduleEditor);
+            $('#loadTeacherSchedule').on('click', loadSelectedTeacherSchedule);
+            
+            console.log('Form handlers initialized');
+        }
+
+        /**
+         * Initialize search handlers
+         */
+        function initializeSearchHandlers() {
+            console.log('Initializing search handlers...');
+            
+            // Teacher search
+            $('#teacherSearch').on('input', debounce(searchTeachers, 300));
+            
+            // Assignment filters
+            $('#filterTeacher, #filterSubject').on('change', filterAllAssignments);
+            $('#assignmentSearchInput').on('input', debounce(searchAllAssignments, 300));
+            $('#clearAllFilters').on('click', clearAllAssignmentFilters);
+            
+            console.log('Search handlers initialized');
+        }
+        
+        /**
+         * Handle add teacher form submission
+         */
+        function handleAddTeacher(e) {
+            e.preventDefault();
+            
+            const formData = {
+                action: 'add_teacher',
+                full_name: $('#fullName').val(),
+                email: $('#email').val(),
+                phone: $('#phone').val(),
+                password: $('#password').val()
+            };
+            
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'POST',
+                data: formData,
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        showNotification('Teacher added successfully!', 'success');
+                        $('#addTeacherForm')[0].reset();
+                        loadTeachers(); // Refresh teacher list
+                    } else {
+                        showNotification(response.message || 'Failed to add teacher', 'error');
+                    }
+                },
+                error: function() {
+                    showNotification('Error adding teacher', 'error');
+                }
+            });
+        }
+        
+        /**
+         * Handle class teacher assignment
+         */
+        function handleClassTeacherAssignment() {
+            const classId = $('#assignClass').val();
+            const sectionId = $('#assignSection').val();
+            const teacherId = $('#assignTeacher').val();
+            
+            if (!classId || !sectionId || !teacherId) {
+                showNotification('Please select class, section, and teacher', 'error');
+                return;
+            }
+            
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'POST',
+                data: {
+                    action: 'assign_class_teacher',
+                    section_id: sectionId,
+                    teacher_id: teacherId
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        showNotification('Class teacher assigned successfully!', 'success');
+                        $('#assignClass, #assignSection, #assignTeacher').val('');
+                        $('#assignSection').prop('disabled', true);
+                        loadClassAssignments(); // Refresh assignments
+                    } else {
+                        showNotification(response.message || 'Failed to assign teacher', 'error');
+                    }
+                },
+                error: function() {
+                    showNotification('Error assigning class teacher', 'error');
+                }
+            });
+        }
+        
+        /**
+         * Handle teacher selection for subject assignments
+         */
+        function handleTeacherSubjectSelection() {
+            const teacherId = $(this).val();
+            
+            if (!teacherId) {
+                $('#subjectAssignmentsDisplay').html('<p class="help-text">Select a teacher to view their subject assignments</p>');
+                return;
+            }
+            
+            loadTeacherSubjects(teacherId);
+        }
+        
+        /**
+         * Load teacher subjects for assignment
+         */
+        function loadTeacherSubjects(teacherId) {
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'GET',
+                data: {
+                    action: 'get_teacher_subjects',
+                    teacher_id: teacherId
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        displayTeacherSubjects(response.data, teacherId);
+                    } else {
+                        showNotification('Error loading teacher subjects', 'error');
+                    }
+                },
+                error: function() {
+                    showNotification('Error loading teacher subjects', 'error');
+                }
+            });
+        }
+        
+        /**
+         * Display teacher subjects with checkboxes
+         */
+        function displayTeacherSubjects(assignedSubjects, teacherId) {
+            let html = '<div class="subject-checkboxes" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 16px 0;">';
+            
+            // Get all subjects and mark assigned ones
+            const allSubjects = <?php echo json_encode($subjects); ?>;
+            
+            allSubjects.forEach(subject => {
+                const isAssigned = assignedSubjects.includes(subject.id);
+                html += `
+                    <label style="display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid #e2e8f0; border-radius: 4px; cursor: pointer;">
+                        <input type="checkbox" name="subjects[]" value="${subject.id}" ${isAssigned ? 'checked' : ''}>
+                        <span>${escapeHtml(subject.name)} (${escapeHtml(subject.code)})</span>
+                    </label>
+                `;
+            });
+            
+            html += '</div>';
+            html += `
+                <div class="actions" style="margin-top: 16px;">
+                    <button class="btn btn-primary" id="updateSubjectAssignments">
+                        <i class="fas fa-save"></i> Update Assignments
+                    </button>
+                    <button class="btn btn-outline" onclick="clearSubjectSelections()">
+                        <i class="fas fa-times"></i> Clear All
+                    </button>
+                </div>
+            `;
+            
+            $('#subjectAssignmentsDisplay').html(html);
+            
+            // Re-bind the update button
+            $('#updateSubjectAssignments').off('click').on('click', function() {
+                handleSubjectAssignmentUpdate(teacherId);
+            });
+        }
+        
+        /**
+         * Handle subject assignment update
+         */
+        function handleSubjectAssignmentUpdate(teacherId) {
+            const selectedSubjects = [];
+            $('input[name="subjects[]"]:checked').each(function() {
+                selectedSubjects.push($(this).val());
+            });
+            
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'POST',
+                data: {
+                    action: 'update_subject_assignments',
+                    teacher_id: teacherId,
+                    subject_ids: JSON.stringify(selectedSubjects)
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        showNotification('Subject assignments updated successfully!', 'success');
+                        loadAllSubjectAssignments(); // Refresh all assignments view
+                    } else {
+                        showNotification(response.message || 'Failed to update assignments', 'error');
+                    }
+                },
+                error: function() {
+                    showNotification('Error updating subject assignments', 'error');
+                }
+            });
+        }
+        
+        /**
+         * Clear subject selections
+         */
+        function clearSubjectSelections() {
+            $('input[name="subjects[]"]').prop('checked', false);
+        }
+        
+        /**
+         * Load all subject assignments
+         */
+        function loadAllSubjectAssignments() {
+            const container = $('#allAssignmentsTable');
+            const loading = $('#allAssignmentsLoading');
+            const empty = $('#allAssignmentsEmpty');
+            
+            container.hide();
+            empty.hide();
+            loading.show();
+            
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'GET',
+                data: { action: 'get_all_subject_assignments' },
+                dataType: 'json',
+                success: function(response) {
+                    loading.hide();
+                    
+                    if (response.success && response.data && response.data.assignments && response.data.assignments.length > 0) {
+                        displayAllSubjectAssignments(response.data.assignments);
+                        displayAssignmentStatistics(response.data.statistics);
+                        container.show();
+                    } else {
+                        empty.show();
+                    }
+                },
+                error: function() {
+                    loading.hide();
+                    container.show();
+                    $('#allAssignmentsTableBody').html('<tr><td colspan="7" class="text-center text-danger">Error loading assignments</td></tr>');
+                }
+            });
+        }
+        
+        /**
+         * Display all subject assignments
+         */
+        function displayAllSubjectAssignments(assignments) {
+            const tbody = $('#allAssignmentsTableBody');
+            tbody.empty();
+            
+            assignments.forEach(teacher => {
+                const teacherInfo = teacher.teacher_info;
+                const teacherAssignments = teacher.assignments;
+                
+                if (teacherAssignments.length === 0) {
+                    // Show teacher with no assignments
+                    tbody.append(`
+                        <tr>
+                            <td><code>${escapeHtml(teacherInfo.employee_number)}</code></td>
+                            <td>${escapeHtml(teacherInfo.name)}</td>
+                            <td colspan="3"><em>No subject assignments</em></td>
+                            <td><span class="status-badge status-${teacherInfo.status}">${teacherInfo.status}</span></td>
+                            <td>-</td>
+                        </tr>
+                    `);
+                } else {
+                    // Show each assignment
+                    teacherAssignments.forEach((assignment, index) => {
+                        tbody.append(`
+                            <tr>
+                                ${index === 0 ? `<td rowspan="${teacherAssignments.length}"><code>${escapeHtml(teacherInfo.employee_number)}</code></td>` : ''}
+                                ${index === 0 ? `<td rowspan="${teacherAssignments.length}">${escapeHtml(teacherInfo.name)}</td>` : ''}
+                                <td>${escapeHtml(assignment.subject_name)}</td>
+                                <td><code>${escapeHtml(assignment.subject_code)}</code></td>
+                                <td><span class="assignment-scope-badge ${assignment.assignment_scope}">${assignment.assignment_scope}</span></td>
+                                ${index === 0 ? `<td rowspan="${teacherAssignments.length}"><span class="status-badge status-${teacherInfo.status}">${teacherInfo.status}</span></td>` : ''}
+                                <td>
+                                    <button class="btn btn-sm btn-outline" onclick="removeSubjectAssignment(${assignment.assignment_id})">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `);
+                    });
+                }
+            });
+        }
+        
+        /**
+         * Display assignment statistics
+         */
+        function displayAssignmentStatistics(stats) {
+            const container = $('#assignmentStatistics');
+            const html = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
+                    <div class="stat-item">
+                        <div class="stat-label">Total Teachers</div>
+                        <div class="stat-value">${stats.total_teachers}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Active Teachers</div>
+                        <div class="stat-value">${stats.active_teachers}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Assigned Teachers</div>
+                        <div class="stat-value">${stats.assigned_teachers}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Unassigned Teachers</div>
+                        <div class="stat-value">${stats.unassigned_teachers}</div>
+                    </div>
+                </div>
+            `;
+            container.html(html);
+        }
+
+        /**
+         * Filter all assignments based on teacher and subject filters
+         */
+        function filterAllAssignments() {
+            const teacherFilter = $('#filterTeacher').val();
+            const subjectFilter = $('#filterSubject').val();
+            
+            console.log('Filtering assignments:', { teacherFilter, subjectFilter });
+            
+            // Reload assignments with filters
+            loadAllSubjectAssignments();
+        }
+        
+        /**
+         * Search all assignments based on search input
+         */
+        function searchAllAssignments() {
+            const searchTerm = $('#allAssignmentsSearch').val().toLowerCase();
+            console.log('Searching assignments for:', searchTerm);
+            
+            // Filter visible rows based on search term
+            $('#allAssignmentsTableBody tr').each(function() {
+                const row = $(this);
+                const text = row.text().toLowerCase();
+                
+                if (text.includes(searchTerm)) {
+                    row.show();
+                } else {
+                    row.hide();
+                }
+            });
+        }
+        
+        /**
+         * Clear all assignment filters
+         */
+        function clearAllAssignmentFilters() {
             $('#filterTeacher').val('');
             $('#filterSubject').val('');
+            $('#allAssignmentsSearch').val('');
+            
+            // Show all rows
+            $('#allAssignmentsTableBody tr').show();
+            
+            // Reload data
             loadAllSubjectAssignments();
         }
 
-        // Export assignments (placeholder)
-        function exportAssignments() {
-            showNotification('Export functionality - to be implemented', 'info');
-        }
+        // ...existing code...
+        
+        // --- TAB SWITCHING INITIALIZATION ---
+        function initializeTabSwitching() {
+            console.log('Initializing tab switching...');
+            
+            // Attach click handlers to tab buttons
+            $('.tab-button').on('click', function(e) {
+                e.preventDefault();
+                const tabId = $(this).data('tab');
+                console.log('Tab button clicked:', tabId);
+                if (tabId) {
+                    switchTab(tabId);
+                } else {
+                    console.error('No data-tab attribute found on button');
+                }
+            });
 
-        // Event handlers for the new section
-        $(document).ready(function() {
-            // Add event handlers
-            $('#refreshAllAssignments').click(loadAllSubjectAssignments);
-            $('#exportAssignments').click(exportAssignments);
-            $('#clearAllFilters').click(clearAllFilters);
+            // Initialize with default tab or from localStorage
+            let initialTab = null;
             
-            // Search with debounce
-            $('#allAssignmentsSearch').on('input', debounce(loadAllSubjectAssignments, 500));
-            
-            // Filter changes
-            $('#filterTeacher, #filterSubject').change(loadAllSubjectAssignments);
-            
-            // Load initial data when the subject assignments tab is shown
-            // This will be called when the tab is switched
-        });
-
-        // Update the existing switchTab function to load the new data
-        function loadSubjectAssignmentsTabData() {
-            // Load existing teacher subjects if teacher is selected
-            if ($('#subjectTeacher').val()) {
-                loadTeacherSubjects();
+            try {
+                initialTab = localStorage.getItem('activeTeacherManagementTab');
+            } catch(e) {
+                console.warn('Could not read from localStorage:', e);
             }
             
-            // Load all assignments table
-            loadAllSubjectAssignments();
+            // Validate that the stored tab exists and is accessible
+            if (initialTab) {
+                const tabExists = $(`#${initialTab}-content`).length > 0;
+                const buttonExists = $(`.tab-button[data-tab="${initialTab}"]`).length > 0;
+                if (!tabExists || !buttonExists) {
+                    console.warn(`Stored tab ${initialTab} does not exist, using default`);
+                    initialTab = null;
+                }
+            }
             
-            // Load filter options
-            loadAssignmentFilters();
+            // If no valid stored tab, use the first available tab
+            if (!initialTab) {
+                const firstTab = $('.tab-button').first();
+                if (firstTab.length > 0) {
+                    initialTab = firstTab.data('tab');
+                    console.log('Using first available tab:', initialTab);
+                } else {
+                    console.error('No tab buttons found');
+                    return;
+                }
+            }
+            
+            // Activate the initial tab
+            if (initialTab) {
+                console.log('Activating initial tab:', initialTab);
+                switchTab(initialTab);
+            }
+        }        // --- MISSING FUNCTIONS ---
+        
+        /**
+         * Load teachers from API and display them
+         */
+        function loadTeachers() {
+            console.log('Loading teachers...');
+            const container = $('#teachersTableBody');
+            const loading = $('#teachersLoading');
+            
+            // Show loading state
+            loading.show();
+            container.parent().hide();
+            
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'GET',
+                data: { action: 'get_teachers' },
+                dataType: 'json',
+                success: function(response) {
+                    console.log('Teachers API response:', response);
+                    loading.hide();
+                    container.parent().show();
+                    
+                    if (response.success && response.data) {
+                        displayTeachers(response.data);
+                    } else {
+                        container.html('<tr><td colspan="6" class="text-center">No teachers found</td></tr>');
+                        console.warn('No teachers data in response:', response);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error loading teachers:', error);
+                    loading.hide();
+                    container.parent().show();
+                    container.html('<tr><td colspan="6" class="text-center text-danger">Error loading teachers</td></tr>');
+                    showNotification('Failed to load teachers', 'error');
+                }
+            });
         }
+        
+        /**
+         * Display teachers in the table
+         */
+        function displayTeachers(teachers) {
+            console.log('Displaying', teachers.length, 'teachers');
+            const tbody = $('#teachersTableBody');
+            tbody.empty();
+            
+            if (!teachers || teachers.length === 0) {
+                tbody.html('<tr><td colspan="6" class="text-center">No teachers found</td></tr>');
+                return;
+            }
+            
+            teachers.forEach(teacher => {
+                const row = `
+                    <tr>
+                        <td><code>${escapeHtml(teacher.employee_number || 'N/A')}</code></td>
+                        <td>
+                            <div class="teacher-info-cell">
+                                <div class="teacher-name">${escapeHtml(teacher.full_name || 'N/A')}</div>
+                                <div class="teacher-email">${escapeHtml(teacher.email || 'N/A')}</div>
+                            </div>
+                        </td>
+                        <td>${escapeHtml(teacher.email || 'N/A')}</td>
+                        <td>${escapeHtml(teacher.role || 'teacher')}</td>
+                        <td><span class="status-badge status-${teacher.status || 'active'}">${teacher.status || 'active'}</span></td>
+                        <td class="actions">
+                            <button class="btn btn-outline btn-sm" onclick="editTeacher(${teacher.id})" title="Edit Teacher">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-secondary btn-sm" onclick="viewTeacherDetails(${teacher.id})" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+            
+            console.log('Teachers displayed successfully');
+        }
+        
+        /**
+         * Generate employee number
+         */
+        function generateEmployeeNumber() {
+            const currentYear = new Date().getFullYear();
+            const employeeInput = $('#employeeNumber');
+            
+            if (employeeInput.length === 0) {
+                console.warn('Employee number input field not found');
+                return;
+            }
+            
+            // Simple client-side generation - this will be validated/corrected on server-side
+            const randomNum = Math.floor(Math.random() * 900) + 100; // 3-digit random number
+            const generated = `VES${currentYear}T${randomNum}`;
+            
+            employeeInput.val(generated);
+            console.log('Generated employee number:', generated);
+        }
+        
+        /**
+         * Update sections dropdown based on selected class
+         */
+        function updateSections(classId, targetSectionId) {
+            console.log('Updating sections for class:', classId);
+            const sectionSelect = $('#' + targetSectionId);
+            
+            // Reset section dropdown
+            sectionSelect.empty().append('<option value="">Select Section</option>');
+            
+            if (!classId) {
+                sectionSelect.prop('disabled', true);
+                return;
+            }
+            
+            // Filter sections by class ID
+            const classSections = sectionsData.filter(section => section.class_id == classId);
+            
+            if (classSections.length > 0) {
+                classSections.forEach(section => {
+                    sectionSelect.append(`<option value="${section.id}">${escapeHtml(section.name)}</option>`);
+                });
+                sectionSelect.prop('disabled', false);
+                console.log('Found', classSections.length, 'sections for class', classId);
+            } else {
+                sectionSelect.append('<option value="">No sections found</option>');
+                sectionSelect.prop('disabled', true);
+                console.log('No sections found for class', classId);
+            }
+        }
+        
+        /**
+         * Load teachers for dropdown population
+         */
+        function loadTeachersForDropdowns(selectId, includeEmpty = true) {
+            console.log('Loading teachers for dropdown:', selectId);
+            const select = $('#' + selectId);
+            
+            if (select.length === 0) {
+                console.warn('Dropdown not found:', selectId);
+                return;
+            }
+            
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'GET', 
+                data: { action: 'get_teachers' },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success && response.data) {
+                        select.empty();
+                        if (includeEmpty) {
+                            select.append('<option value="">Select Teacher</option>');
+                        }
+                        
+                        response.data.forEach(teacher => {
+                            select.append(`<option value="${teacher.id}">${escapeHtml(teacher.full_name)} (${escapeHtml(teacher.employee_number)})</option>`);
+                        });
+                        
+                        console.log('Teachers loaded for dropdown:', selectId);
+                    }
+                },
+                error: function() {
+                    console.error('Failed to load teachers for dropdown:', selectId);
+                }
+            });
+        }
+        
+        /**
+         * Load classes for dropdown population  
+         */
+        function loadClassesForDropdowns(selectId, includeEmpty = true) {
+            console.log('Loading classes for dropdown:', selectId);
+            const select = $('#' + selectId);
+            
+            if (select.length === 0) {
+                console.warn('Dropdown not found:', selectId);
+                return;
+            }
+            
+            // Classes are already available in the PHP-generated dropdown
+            console.log('Classes already populated in dropdown:', selectId);
+        }
+        
+        /**
+         * Load subjects for dropdown population
+         */
+        function loadSubjectsForDropdowns(selectId, includeEmpty = true) {
+            console.log('Loading subjects for dropdown:', selectId);
+            const select = $('#' + selectId);
+            
+            if (select.length === 0) {
+                console.warn('Dropdown not found:', selectId);
+                return;
+            }
+            
+            // Subjects are already available in the PHP-generated dropdown
+            console.log('Subjects already populated in dropdown:', selectId);
+        }
+        
+        /**
+         * Populate subject checkboxes based on teacher selection
+         */
+        function populateSubjectCheckboxes(teacherId) {
+            console.log('Populating subject checkboxes for teacher:', teacherId);
+            
+            if (!teacherId) {
+                $('input[name="subjects[]"]').prop('checked', false);
+                return;
+            }
+            
+            // Load teacher's current subject assignments
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'GET',
+                data: { 
+                    action: 'get_teacher_subjects',
+                    teacher_id: teacherId 
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success && response.data) {
+                        // Uncheck all first
+                        $('input[name="subjects[]"]').prop('checked', false);
+                        
+                        // Check assigned subjects
+                        response.data.forEach(subjectId => {
+                            $(`input[name="subjects[]"][value="${subjectId}"]`).prop('checked', true);
+                        });
+                        
+                        console.log('Subject checkboxes updated for teacher:', teacherId);
+                    }
+                },
+                error: function() {
+                    console.error('Failed to load teacher subjects for checkboxes');
+                }
+            });
+        }
+        
+        /**
+         * Load assignment filters
+         */
+        function loadAssignmentFilters() {
+            console.log('Loading assignment filters...');
+            // This is handled by the loadTeachersForDropdowns and loadSubjectsForDropdowns functions
+        }
+        
+        /**
+         * Search teachers
+         */
+        function searchTeachers() {
+            const query = $('#teacherSearch').val().toLowerCase();
+            console.log('Searching teachers with query:', query);
+            
+            $('#teachersTableBody tr').each(function() {
+                const text = $(this).text().toLowerCase();
+                if (text.includes(query)) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+        }
+        
+        /**
+         * Debounce function for search
+         */
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+        
+        /**
+         * Schedule editor functions (placeholders)
+         */
+        function toggleScheduleEditor() {
+            const editor = $('#teacherScheduleEditor');
+            if (editor.is(':visible')) {
+                editor.hide();
+                $('#teacherScheduleEditorToggle').html('<i class="fas fa-calendar-plus"></i> Open Schedule Editor');
+            } else {
+                editor.show();
+                $('#teacherScheduleEditorToggle').html('<i class="fas fa-calendar-minus"></i> Close Schedule Editor');
+            }
+        }
+        
+        function loadSelectedTeacherSchedule() {
+            const teacherId = $('#selectedTeacher').val();
+            if (!teacherId) {
+                showNotification('Please select a teacher first', 'error');
+                return;
+            }
+            
+            console.log('Loading schedule for teacher:', teacherId);
+            showNotification('Schedule loading functionality will be implemented', 'info');
+        }
+        
+        /**
+         * Utility functions
+         */
+        function escapeHtml(text) {
+            if (typeof text !== 'string') {
+                return text;
+            }
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+        
+        function showNotification(message, type = 'info') {
+            console.log(`Notification [${type}]:`, message);
+            
+            const notification = $('#notification');
+            if (notification.length === 0) {
+                // Create notification element if it doesn't exist
+                $('body').append(`<div id="notification" class="notification"></div>`);
+            }
+            
+            const notificationEl = $('#notification');
+            notificationEl
+                .removeClass('success error warning info')
+                .addClass(type)
+                .text(message)
+                .fadeIn();
+            
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                notificationEl.fadeOut();
+            }, 3000);
+        }
+        
+        /**
+         * Placeholder functions for teacher actions
+         */
+        function editTeacher(teacherId) {
+            console.log('Edit teacher:', teacherId);
+            showNotification('Teacher editing functionality will be implemented', 'info');
+        }
+        
+        function viewTeacherDetails(teacherId) {
+            console.log('View teacher details:', teacherId);
+            showNotification('Teacher details view will be implemented', 'info');
+        }
+        
+        function viewTeacherAssignments(teacherId) {
+            console.log('View teacher assignments:', teacherId);
+            showNotification('Teacher assignments view will be implemented', 'info');
+        }
+        
+        function reassignClassTeacher(sectionId) {
+            console.log('Reassign class teacher for section:', sectionId);
+            showNotification('Use the Class Teacher Assignment tab to reassign teachers', 'info');
+        }
+        
+        function removeClassTeacher(sectionId) {
+            console.log('Remove class teacher for section:', sectionId);
+            if (confirm('Are you sure you want to remove the class teacher for this section?')) {
+                showNotification('Class teacher removal functionality will be implemented', 'info');
+            }
+        }
+        
+        function removeSubjectAssignment(assignmentId) {
+            console.log('Remove subject assignment:', assignmentId);
+            if (confirm('Are you sure you want to remove this subject assignment?')) {
+                showNotification('Subject assignment removal functionality will be implemented', 'info');
+            }
+        }
+        
+        function viewTeacherSchedule(teacherId) {
+            console.log('View teacher schedule:', teacherId);
+            showNotification('Teacher schedule view will be implemented', 'info');
+        }
+        
+        function editClassTimetable(classId, sectionId) {
+            console.log('Edit class timetable:', classId, sectionId);
+            showNotification('Class timetable editing will be implemented', 'info');
+        }
+
+        // --- DOCUMENT READY ---
+        $(document).ready(function() {
+            console.log('Document ready - initializing teacher management interface...');
+            
+            // Initialize tab switching
+            initializeTabSwitching();
+            
+            // Initialize form handlers (when implemented)
+            if (typeof initializeFormHandlers === 'function') {
+                initializeFormHandlers();
+            }
+            
+            // Initialize search handlers (when implemented)
+            if (typeof initializeSearchHandlers === 'function') {
+                initializeSearchHandlers();
+            }
+            
+            console.log('Teacher management interface initialization complete.');
+        });
+
     </script>
 </body>
 </html>

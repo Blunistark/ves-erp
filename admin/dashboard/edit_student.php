@@ -20,7 +20,7 @@ require_once 'con.php';
 $student_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 if (!$student_id) {
-    header("Location: students.php");
+    header("Location: student_management_unified.php");
     exit;
 }
 
@@ -39,7 +39,7 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
-    header("Location: students.php");
+    header("Location: student_management_unified.php");
     exit;
 }
 

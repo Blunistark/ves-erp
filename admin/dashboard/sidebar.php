@@ -391,13 +391,9 @@ if (isset($_SESSION['user_id'])) {
                         </svg>
                     </button>
                     <div class="nav-group-content">
-                        <a href="classessections.php" class="nav-subitem <?php echo basename($_SERVER['PHP_SELF']) == 'classessections.php' ? 'active' : ''; ?>">View Students by Class</a>
-                        <a href="students.php?class=3" class="nav-subitem <?php echo basename($_SERVER['PHP_SELF']) == 'students.php' ? 'active' : ''; ?>">Quick View - Class II</a>
-                        <a href="add_student.php" class="nav-subitem <?php echo basename($_SERVER['PHP_SELF']) == 'add_student.php' ? 'active' : ''; ?>">Add Student</a>
-                        <a href="import_student.php" class="nav-subitem <?php echo basename($_SERVER['PHP_SELF']) == 'import_student.php' ? 'active' : ''; ?>">Import/Export Data</a>
+                        <a href="student_management_unified.php" class="nav-subitem <?php echo basename($_SERVER['PHP_SELF']) == 'student_management_unified.php' ? 'active' : ''; ?>">Student Management</a>
                         <a href="student_transfer.php" class="nav-subitem <?php echo basename($_SERVER['PHP_SELF']) == 'student_transfer.php' ? 'active' : ''; ?>">Transfer/Promotion</a>
                         <a href="student_transfer_records.php" class="nav-subitem <?php echo basename($_SERVER['PHP_SELF']) == 'student_transfer_records.php' ? 'active' : ''; ?>">Transfer Records</a>
-                        <a href="manage_student.php" class="nav-subitem <?php echo basename($_SERVER['PHP_SELF']) == 'manage_student.php' ? 'active' : ''; ?>">Manage Students</a>
                     </div>
                 </div>
 

@@ -13,7 +13,7 @@ if (!isLoggedIn() || !hasRole('admin')) {
     exit;
 }
 
-// Include sidebar after authentication
+
 include 'sidebar.php'; 
 ?>
 
@@ -351,7 +351,7 @@ include 'sidebar.php';
         </a>
 
         <!-- Student Management and sub-items -->
-        <a href="add_student.php" class="nav-card">
+        <a href="student_management_unified.php" class="nav-card">
             <div class="nav-card-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
@@ -361,37 +361,8 @@ include 'sidebar.php';
                 </svg>
             </div>
             <div class="nav-card-content">
-                <h3>Add Student</h3>
-                <p>Create new student accounts</p>
-            </div>
-        </a>
-
-        <a href="manage_student.php" class="nav-card">
-            <div class="nav-card-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                    <circle cx="9" cy="7" r="4"/>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                </svg>
-            </div>
-            <div class="nav-card-content">
-                <h3>Manage Students</h3>
-                <p>View and update student details</p>
-            </div>
-        </a>
-
-        <a href="import_student.php" class="nav-card">
-            <div class="nav-card-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                    <polyline points="17 8 12 3 7 8"/>
-                    <line x1="12" y1="3" x2="12" y2="15"/>
-                </svg>
-            </div>
-            <div class="nav-card-content">
-                <h3>Import Students</h3>
-                <p>Bulk import student data</p>
+                <h3>Student Management</h3>
+                <p>Manage all student operations</p>
             </div>
         </a>
 

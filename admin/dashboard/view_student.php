@@ -2,11 +2,11 @@
 include 'con.php';
 include 'sidebar.php';
 $id = $_GET['id'] ?? $_POST['id'] ?? null;
-if (!$id) { header('Location: manage_student.php'); exit; }
+if (!$id) { header('Location: student_management.php'); exit; }
 $stmt = $pdo->prepare('SELECT * FROM students WHERE id = ?');
 $stmt->execute([$id]);
 $student = $stmt->fetch();
-if (!$student) { header('Location: manage_student.php'); exit; }
+if (!$student) { header('Location: student_management.php'); exit; }
 $message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // collect form data
@@ -232,7 +232,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="btn btn-outline" onclick="window.location='manage_student.php'">Cancel</button>
+                    <button type="button" class="btn btn-outline" onclick="window.location='student_management_unified.php'">Cancel</button>
                     <button type="submit" class="btn btn-primary">Save Changes</button>
                 </div>
             </form>
