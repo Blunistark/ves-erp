@@ -293,11 +293,6 @@
                     <div class="filter-item">
                         <label for="classSelect" class="form-label">Filter by Class</label>
                         <select id="classSelect" class="form-select">
-                            <option value="all">All Classes</option>
-                            <option value="8a">Class 8A</option>
-                            <option value="9b">Class 9B</option>
-                            <option value="10c">Class 10C</option>
-                            <option value="7d">Class 7D</option>
                         </select>
                     </div>
                     <div class="filter-item">
@@ -1221,31 +1216,35 @@
         // Update class filter options
         const classSelect = document.getElementById('classSelect');
         const currentClassValue = classSelect.value; // Preserve current selection
-        
-        // For teachers, don't include "All Classes" option since they should only see their assigned classes
+
         classSelect.innerHTML = '';
-        
+
+        // ✅ Add "All Classes" option
+        const allOption = document.createElement('option');
+        allOption.value = ''; // or use 'all' if you handle it in filtering
+        allOption.textContent = 'All Classes';
+        if (currentClassValue === '') {
+            allOption.selected = true;
+        }
+        classSelect.appendChild(allOption);
+
         // Add classes from the data, sorted by name
         const sortedClassNames = Array.from(classes.keys()).sort();
         console.log('Generated classes map for filter:', classes);
-        let hasSelection = false;
+        let hasSelection = currentClassValue === '';
+
         sortedClassNames.forEach((classNameSection, index) => {
             const classInfo = classes.get(classNameSection);
             if (classInfo) {
                 const option = document.createElement('option');
-                // Store timetable_id in the value
-                option.value = classInfo.timetable_id; // Use timetable_id as the value
+                option.value = classInfo.timetable_id;
                 option.textContent = `Class ${classNameSection}`;
-                 // Check if the current selected value matches the timetable_id
-                 if (String(classInfo.timetable_id) === currentClassValue) {
-                     option.selected = true; // Restore selection
-                     hasSelection = true;
-                 }
-                 // If no previous selection and this is the first option, select it
-                 if (!hasSelection && index === 0) {
-                     option.selected = true;
-                     hasSelection = true;
-                 }
+                
+                if (String(classInfo.timetable_id) === currentClassValue) {
+                    option.selected = true;
+                    hasSelection = true;
+                }
+
                 classSelect.appendChild(option);
             }
         });

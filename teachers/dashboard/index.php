@@ -186,32 +186,8 @@ if (!isset($stats['attendance_marked'])) {
             padding: 0 !important;
         }
 
-<<<<<<< HEAD
-        .user-welcome {
-            background-color: #f9f9f9;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .dashboard-container {
-            margin-left: 280px !important;
-            padding: 2rem !important;
-            background-color: #ffffff !important;
-            min-height: 100vh !important;
-            transition: margin-left 0.3s ease !important;
-            width: calc(100% - 280px) !important;
-            box-sizing: border-box !important;
-            position: relative !important;
-        }
-=======
         /* Dashboard container responsive styles */
        
->>>>>>> origin/UI
 
         .sidebar.collapsed ~ .dashboard-container {
             margin-left: 60px !important;
@@ -276,184 +252,6 @@ if (!isset($stats['attendance_marked'])) {
             border: 1px solid #e2e8f0;
         }
 
-<<<<<<< HEAD
-        /* NOTIFICATION BELL STYLES */
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            position: relative;
-        }
-
-        .notification-bell {
-            position: relative;
-            order: 2;
-        }
-
-        .notification-icon {
-            position: relative;
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, #4285f4, #0d47a1);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(66, 133, 244, 0.3);
-        }
-
-        .notification-icon:hover {
-            background: linear-gradient(135deg, #3367d6, #0b3d91);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(66, 133, 244, 0.4);
-        }
-
-        .notification-icon svg {
-            width: 24px;
-            height: 24px;
-            color: white;
-        }
-
-        .notification-badge {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            background: linear-gradient(135deg, #ff4444, #cc0000);
-            color: white;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: 600;
-            min-width: 24px;
-            border: 2px solid white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-
-        .notification-badge.hidden {
-            display: none;
-        }
-
-        .notification-dropdown {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            width: 380px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
-            border: 1px solid #e0e0e0;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-10px);
-            transition: all 0.3s ease;
-            margin-top: 8px;
-        }
-
-        .notification-dropdown.show {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-        }
-
-        .notification-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 20px;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        .notification-header h3 {
-            margin: 0;
-            font-size: 18px;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .mark-all-read {
-            background: #4285f4;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: background 0.2s ease;
-        }
-
-        .mark-all-read:hover {
-            background: #3367d6;
-        }
-
-        .notification-list {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        .notification-item {
-            padding: 16px 20px;
-            border-bottom: 1px solid #f8f8f8;
-            cursor: pointer;
-            transition: background 0.2s ease;
-        }
-
-        .notification-item:hover {
-            background: #f8f9fa;
-        }
-
-        .notification-item.unread {
-            background: #f0f8ff;
-            border-left: 4px solid #4285f4;
-        }
-
-        .notification-content {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-        }
-
-        .notification-type-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .notification-type-icon.system { background: #e3f2fd; color: #1976d2; }
-        .notification-type-icon.admin { background: #f3e5f5; color: #7b1fa2; }
-        .notification-type-icon.teacher { background: #e8f5e8; color: #388e3c; }
-        .notification-type-icon.announcement { background: #fff3e0; color: #f57c00; }
-        .notification-type-icon.notice { background: #fce4ec; color: #c2185b; }
-
-        .notification-details {
-            flex: 1;
-        }
-
-        .notification-title {
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 4px;
-            font-size: 14px;
-        }
-
-        .notification-message {
-            color: #666;
-            font-size: 13px;
-            line-height: 1.4;
-            margin-bottom: 8px;
-        }
-
-=======
         /* User welcome section */
         .user-welcome {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -664,16 +462,11 @@ if (!isset($stats['attendance_marked'])) {
             margin-bottom: 0.5rem;
         }
 
->>>>>>> origin/UI
         .notification-meta {
             display: flex;
             justify-content: space-between;
             align-items: center;
-<<<<<<< HEAD
-            font-size: 12px;
-=======
             font-size: 0.75rem;
->>>>>>> origin/UI
         }
 
         .notification-time {
@@ -681,11 +474,7 @@ if (!isset($stats['attendance_marked'])) {
         }
 
         .notification-priority {
-<<<<<<< HEAD
-            padding: 2px 8px;
-=======
             padding: 0.125rem 0.5rem;
->>>>>>> origin/UI
             border-radius: 12px;
             font-weight: 500;
             text-transform: uppercase;
@@ -696,11 +485,7 @@ if (!isset($stats['attendance_marked'])) {
         .notification-priority.low { background: #e8f5e8; color: #388e3c; }
 
         .notification-footer {
-<<<<<<< HEAD
-            padding: 16px 20px;
-=======
             padding: 1rem 1.25rem;
->>>>>>> origin/UI
             border-top: 1px solid #f0f0f0;
             text-align: center;
         }
@@ -709,11 +494,7 @@ if (!isset($stats['attendance_marked'])) {
             color: #4285f4;
             text-decoration: none;
             font-weight: 500;
-<<<<<<< HEAD
-            font-size: 14px;
-=======
             font-size: 0.875rem;
->>>>>>> origin/UI
         }
 
         .view-all-btn:hover {
@@ -721,11 +502,7 @@ if (!isset($stats['attendance_marked'])) {
         }
 
         .notification-loading, .notification-empty {
-<<<<<<< HEAD
-            padding: 40px 20px;
-=======
             padding: 2.5rem 1.25rem;
->>>>>>> origin/UI
             text-align: center;
             color: #999;
             font-style: italic;
@@ -1180,11 +957,7 @@ if (!isset($stats['attendance_marked'])) {
             .header-right {
                 flex-direction: row;
                 justify-content: center;
-<<<<<<< HEAD
-                gap: 15px;
-=======
                 gap: 1rem;
->>>>>>> origin/UI
             }
             
             .school-logo {
@@ -1388,231 +1161,16 @@ if (!isset($stats['attendance_marked'])) {
             .header-title {
                 font-size: 1.25rem;
             }
-<<<<<<< HEAD
-=======
 
             .header-date {
                 font-size: 0.75rem;
                 padding: 0.25rem 0.5rem;
             }
->>>>>>> origin/UI
             
             .notification-dropdown {
                 width: 280px;
                 right: -80px;
             }
-<<<<<<< HEAD
-        }
-        
-        /* Notification badge */
-        .notification-badge {
-            position: absolute;
-            top: -10px;
-            right: -10px;
-            background: #f56565;
-            color: white;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            font-size: 0.8rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            border: 3px solid white;
-            z-index: 110;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-        
-        /* Notification Bell Styles */
-        .notification-container {
-            position: relative;
-            z-index: 100;
-            order: 2; /* Move notification bell to the far right */
-        }
-        
-        .notification-bell {
-            background: #4299e1;
-            border: 2px solid #2b77cb;
-            cursor: pointer;
-            position: relative;
-            padding: 14px;
-            border-radius: 50%;
-            transition: all 0.2s ease;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 8px rgba(66, 153, 225, 0.3);
-            min-width: 48px;
-            min-height: 48px;
-        }
-        
-        .notification-bell:hover {
-            background-color: #3182ce;
-            border-color: #2c5aa0;
-            transform: scale(1.1);
-            box-shadow: 0 6px 12px rgba(66, 153, 225, 0.4);
-        }
-        
-        .notification-bell svg {
-            width: 22px;
-            height: 22px;
-        }
-        
-        .notification-dropdown {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            width: 360px;
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-            z-index: 1000;
-            display: none;
-            max-height: 400px;
-            overflow: hidden;
-        }
-        
-        .notification-dropdown.show {
-            display: block;
-        }
-        
-        .notification-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 20px;
-            border-bottom: 1px solid #e2e8f0;
-            background: #f8fafc;
-        }
-        
-        .notification-header h3 {
-            margin: 0;
-            font-size: 1rem;
-            font-weight: 600;
-            color: #1a202c;
-        }
-        
-        .mark-all-read {
-            background: none;
-            border: none;
-            color: #4299e1;
-            font-size: 0.875rem;
-            cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 4px;
-        }
-        
-        .mark-all-read:hover {
-            background-color: #ebf8ff;
-        }
-        
-        .notification-list {
-            max-height: 280px;
-            overflow-y: auto;
-        }
-        
-        .notification-item {
-            padding: 12px 20px;
-            border-bottom: 1px solid #f1f5f9;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-            position: relative;
-        }
-        
-        .notification-item:hover {
-            background-color: #f8fafc;
-        }
-        
-        .notification-item.unread {
-            background-color: #ebf8ff;
-            border-left: 3px solid #4299e1;
-        }
-        
-        .notification-item.unread::before {
-            content: '';
-            position: absolute;
-            left: 8px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 6px;
-            height: 6px;
-            background-color: #4299e1;
-            border-radius: 50%;
-        }
-        
-        .notification-title {
-            font-weight: 600;
-            font-size: 0.875rem;
-            color: #1a202c;
-            margin-bottom: 4px;
-        }
-        
-        .notification-message {
-            font-size: 0.8rem;
-            color: #4a5568;
-            line-height: 1.4;
-            margin-bottom: 6px;
-        }
-        
-        .notification-time {
-            font-size: 0.75rem;
-            color: #718096;
-        }
-        
-        .notification-priority-urgent {
-            border-left-color: #f56565 !important;
-        }
-        
-        .notification-priority-important {
-            border-left-color: #ed8936 !important;
-        }
-        
-        .notification-loading {
-            padding: 20px;
-            text-align: center;
-            color: #718096;
-        }
-        
-        .notification-empty {
-            padding: 40px 20px;
-            text-align: center;
-            color: #718096;
-        }
-        
-        .notification-footer {
-            padding: 12px 20px;
-            border-top: 1px solid #e2e8f0;
-            background: #f8fafc;
-        }
-        
-        .view-all-link {
-            display: block;
-            text-align: center;
-            color: #4299e1;
-            text-decoration: none;
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-        
-        .view-all-link:hover {
-            text-decoration: underline;
-        }
-        
-        .no-classes {
-            color: #718096;
-            font-style: italic;
-            padding: 20px 0;
-            text-align: center;
-            background: #f7fafc;
-            border: 2px dashed #cbd5e0;
-            border-radius: 16px;
-            margin: 10px 0;
-        }
-</style>
-=======
 
             .quick-stats {
                 gap: 0.75rem;
@@ -1903,7 +1461,6 @@ if (!isset($stats['attendance_marked'])) {
            }
        }
    </style>
->>>>>>> origin/UI
 </head>
 <body>
 <div class="sidebar-overlay"></div>

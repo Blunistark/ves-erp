@@ -210,7 +210,7 @@ class TimetableApiHandler extends ApiHandler {
                 LEFT JOIN academic_years ay ON t.academic_year_id = ay.id
                 LEFT JOIN classes c ON t.class_id = c.id
                 LEFT JOIN sections s ON t.section_id = s.id
-                WHERE tp.teacher_id = ? AND t.status = 'published'";
+                WHERE tp.teacher_id = ? ";
         
         $params = [$teacher_id];
         $types = "i";
