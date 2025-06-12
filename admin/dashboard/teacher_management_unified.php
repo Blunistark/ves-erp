@@ -390,6 +390,39 @@ include 'sidebar.php';
             animation: spin 1s ease-in-out infinite;
         }
 
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .modal-overlay {
+            z-index: 1000;
+        }
+
+        .modal-container {
+            max-width: 500px;
+        }
+
+        #reassignReason {
+            resize: vertical;
+            min-height: 80px;
+        }
+
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
@@ -959,10 +992,42 @@ include 'sidebar.php';
 
         .notification.warning {
             background-color: #f59e0b;
+        }        .notification.info {
+            background-color: #3b82f6;
         }
 
-        .notification.info {
-            background-color: #3b82f6;
+        /* Additional Modal Styles for Reassign Feature */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .modal-overlay {
+            z-index: 1000;
+        }
+
+        .modal-container {
+            max-width: 500px;
+        }
+
+        #reassignReason {
+            resize: vertical;
+            min-height: 80px;
         }
     </style>
 </head>
@@ -1405,44 +1470,6 @@ include 'sidebar.php';
                         <h3 class="card-title">Timetable & Schedule Management</h3>
                     </div>
                     <div class="card-body">
-                        <!-- Timetable Conflicts Section -->
-                        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                            <h4 class="section-title" style="font-size: 1.1rem; font-weight: 600; margin:0;">
-                                <i class="fas fa-exclamation-triangle text-warning"></i>
-                                Schedule Conflicts
-                            </h4>
-                            <button class="btn btn-outline btn-sm" id="adminRefreshConflictsBtn">
-                                <i class="fas fa-sync"></i>
-                                Refresh Conflicts
-                            </button>
-                        </div>
-                        <div id="adminTimetableConflicts" style="margin-bottom: 32px;">
-                            <p class="help-text">Loading conflicts...</p>
-                        </div>
-                        <div id="adminTimetableConflictsLoading" class="loading" style="display:none;"><div class="spinner"></div><p>Loading Conflicts...</p></div>
-
-                        <!-- Teacher Timetable Overview -->
-                        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; margin-top: 32px;">
-                            <h4 class="section-title" style="font-size: 1.1rem; font-weight: 600; margin:0;">
-                                <i class="fas fa-users"></i>
-                                Teacher Schedule Overview
-                            </h4>
-                        </div>
-                        <div id="adminTeacherTimetableOverview" style="margin-bottom: 32px;">
-                             <p class="help-text">Loading teacher schedules...</p>
-                        </div>
-                        <div id="adminTeacherTimetableOverviewLoading" class="loading" style="display:none;"><div class="spinner"></div><p>Loading Teacher Schedules...</p></div>                        <!-- Class Timetable Status -->
-                        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; margin-top: 32px;">
-                            <h4 class="section-title" style="font-size: 1.1rem; font-weight: 600; margin:0;">
-                                <i class="fas fa-chalkboard"></i>
-                                Class Timetable Status
-                            </h4>
-                        </div>
-                        <div id="adminClassTimetableStatus">
-                            <p class="help-text">Loading class timetable statuses...</p>
-                        </div>
-                        <div id="adminClassTimetableStatusLoading" class="loading" style="display:none;"><div class="spinner"></div><p>Loading Class Timetable Status...</p></div>
-
                         <!-- Individual Teacher Schedule Editor -->
                         <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; margin-top: 32px;">
                             <h4 class="section-title" style="font-size: 1.1rem; font-weight: 600; margin:0;">
@@ -1588,6 +1615,45 @@ include 'sidebar.php';
                         </div>
                     </div>
                 </div>
+                        <!-- Timetable Conflicts Section -->
+                        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <h4 class="section-title" style="font-size: 1.1rem; font-weight: 600; margin:0;">
+                                <i class="fas fa-exclamation-triangle text-warning"></i>
+                                Schedule Conflicts
+                            </h4>
+                            <button class="btn btn-outline btn-sm" id="adminRefreshConflictsBtn">
+                                <i class="fas fa-sync"></i>
+                                Refresh Conflicts
+                            </button>
+                        </div>
+                        <div id="adminTimetableConflicts" style="margin-bottom: 32px;">
+                            <p class="help-text">Loading conflicts...</p>
+                        </div>
+                        <div id="adminTimetableConflictsLoading" class="loading" style="display:none;"><div class="spinner"></div><p>Loading Conflicts...</p></div>
+
+                        <!-- Teacher Timetable Overview -->
+                        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; margin-top: 32px;">
+                            <h4 class="section-title" style="font-size: 1.1rem; font-weight: 600; margin:0;">
+                                <i class="fas fa-users"></i>
+                                Teacher Schedule Overview
+                            </h4>
+                        </div>
+                        <div id="adminTeacherTimetableOverview" style="margin-bottom: 32px;">
+                             <p class="help-text">Loading teacher schedules...</p>
+                        </div>
+                        <div id="adminTeacherTimetableOverviewLoading" class="loading" style="display:none;"><div class="spinner"></div><p>Loading Teacher Schedules...</p></div>                        <!-- Class Timetable Status -->
+                        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; margin-top: 32px;">
+                            <h4 class="section-title" style="font-size: 1.1rem; font-weight: 600; margin:0;">
+                                <i class="fas fa-chalkboard"></i>
+                                Class Timetable Status
+                            </h4>
+                        </div>
+                        <div id="adminClassTimetableStatus">
+                            <p class="help-text">Loading class timetable statuses...</p>
+                        </div>
+                        <div id="adminClassTimetableStatusLoading" class="loading" style="display:none;"><div class="spinner"></div><p>Loading Class Timetable Status...</p></div>
+
+                        
             </div>
         </div>    </div>
       <!-- JavaScript -->
@@ -3527,9 +3593,30 @@ include 'sidebar.php';
             showNotification('Teacher assignments view will be implemented', 'info');
         }
         
-        function reassignClassTeacher(sectionId) {
+       function reassignClassTeacher(sectionId) {
             console.log('Reassign class teacher for section:', sectionId);
-            showNotification('Use the Class Teacher Assignment tab to reassign teachers', 'info');
+            
+            // First, get current section info
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'GET',
+                data: { 
+                    action: 'get_section_info',
+                    section_id: sectionId 
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success && response.data) {
+                        openReassignModal(response.data);
+                    } else {
+                        showNotification('Failed to load section information', 'error');
+                    }
+                },                error: function(xhr, status, error) {
+                    console.error('Ajax error:', {xhr, status, error});
+                    console.error('Response text:', xhr.responseText);
+                    showNotification('Error loading section information: ' + error, 'error');
+                }
+            });
         }
         
         function removeClassTeacher(sectionId) {
@@ -3582,6 +3669,152 @@ include 'sidebar.php';
         $('#teacherScheduleEditorToggle').off('click').on('click', function() {
             $('#teacherScheduleEditor').toggle();
         });
+
+        
+        function openReassignModal(sectionData) {
+            const modal = `
+                <div id="reassignModal" class="modal-overlay">
+                    <div class="modal-container">
+                        <div class="modal-header">
+                            <h3>Reassign Class Teacher</h3>
+                            <button class="modal-close" onclick="closeReassignModal()">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label><strong>Class:</strong> ${sectionData.class_name}</label>
+                            </div>
+                            <div class="form-group">
+                                <label><strong>Section:</strong> ${sectionData.section_name}</label>
+                            </div>
+                            <div class="form-group">
+                                <label><strong>Current Class Teacher:</strong> ${sectionData.current_teacher || 'Not assigned'}</label>
+                            </div>
+                            <hr style="margin: 20px 0;">
+                            <div class="form-group">
+                                <label for="newTeacherId">Select New Class Teacher:</label>
+                                <select id="newTeacherId" class="form-control" required>
+                                    <option value="">-- Select Teacher --</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="reassignReason">Reason for Reassignment:</label>
+                                <textarea id="reassignReason" class="form-control" rows="3" placeholder="Enter reason for reassignment (optional)"></textarea>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary" onclick="closeReassignModal()">Cancel</button>
+                                <button type="button" class="btn btn-primary" onclick="confirmReassignment(${sectionData.section_id})">Reassign Teacher</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if any
+            $('#reassignModal').remove();
+            
+            // Add modal to page
+            $('body').append(modal);
+            
+            // Populate teachers dropdown
+            populateTeachersDropdown(sectionData.current_teacher_id);
+            
+            // Show modal
+            $('#reassignModal').fadeIn(300);
+        }
+
+        
+function populateTeachersDropdown(currentTeacherId) {
+    const dropdown = $('#newTeacherId');
+    dropdown.empty().append('<option value="">-- Select Teacher --</option>');
+    
+    // Use the global teachers data
+    if (window.teachersData && window.teachersData.length > 0) {
+        window.teachersData.forEach(teacher => {
+            if (teacher.status === 'active') {
+                const isSelected = teacher.id == currentTeacherId ? ' (Current)' : '';
+                dropdown.append(`<option value="${teacher.id}">${teacher.full_name}${isSelected}</option>`);
+            }
+        });
+    } else {
+        // Fallback: load teachers via AJAX
+        $.ajax({
+            url: 'teacher_management_api.php',
+            type: 'GET',
+            data: { action: 'get_teachers' },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success && response.data) {
+                    response.data.forEach(teacher => {
+                        if (teacher.status === 'active') {
+                            const isSelected = teacher.id == currentTeacherId ? ' (Current)' : '';
+                            dropdown.append(`<option value="${teacher.id}">${teacher.full_name}${isSelected}</option>`);
+                        }
+                    });
+                }
+            }
+        });
+    }
+}
+
+function confirmReassignment(sectionId) {
+    const newTeacherId = $('#newTeacherId').val();
+    const reason = $('#reassignReason').val().trim();
+    
+    if (!newTeacherId) {
+        showNotification('Please select a teacher', 'error');
+        return;
+    }
+    
+    const confirmMsg = `Are you sure you want to reassign the class teacher for this section?\n\nThis action will update the class teacher assignment immediately.`;
+    
+    if (!confirm(confirmMsg)) {
+        return;
+    }
+    
+    // Show loading state
+    $('.btn-primary', '#reassignModal').prop('disabled', true).text('Reassigning...');
+    
+    $.ajax({
+        url: 'teacher_management_api.php',
+        type: 'POST',
+        data: {
+            action: 'reassign_class_teacher',
+            section_id: sectionId,
+            teacher_id: newTeacherId,
+            reason: reason
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                showNotification('Class teacher reassigned successfully', 'success');
+                closeReassignModal();
+                
+                // Refresh the current view
+                if (typeof loadClassTeacherAssignments === 'function') {
+                    loadClassTeacherAssignments();
+                }
+                if (typeof loadTeacherAssignments === 'function') {
+                    loadTeacherAssignments();
+                }
+            } else {
+                showNotification('Failed to reassign class teacher: ' + (response.message || 'Unknown error'), 'error');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Reassignment error:', error);
+            showNotification('Error reassigning class teacher: ' + error, 'error');
+        },
+        complete: function() {
+            $('.btn-primary', '#reassignModal').prop('disabled', false).text('Reassign Teacher');
+        }
+    });
+}
+
+function closeReassignModal() {
+    $('#reassignModal').fadeOut(300, function() {
+        $(this).remove();
+    });
+}
 
         
 // Enhanced debug function for API troubleshooting

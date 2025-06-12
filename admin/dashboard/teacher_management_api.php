@@ -74,12 +74,84 @@ try {
             
         case 'check_conflicts':
             handleCheckConflicts();
-            break;
+            break;        case 'reassign_class_teacher':
+            if (!isset($_POST['section_id']) || !isset($_POST['teacher_id'])) {
+                echo json_encode(['success' => false, 'message' => 'Section ID and Teacher ID are required']);
+                exit;
+            }
             
-        case 'reassign_class_teacher':
-            handleReassignClassTeacher();
-            break;
+            $section_id = (int)$_POST['section_id'];
+            $teacher_id = (int)$_POST['teacher_id'];
+            $reason = isset($_POST['reason']) ? trim($_POST['reason']) : '';
             
+            try {
+                // Validate that teacher exists and is active
+                $stmt = $conn->prepare("SELECT id, full_name FROM users WHERE id = ? AND role IN ('teacher', 'headmaster') AND status = 'active'");
+                if (!$stmt) {
+                    throw new Exception("Prepare failed: " . $conn->error);
+                }
+                
+                $stmt->bind_param("i", $teacher_id);
+                if (!$stmt->execute()) {
+                    throw new Exception("Execute failed: " . $stmt->error);
+                }
+                
+                $result = $stmt->get_result();
+                $teacher = $result->fetch_assoc();
+                $stmt->close();
+                
+                if (!$teacher) {
+                    echo json_encode(['success' => false, 'message' => 'Invalid teacher selected']);
+                    exit;
+                }
+                
+                // Validate that section exists
+                $stmt = $conn->prepare("SELECT id, name FROM sections WHERE id = ?");
+                if (!$stmt) {
+                    throw new Exception("Prepare failed: " . $conn->error);
+                }
+                
+                $stmt->bind_param("i", $section_id);
+                if (!$stmt->execute()) {
+                    throw new Exception("Execute failed: " . $stmt->error);
+                }
+                
+                $result = $stmt->get_result();
+                $section = $result->fetch_assoc();
+                $stmt->close();
+                
+                if (!$section) {
+                    echo json_encode(['success' => false, 'message' => 'Invalid section selected']);
+                    exit;
+                }
+                
+                // Update the section's class teacher
+                $stmt = $conn->prepare("UPDATE sections SET class_teacher_user_id = ? WHERE id = ?");
+                if (!$stmt) {
+                    throw new Exception("Prepare failed: " . $conn->error);
+                }
+                
+                $stmt->bind_param("ii", $teacher_id, $section_id);
+                if (!$stmt->execute()) {
+                    throw new Exception("Execute failed: " . $stmt->error);
+                }
+                
+                $stmt->close();
+                
+                echo json_encode([
+                    'success' => true, 
+                    'message' => 'Class teacher reassigned successfully',
+                    'data' => [
+                        'teacher_name' => $teacher['full_name'],
+                        'section_name' => $section['name']
+                    ]
+                ]);
+                
+            } catch (Exception $e) {
+                error_log("Error reassigning class teacher: " . $e->getMessage());
+                echo json_encode(['success' => false, 'message' => 'Failed to reassign class teacher: ' . $e->getMessage()]);
+            }
+            break;
         case 'delete_teacher':
             handleDeleteTeacher();
             break;
@@ -182,6 +254,55 @@ try {
             
         case 'get_classes':
             handleGetClasses();
+            break;        case 'get_section_info':
+            if (!isset($_GET['section_id'])) {
+                echo json_encode(['success' => false, 'message' => 'Section ID is required']);
+                exit;
+            }
+            
+            $section_id = (int)$_GET['section_id'];
+            
+            try {
+                $sql = "
+                    SELECT 
+                        s.id as section_id,
+                        s.name as section_name,
+                        c.name as class_name,
+                        c.id as class_id,
+                        s.class_teacher_user_id as current_teacher_id,
+                        u.full_name as current_teacher
+                    FROM sections s
+                    JOIN classes c ON s.class_id = c.id
+                    LEFT JOIN users u ON s.class_teacher_user_id = u.id
+                    WHERE s.id = ?
+                ";
+                
+                $stmt = $conn->prepare($sql);
+                if (!$stmt) {
+                    throw new Exception("Prepare failed: " . $conn->error);
+                }
+                
+                $stmt->bind_param("i", $section_id);
+                
+                if (!$stmt->execute()) {
+                    throw new Exception("Execute failed: " . $stmt->error);
+                }
+                
+                $result = $stmt->get_result();
+                $row = $result->fetch_assoc();
+                
+                if ($row) {
+                    echo json_encode(['success' => true, 'data' => $row]);
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Section not found']);
+                }
+                
+                $stmt->close();
+                
+            } catch (Exception $e) {
+                error_log("Error fetching section info: " . $e->getMessage());
+                echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
+            }
             break;
             
         default:
