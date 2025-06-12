@@ -406,7 +406,7 @@ if (isset($_SESSION['user_id'])) {
                     <button class="nav-group-toggle">
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
                             </svg>
                             <span>Teacher Management</span>
                         </div>
@@ -415,10 +415,18 @@ if (isset($_SESSION['user_id'])) {
                         </svg>
                     </button>
                     <div class="nav-group-content">
-                        <a href="teachersadd.php" class="nav-subitem">Add Teacher</a>
-                        <a href="teachersmanage.php" class="nav-subitem">Manage Teachers</a>
-                        <a href="teachersassign.php" class="nav-subitem">Assign Class Teachers</a>
-                        <a href="import_teacher.php" class="nav-subitem">Import Teachers</a>
+                        <a href="teacher_management_unified.php" class="nav-subitem <?php echo basename($_SERVER['PHP_SELF']) == 'teacher_management_unified.php' ? 'active' : ''; ?>">
+                            <svg xmlns="http://www.w3.org/2000/svg" style="width: 14px; height: 14px; margin-right: 8px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                            </svg>
+                            Unified Management
+                        </a>
+                        <a href="import_teacher.php" class="nav-subitem">
+                            <svg xmlns="http://www.w3.org/2000/svg" style="width: 14px; height: 14px; margin-right: 8px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                            </svg>
+                            Import Teachers
+                        </a>
                     </div>
                 </div>
 
@@ -441,7 +449,6 @@ if (isset($_SESSION['user_id'])) {
                         <a href="classessections.php" class="nav-subitem">Manage Sections</a>
                         <a href="subject_manage.php" class="nav-subitem">Manage Subjects</a>
                         <a href="class_subjects.php" class="nav-subitem">Manage Class Subjects</a>
-                        <a href="teacher_subject_assign.php" class="nav-subitem">Teacher Subject Assignment</a>
                     </div>
                 </div>
 
@@ -541,7 +548,7 @@ if (isset($_SESSION['user_id'])) {
                     <button class="nav-group-toggle">
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 012 2z" />
                            </svg>
                            <span>School Events</span>
                        </div>
