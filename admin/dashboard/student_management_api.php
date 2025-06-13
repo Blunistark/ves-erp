@@ -1134,12 +1134,12 @@ function addStudent($conn, $postData, $filesData) {
         }
 
         // --- User Creation ---
-        $username = safe_get($postData, 'username', strtok($postData['email'], '@')); // Default username from email prefix
         $email = $postData['email'];
         $password = $postData['password'];
         $password_hash = password_hash($password, PASSWORD_DEFAULT);
         $role = 'student';
         $status = safe_get($postData, 'status', 'active'); // Default to active
+        $full_name = safe_get($postData, 'full_name');
 
         // Check if email already exists
         $stmtCheckEmail = $conn->prepare("SELECT id FROM users WHERE email = ?");
@@ -1151,12 +1151,12 @@ function addStudent($conn, $postData, $filesData) {
         }
         $stmtCheckEmail->close();
 
-        $sqlUser = "INSERT INTO users (username, email, password_hash, role, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NOW(), NOW())";
+        $sqlUser = "INSERT INTO users (email, password_hash, full_name, role, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NOW(), NOW())";
         $stmtUser = $conn->prepare($sqlUser);
         if (!$stmtUser) {
             throw new Exception("Failed to prepare user statement: " . $conn->error);
         }
-        $stmtUser->bind_param('sssss', $username, $email, $password_hash, $role, $status);
+        $stmtUser->bind_param('sssss', $email, $password_hash, $full_name, $role, $status);
         if (!$stmtUser->execute()) {
             throw new Exception("Failed to create user: " . $stmtUser->error);
         }
@@ -1204,17 +1204,45 @@ function addStudent($conn, $postData, $filesData) {
             throw new Exception("Failed to prepare student statement: " . $conn->error);
         }
 
-        // Bind parameters
-        $stmtStudent->bind_param('issiiisssssssssssssssssss',
-            $userId, $admissionNumber, safe_get($postData, 'full_name'), safe_get($postData, 'class_id'), safe_get($postData, 'section_id'), 
-            safe_get($postData, 'academic_year_id'), safe_get($postData, 'roll_number'), safe_get($postData, 'gender_code'), 
-            safe_get($postData, 'dob'), safe_get($postData, 'blood_group_code'), safe_get($postData, 'nationality'), safe_get($postData, 'mobile'), 
-            safe_get($postData, 'contact_email', $email), // Default contact_email to user email
-            safe_get($postData, 'address'), safe_get($postData, 'pincode'), safe_get($postData, 'alt_mobile'),
-            safe_get($postData, 'father_name'), safe_get($postData, 'father_aadhar_number'),
-            safe_get($postData, 'mother_name'), safe_get($postData, 'mother_aadhar_number'), safe_get($postData, 'mother_tongue'),
-            safe_get($postData, 'aadhar_card_number'), safe_get($postData, 'medical_conditions'), safe_get($postData, 'student_state_code'),
-            $photoPath, safe_get($postData, 'admission_date')
+        // Bind parameters - prepare variables first since bind_param requires variables by reference
+        $fullName = safe_get($postData, 'full_name');
+        $classId = safe_get($postData, 'class_id');
+        $sectionId = safe_get($postData, 'section_id');
+        $academicYearId = safe_get($postData, 'academic_year_id');
+        $rollNumber = safe_get($postData, 'roll_number');
+        $genderCode = safe_get($postData, 'gender_code');
+        $dob = safe_get($postData, 'dob');
+        $bloodGroupCode = safe_get($postData, 'blood_group_code');
+        $nationality = safe_get($postData, 'nationality');
+        $mobile = safe_get($postData, 'mobile');
+        $contactEmail = safe_get($postData, 'contact_email', $email);
+        $address = safe_get($postData, 'address');
+        $pincode = safe_get($postData, 'pincode');
+        $altMobile = safe_get($postData, 'alt_mobile');
+        $fatherName = safe_get($postData, 'father_name');
+        $fatherAadhar = safe_get($postData, 'father_aadhar_number');
+        $motherName = safe_get($postData, 'mother_name');
+        $motherAadhar = safe_get($postData, 'mother_aadhar_number');
+        $motherTongue = safe_get($postData, 'mother_tongue');
+        $aadharNumber = safe_get($postData, 'aadhar_card_number');
+        $medicalConditions = safe_get($postData, 'medical_conditions');
+        $studentStateCode = safe_get($postData, 'student_state_code');
+        $admissionDate = safe_get($postData, 'admission_date');
+
+        // Debug: Count parameters
+        $paramCount = 26;
+        $typeString = 'issiiissssssssssssssssssss';
+        debug_log("BIND PARAM DEBUG: Type string: '$typeString', Length: " . strlen($typeString) . ", Expected params: $paramCount");
+
+        $stmtStudent->bind_param('issiiissssssssssssssssssss',
+            $userId, $admissionNumber, $fullName, $classId, $sectionId, 
+            $academicYearId, $rollNumber, $genderCode, 
+            $dob, $bloodGroupCode, $nationality, $mobile, 
+            $contactEmail, $address, $pincode, $altMobile,
+            $fatherName, $fatherAadhar,
+            $motherName, $motherAadhar, $motherTongue,
+            $aadharNumber, $medicalConditions, $studentStateCode,
+            $photoPath, $admissionDate
         );
 
         if (!$stmtStudent->execute()) {

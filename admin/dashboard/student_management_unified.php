@@ -416,13 +416,6 @@ include 'sidebar.php';
             <?php endif; ?>
         }
 
-        .headmaster-restricted {
-            <?php if ($user_role === 'headmaster'): ?>
-            opacity: 0.5;
-            pointer-events: none;
-            <?php endif; ?>
-        }
-
         /* Modal Styles */
         .modal-overlay {
             position: fixed;
@@ -806,8 +799,8 @@ include 'sidebar.php';
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Academic Year</label>
-                                    <select name="academic_year_id" id="addStudentAcademicYear" class="form-select">
+                                    <label class="form-label required">Academic Year</label>
+                                    <select name="academic_year_id" id="addStudentAcademicYear" class="form-select" required>
                                         <option value="">Select Academic Year</option>
                                     </select>
                                 </div>
@@ -1352,6 +1345,12 @@ include 'sidebar.php';
         }        function handleAddStudent(event) {
             event.preventDefault();
             const formData = new FormData(event.target);
+            
+            // Copy email to contact_email for database compatibility
+            const email = formData.get('email');
+            if (email) {
+                formData.append('contact_email', email);
+            }
             
             // Check if we're editing (student_id is present) or adding
             const studentId = formData.get('student_id');
