@@ -440,13 +440,13 @@ if (isset($_SESSION['user_id'])) {
                         </svg>
                     </button>
                     <div class="nav-group-content">
-                        <a href="academic_management_unified.php" class="nav-subitem">📚 Unified Academic Management</a>
-                        <a href="academic_management_unified.php?tab=academic-years" class="nav-subitem">📅 Academic Years</a>
-                        <a href="academic_management_unified.php?tab=classes-sections" class="nav-subitem">🏫 Classes & Sections</a>
-                        <a href="academic_management_unified.php?tab=subjects" class="nav-subitem">📖 Subjects</a>
-                        <a href="academic_management_unified.php?tab=curriculum" class="nav-subitem">🔗 Curriculum Mapping</a>
-                        <a href="academic_management_unified.php?tab=reports" class="nav-subitem">📊 Reports</a>
-                        <a href="academic_management_unified.php?tab=bulk-operations" class="nav-subitem">⚡ Bulk Operations</a>
+                        <a href="academic_management_unified.php" class="nav-subitem">Academic Management</a>
+                        <a href="academic_management_unified.php?tab=academic-years" class="nav-subitem">Academic Years</a>
+                        <a href="academic_management_unified.php?tab=classes-sections" class="nav-subitem">Classes & Sections</a>
+                        <a href="academic_management_unified.php?tab=subjects" class="nav-subitem">Subjects</a>
+                        <a href="academic_management_unified.php?tab=curriculum" class="nav-subitem">Curriculum Mapping</a>
+                        <a href="academic_management_unified.php?tab=reports" class="nav-subitem">Reports</a>
+                        <a href="academic_management_unified.php?tab=bulk-operations" class="nav-subitem">Bulk Operations</a>
                     </div>
                 </div>
 
