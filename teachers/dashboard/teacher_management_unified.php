@@ -283,7 +283,8 @@ include 'sidebar.php';
         .card-body {
             padding: 24px;
         }
-{/** 
+
+/*
     .data-table {
         width: 100%;
         border-collapse: collapse;
@@ -305,7 +306,7 @@ include 'sidebar.php';
     .data-table tr:hover {
         background: rgba(253, 93, 93, 0.02);
     }
-    */}
+    */
 .data-table {
     width: 100%;
     border-collapse: separate;        /* Changed from 'collapse' */
@@ -347,7 +348,6 @@ include 'sidebar.php';
 }
 
 
-{/**                                                               chatty                                                    */}
         .status-badge {
             display: inline-block;
             padding: 4px 12px;
@@ -1246,8 +1246,6 @@ include 'sidebar.php';
             min-height: 80px;
         }
 
-
-        {/**                                       this is comment                                            */}
         #teachersTableBody tr {
     background-color:rgb(255, 255, 255);
     color: #333;
