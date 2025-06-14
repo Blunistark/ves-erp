@@ -27,7 +27,7 @@ $user_id = $_SESSION['user_id'];
 
 // Fetch required data for dropdowns
 $classes_raw = executeQuery("SELECT id, name FROM classes ORDER BY name");
-$sections_raw = executeQuery("SELECT id, name, class_id FROM sections ORDER BY class_id, name");
+$sections_raw = executeQuery("SELECT id, name, class_id, class_teacher_user_id FROM sections ORDER BY class_id, name");
 $subjects_raw = executeQuery("SELECT id, name, code FROM subjects ORDER BY name");
 $teachers_raw = executeQuery("
     SELECT u.id, u.full_name, u.email, t.employee_number, u.status
@@ -321,6 +321,16 @@ include 'sidebar.php';
         .status-inactive {
             background: rgba(229, 62, 62, 0.1);
             color: #dc2626;
+        }
+
+        .status-unassigned {
+            background: rgba(107, 114, 128, 0.1);
+            color: #6b7280;
+        }
+
+        .text-muted {
+            color: #6b7280 !important;
+            font-style: italic;
         }
 
         .actions {
@@ -915,6 +925,168 @@ include 'sidebar.php';
             margin-bottom: 0;
         }
 
+        /* Edit Teacher Modal Styles */
+        .form-section {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .form-section:last-child {
+            border-bottom: none;
+        }
+        
+        .form-section h4 {
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            font-size: 16px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .form-group input,
+        .form-group select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        .form-note {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+        
+        .subject-assignment-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .subject-assignment-item select {
+            flex: 1;
+            min-width: 120px;
+        }
+        
+        .subject-assignment-item .btn-sm {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+        /* Edit Teacher Modal Positioning Fix */
+       #editTeacherModal {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background-color: rgba(0, 0, 0, 0.5) !important;
+            display: none !important;
+            justify-content: center !important;
+            align-items: center !important;
+            z-index: 9999 !important;
+            overflow-y: auto !important;
+        }
+        #editTeacherModal.show {
+            display: flex !important;
+        }
+
+        #editTeacherModal .modal-content {
+            position: relative !important;
+            background: white !important;
+            border-radius: 8px !important;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+            max-width: 800px !important;
+            width: 90% !important;
+            max-height: 90vh !important;
+            overflow-y: auto !important;
+            margin: 20px !important;
+        }
+
+        #editTeacherModal .modal-header {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            padding: 20px 24px !important;
+            border-bottom: 1px solid #e5e7eb !important;
+            background: #f9fafb !important;
+        }
+
+        #editTeacherModal .modal-header h3 {
+            margin: 0 !important;
+            font-size: 1.25rem !important;
+            font-weight: 600 !important;
+            color: #111827 !important;
+        }
+
+        #editTeacherModal .close {
+            background: none !important;
+            border: none !important;
+            font-size: 24px !important;
+            cursor: pointer !important;
+            color: #6b7280 !important;
+            padding: 0 !important;
+            width: 30px !important;
+            height: 30px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border-radius: 4px !important;
+        }
+
+        #editTeacherModal .close:hover {
+            background-color: #f3f4f6 !important;
+            color: #374151 !important;
+        }
+
+        #editTeacherModal .modal-body {
+            padding: 24px !important;
+            max-height: calc(90vh - 140px) !important;
+            overflow-y: auto !important;
+        }
+
+        #editTeacherModal .modal-footer {
+            display: flex !important;
+            justify-content: flex-end !important;
+            gap: 12px !important;
+            padding: 16px 24px !important;
+            border-top: 1px solid #e5e7eb !important;
+            background: #f9fafb !important;
+        }
+
+        /* Ensure modal appears above everything else */
+        body.modal-open {
+            overflow: hidden !important;
+        }
+
         /* Responsive design */
         @media (max-width: 768px) {
             .schedule-grid-table {
@@ -1072,10 +1244,6 @@ include 'sidebar.php';
                 <button class="tab-button" data-tab="timetable-management">
                     <i class="fas fa-calendar-alt"></i>
                     Timetable Management
-                </button>
-                <button class="tab-button" data-tab="bulk-operations">
-                    <i class="fas fa-tasks"></i>
-                    Bulk Operations
                 </button>            </div>
 
             <!-- Tab Content: Manage Teachers -->
@@ -1174,113 +1342,12 @@ include 'sidebar.php';
                     <div class="card-header">
                         <h3 class="card-title">Subject Assignments</h3>
                     </div>
-                    <div class="card-body">
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label for="subjectTeacher" class="form-label required">Teacher</label>
-                                <select id="subjectTeacher" name="subjectTeacher" class="form-select" required>
-                                    <option value="">Select Teacher</option>
-                                    <?php foreach ($teachers as $teacher): ?>
-                                        <option value="<?php echo $teacher['id']; ?>">
-                                            <?php echo htmlspecialchars($teacher['full_name']); ?> (<?php echo htmlspecialchars($teacher['employee_number']); ?>)
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Assign Subjects</label>
-                            <div id="subjectsCheckboxes" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; margin-top: 12px;">
-                                <?php foreach ($subjects as $subject): ?>
-                                    <label style="display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer;">
-                                        <input type="checkbox" name="subjects[]" value="<?php echo $subject['id']; ?>" style="margin: 0;">
-                                        <span><?php echo htmlspecialchars($subject['name']); ?> (<?php echo htmlspecialchars($subject['code']); ?>)</span>
-                                    </label>
-                                <?php endforeach; ?>
-                            </div>
-                        </div>
-
-                        <div class="actions">
-                            <button type="button" id="updateSubjectAssignments" class="btn btn-primary">
-                                <i class="fas fa-save"></i>
-                                Update Assignments
-                            </button>
-                            <button type="button" id="clearSubjectAssignments" class="btn btn-outline">
-                                <i class="fas fa-times"></i>
-                                Clear All
-                            </button>
-                        </div>
-
-                        <!-- Current Subject Assignments -->
-                        <h4 style="margin-top: 32px; margin-bottom: 16px;">Current Subject Assignments</h4>
-                        <div id="subjectAssignmentsDisplay">
-                            <p class="help-text">Select a teacher to view their subject assignments</p>
-                        </div>
 
                         <!-- All Subject Assignments Display Section -->
-<div class="section-divider" style="margin: 40px 0; border-top: 2px solid var(--border-color);"></div>
 
-<div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-    <h4 class="section-title" style="font-size: 1.25rem; font-weight: 600; margin: 0; color: var(--text-primary);">
-        <i class="fas fa-list-ul"></i>
-        All Teachers Subject Assignments
-    </h4>
-    <div class="section-actions" style="display: flex; gap: 12px;">
-        <button class="btn btn-outline btn-sm" id="refreshAllAssignments">
-            <i class="fas fa-sync"></i>
-            Refresh
-        </button>
-        <button class="btn btn-outline btn-sm" id="exportAssignments">
-            <i class="fas fa-download"></i>
-            Export
-        </button>
-    </div>
-</div>
-
-<!-- Statistics Cards -->
-<div id="assignmentStatistics" class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px;">
-    <!-- Statistics will be populated here -->
-</div>
-
-<!-- Filters and Search -->
-<div class="filters-container" style="background: var(--bg-white); padding: 20px; border-radius: var(--border-radius); margin-bottom: 20px; box-shadow: var(--shadow-sm);">
-    <div class="filter-grid" style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 16px; align-items: end;">
-        <div class="form-group" style="margin-bottom: 0;">
-            <label for="allAssignmentsSearch" class="form-label">Search Teachers</label>
-            <div class="search-container" style="position: relative;">
-                <i class="fas fa-search search-icon"></i>
-                <input type="text" id="allAssignmentsSearch" class="search-input" placeholder="Search by name, employee ID, or email...">
-            </div>
-        </div>
-        <div class="form-group" style="margin-bottom: 0;">
-            <label for="filterTeacher" class="form-label">Filter by Teacher</label>
-            <select id="filterTeacher" class="form-select">
-                <option value="">All Teachers</option>
-                <!-- Will be populated dynamically -->
-            </select>
-        </div>
-        <div class="form-group" style="margin-bottom: 0;">
-            <label for="filterSubject" class="form-label">Filter by Subject</label>
-            <select id="filterSubject" class="form-select">
-                <option value="">All Subjects</option>
-                <!-- Will be populated dynamically -->
-            </select>
-        </div>
-        <div class="form-group" style="margin-bottom: 0;">
-            <button type="button" id="clearAllFilters" class="btn btn-outline">
-                <i class="fas fa-times"></i>
-                Clear
-            </button>
-        </div>
-    </div>
-</div>
 
 <!-- Main Assignments Table -->
 <div id="allAssignmentsContainer" class="card">
-    <div class="card-header">
-        <h5 class="card-title" style="margin: 0;">Subject Assignments Overview</h5>
-    </div>
     <div class="card-body" style="padding: 0;">
         
         <!-- Loading State -->
@@ -1317,72 +1384,6 @@ include 'sidebar.php';
         
     </div>
 </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tab Content: Bulk Operations -->
-            <div id="bulk-operations" class="tab-content">
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Bulk Operations</h3>
-                    </div>
-                    <div class="card-body">
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px;">
-                            <!-- Bulk Class Assignment -->
-                            <div class="card">
-                                <div class="card-header">
-                                    <h4 class="card-title">Bulk Class Assignment</h4>
-                                </div>
-                                <div class="card-body">
-                                    <div class="form-group">
-                                        <label for="bulkAssignClass" class="form-label">Class</label>
-                                        <select id="bulkAssignClass" class="form-select">
-                                            <option value="">Select Class</option>
-                                            <?php foreach ($classes as $class): ?>
-                                                <option value="<?php echo $class['id']; ?>"><?php echo htmlspecialchars($class['name']); ?></option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="bulkAssignSubject" class="form-label">Subject</label>
-                                        <select id="bulkAssignSubject" class="form-select">
-                                            <option value="">Select Subject</option>
-                                            <?php foreach ($subjects as $subject): ?>
-                                                <option value="<?php echo $subject['id']; ?>"><?php echo htmlspecialchars($subject['name']); ?></option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">Teachers</label>
-                                        <div id="bulkTeachersCheckboxes">
-                                            <?php foreach ($teachers as $teacher): ?>
-                                                <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                                                    <input type="checkbox" name="bulkTeachers[]" value="<?php echo $teacher['id']; ?>">
-                                                    <span><?php echo htmlspecialchars($teacher['full_name']); ?></span>
-                                                </label>
-                                            <?php endforeach; ?>
-                                        </div>
-                                    </div>
-                                    <button type="button" id="executeBulkAssignment" class="btn btn-primary">
-                                        <i class="fas fa-bolt"></i>
-                                        Execute Bulk Assignment
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Statistics -->
-                            <div class="card">
-                                <div class="card-header">
-                                    <h4 class="card-title">System Statistics</h4>
-                                </div>
-                                <div class="card-body">
-                                    <div id="statisticsContent">
-                                        <!-- Will be loaded dynamically -->
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -1537,8 +1538,10 @@ include 'sidebar.php';
                                 <p class="help-text">Use the dropdown above to choose a teacher and load their schedule.</p>
                             </div>
                         </div>
-                    </div>
-                </div>
+                 
+              
+            
+
                         <!-- Timetable Conflicts Section -->
                         <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                             <h4 class="section-title" style="font-size: 1.1rem; font-weight: 600; margin:0;">
@@ -1565,28 +1568,102 @@ include 'sidebar.php';
                         <div id="adminTeacherTimetableOverview" style="margin-bottom: 32px;">
                              <p class="help-text">Loading teacher schedules...</p>
                         </div>
-                        <div id="adminTeacherTimetableOverviewLoading" class="loading" style="display:none;"><div class="spinner"></div><p>Loading Teacher Schedules...</p></div>                        <!-- Class Timetable Status -->
-                        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; margin-top: 32px;">
-                            <h4 class="section-title" style="font-size: 1.1rem; font-weight: 600; margin:0;">
-                                <i class="fas fa-chalkboard"></i>
-                                Class Timetable Status
-                            </h4>
-                        </div>
-                        <div id="adminClassTimetableStatus">
-                            <p class="help-text">Loading class timetable statuses...</p>
-                        </div>
-                        <div id="adminClassTimetableStatusLoading" class="loading" style="display:none;"><div class="spinner"></div><p>Loading Class Timetable Status...</p></div>
-
+                        <div id="adminTeacherTimetableOverviewLoading" class="loading" style="display:none;"><div class="spinner"></div><p>Loading Teacher Schedules...</p></div>                       
                         
             </div>
         </div>    </div>
+
+                <!-- Edit Teacher Modal -->
+        <div id="editTeacherModal" class="modal" style="display: none;">
+            <div class="modal-content" style="max-width: 800px; width: 90%; max-height: 90vh; overflow-y: auto;">
+                <div class="modal-header">
+                    <h3>Edit Teacher</h3>
+                    <span class="close" onclick="closeEditTeacherModal()">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <form id="editTeacherForm">
+                        <input type="hidden" id="editTeacherId" name="teacher_id">
+                        
+                        <!-- Basic Information -->
+                        <div class="form-section">
+                            <h4>Basic Information</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="editTeacherName">Full Name:</label>
+                                    <input type="text" id="editTeacherName" name="full_name" required readonly>
+                                    <small class="form-note">Contact admin to change name</small>
+                                </div>
+                                <div class="form-group">
+                                    <label for="editTeacherEmail">Email:</label>
+                                    <input type="email" id="editTeacherEmail" name="email" required readonly>
+                                    <small class="form-note">Contact admin to change email</small>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="editEmployeeNumber">Employee Number:</label>
+                                    <input type="text" id="editEmployeeNumber" name="employee_number" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label for="editTeacherStatus">Status:</label>
+                                    <select id="editTeacherStatus" name="status">
+                                        <option value="active">Active</option>
+                                        <option value="inactive">Inactive</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+        
+                        <!-- Class Teacher Assignment -->
+                        <div class="form-section">
+                            <h4>Class Teacher Assignment</h4>
+                            <div class="form-group">
+                                <label for="editClassTeacherSection">Assign as Class Teacher:</label>
+                                <select id="editClassTeacherSection" name="class_teacher_section">
+                                    <option value="">Not a Class Teacher</option>
+                                </select>
+                                <small class="form-note">Select a section to assign this teacher as class teacher</small>
+                            </div>
+                            <div id="currentClassTeacherInfo" style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px; display: none;">
+                                <strong>Currently Class Teacher of:</strong> <span id="currentClassTeacherText"></span>
+                            </div>
+                        </div>
+        
+                        <!-- Subject Assignments -->
+                        <div class="form-section">
+                            <h4>Subject Assignments</h4>
+                            <div class="form-group">
+                                <label>Assigned Subjects:</label>
+                                <div id="subjectAssignmentContainer" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 4px;">
+                                    <!-- Subject assignments will be loaded here -->
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <button type="button" class="btn btn-secondary" onclick="addSubjectAssignment()">
+                                    <i class="fas fa-plus"></i> Add Subject Assignment
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditTeacherModal()">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveTeacherChanges()">Save Changes</button>
+                </div>
+            </div>
+        </div>
       <!-- JavaScript -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
         <script>
         // Global variables
         const userRole = <?php echo json_encode($user_role); ?>;
         const sectionsData = <?php echo json_encode($sections, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
+        const classes = <?php echo json_encode($classes, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
+        const sections = <?php echo json_encode($sections, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
+        const subjects = <?php echo json_encode($subjects, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
+        let teachersData = [];
         let currentTab = null;
+        
         
         function switchTab(tabId) {
             console.log(`Attempting to switch to tab: ${tabId}`);            const $targetContent = $('#' + tabId);
@@ -1740,24 +1817,48 @@ include 'sidebar.php';
             `;
             
             assignments.forEach(assignment => {
+                // Handle null/empty teacher values
+                const teacherName = assignment.teacher_name && assignment.teacher_name !== 'null' && assignment.teacher_name.trim() !== '' 
+                    ? assignment.teacher_name 
+                    : 'Not Assigned';
+                
+                const employeeNumber = assignment.employee_number && assignment.employee_number !== 'null' && assignment.employee_number.trim() !== '' 
+                    ? assignment.employee_number 
+                    : 'N/A';
+                
+                const teacherStatus = assignment.teacher_status && assignment.teacher_status !== 'null' && assignment.teacher_status.trim() !== '' 
+                    ? assignment.teacher_status 
+                    : 'unassigned';
+                
+                const statusText = teacherStatus === 'unassigned' ? 'Not Assigned' : teacherStatus;
+                
+                // Determine if teacher is assigned for action buttons
+                const isAssigned = assignment.teacher_name && assignment.teacher_name !== 'null' && assignment.teacher_name.trim() !== '';
+                
                 html += `
                     <tr>
                         <td><strong>${escapeHtml(assignment.class_name)}</strong></td>
                         <td><span class="section-badge">${escapeHtml(assignment.section_name)}</span></td>
                         <td>
                             <div class="teacher-info">
-                                <span class="teacher-name">${escapeHtml(assignment.teacher_name)}</span>
+                                <span class="teacher-name ${!isAssigned ? 'text-muted' : ''}">${escapeHtml(teacherName)}</span>
                             </div>
                         </td>
-                        <td><code>${escapeHtml(assignment.employee_number)}</code></td>
-                        <td><span class="status-badge status-${assignment.teacher_status}">${assignment.teacher_status}</span></td>
+                        <td><code class="${employeeNumber === 'N/A' ? 'text-muted' : ''}">${escapeHtml(employeeNumber)}</code></td>
+                        <td><span class="status-badge status-${teacherStatus}">${statusText}</span></td>
                         <td class="actions admin-only">
-                            <button class="btn btn-sm btn-outline" onclick="reassignClassTeacher(${assignment.section_id})">
-                                <i class="fas fa-exchange-alt"></i> Reassign
-                            </button>
-                            <button class="btn btn-sm btn-secondary" onclick="removeClassTeacher(${assignment.section_id})">
-                                <i class="fas fa-times"></i> Remove
-                            </button>
+                            ${isAssigned ? `
+                                <button class="btn btn-sm btn-outline" onclick="reassignClassTeacher(${assignment.section_id})">
+                                    <i class="fas fa-exchange-alt"></i> Reassign
+                                </button>
+                                <button class="btn btn-sm btn-secondary" onclick="removeClassTeacher(${assignment.section_id})">
+                                    <i class="fas fa-times"></i> Remove
+                                </button>
+                            ` : `
+                                <button class="btn btn-sm btn-primary" onclick="assignClassTeacher(${assignment.section_id})">
+                                    <i class="fas fa-plus"></i> Assign Teacher
+                                </button>
+                            `}
                         </td>
                     </tr>
                 `;
@@ -2356,7 +2457,7 @@ include 'sidebar.php';
                                 <td><span class="assignment-scope-badge ${assignment.assignment_scope}">${assignment.assignment_scope}</span></td>
                                 ${index === 0 ? `<td rowspan="${teacherAssignments.length}"><span class="status-badge status-${teacherInfo.status}">${teacherInfo.status}</span></td>` : ''}
                                 <td>
-                                    <button class="btn btn-sm btn-outline" onclick="removeSubjectAssignment(${assignment.assignment_id})">
+                                    <button class="btn btn-sm btn-outline" onclick="removeSubjectAssignment(${index},${assignment.assignment_id})">
                                         <i class="fas fa-times"></i>
                                     </button>
                                 </td>
@@ -3130,9 +3231,11 @@ include 'sidebar.php';
          * Display teachers in the table
          */
         function displayTeachers(teachers) {
+            teachersData = teachers;
             console.log('Displaying', teachers.length, 'teachers');
             const tbody = $('#teachersTableBody');
             tbody.empty();
+            
             
             if (!teachers || teachers.length === 0) {
                 tbody.html('<tr><td colspan="6" class="text-center">No teachers found</td></tr>');
@@ -3430,11 +3533,279 @@ include 'sidebar.php';
         }
         
         /**
-         * Placeholder functions for teacher actions
+         * Functions for teacher actions
          */
+        
         function editTeacher(teacherId) {
-            console.log('Edit teacher:', teacherId);
-            showNotification('Teacher editing functionality will be implemented', 'info');
+            console.log('Opening edit modal for teacher:', teacherId);
+            
+            // Check if teachers data is loaded
+            if (!teachersData || teachersData.length === 0) {
+                showNotification('Teachers data not loaded yet. Please wait and try again.', 'warning');
+                return;
+            }
+            
+            // Find teacher data
+            const teacher = teachersData.find(t => t.id == teacherId);
+            if (!teacher) {
+                showNotification('Teacher not found', 'error');
+                return;
+            }
+            
+            // Populate basic information
+            document.getElementById('editTeacherId').value = teacher.id;
+            document.getElementById('editTeacherName').value = teacher.full_name || '';
+            document.getElementById('editTeacherEmail').value = teacher.email || '';
+            document.getElementById('editEmployeeNumber').value = teacher.employee_number || '';
+            document.getElementById('editTeacherStatus').value = teacher.status || 'active';
+            
+            // Load class teacher assignment options
+            loadClassTeacherOptions(teacherId);
+            
+            // Load current subject assignments
+            loadTeacherSubjectAssignments(teacherId);
+            
+            // Show modal with proper class management
+            const modal = document.getElementById('editTeacherModal');
+            document.body.classList.add('modal-open');
+            modal.classList.add('show');
+            
+            // Focus on the modal for accessibility
+            modal.focus();
+        }
+        
+        function closeEditTeacherModal() {
+            const modal = document.getElementById('editTeacherModal');
+            modal.classList.remove('show');
+            document.body.classList.remove('modal-open');
+            document.getElementById('editTeacherForm').reset();
+            document.getElementById('subjectAssignmentContainer').innerHTML = '';
+        }
+
+        function loadClassTeacherOptions(teacherId) {
+            const select = document.getElementById('editClassTeacherSection');
+            select.innerHTML = '<option value="">Not a Class Teacher</option>';
+            
+            let currentAssignment = null;
+            
+            // Get sections that are either unassigned or assigned to this teacher
+            classes.forEach(cls => {
+                const classSections = sections.filter(s => s.class_id == cls.id);
+                classSections.forEach(section => {
+                    const option = document.createElement('option');
+                    option.value = section.id;
+                    option.textContent = `${cls.name} - ${section.name}`;
+                    
+                    // Check if this teacher is already assigned to this section
+                    if (section.class_teacher_user_id == teacherId) {
+                        option.selected = true;
+                        currentAssignment = `${cls.name} - ${section.name}`;
+                    }
+                    
+                    select.appendChild(option);
+                });
+            });
+            
+            // Show current assignment info if exists
+            if (currentAssignment) {
+                showCurrentClassTeacherInfo(currentAssignment);
+            } else {
+                hideCurrentClassTeacherInfo();
+            }
+        }
+
+        function showCurrentClassTeacherInfo(sectionName) {
+            const infoDiv = document.getElementById('currentClassTeacherInfo');
+            const textSpan = document.getElementById('currentClassTeacherText');
+            if (infoDiv && textSpan) {
+                textSpan.textContent = sectionName;
+                infoDiv.style.display = 'block';
+            }
+        }
+
+        function hideCurrentClassTeacherInfo() {
+            const infoDiv = document.getElementById('currentClassTeacherInfo');
+            if (infoDiv) {
+                infoDiv.style.display = 'none';
+            }
+        }
+
+        function loadTeacherSubjectAssignments(teacherId) {
+            const container = document.getElementById('subjectAssignmentContainer');
+            container.innerHTML = '<div class="loading">Loading subject assignments...</div>';
+            
+            // Fetch current subject assignments
+            fetch(`teacher_management_api.php?action=get_teacher_subjects&teacher_id=${teacherId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displaySubjectAssignments(data.assignments || []);
+                } else {
+                    container.innerHTML = '<div class="error">Failed to load subject assignments</div>';
+                    console.error('API Error:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading subject assignments:', error);
+                container.innerHTML = '<div class="error">Error loading subject assignments</div>';
+            });
+        }
+        
+        function displaySubjectAssignments(assignments) {
+            const container = document.getElementById('subjectAssignmentContainer');
+            
+            if (assignments.length === 0) {
+                container.innerHTML = '<div class="no-assignments">No subject assignments found</div>';
+                // Add one empty assignment form
+                addSubjectAssignment();
+                return;
+            }
+            
+            let html = '';
+            assignments.forEach((assignment, index) => {
+                html += createSubjectAssignmentHTML(assignment, index);
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function createSubjectAssignmentHTML(assignment, index) {
+            // Handle null values from API
+            const classId = assignment.class_id || '';
+            const sectionId = assignment.section_id || '';
+            const subjectId = assignment.subject_id || '';
+            
+            let classOptions = '<option value="">Select Class</option>';
+            classes.forEach(cls => {
+                const selected = classId == cls.id ? 'selected' : '';
+                classOptions += `<option value="${cls.id}" ${selected}>${cls.name}</option>`;
+            });
+            
+            let sectionOptions = '<option value="">Select Section</option>';
+            if (classId) {
+                const classSections = sections.filter(s => s.class_id == classId);
+                classSections.forEach(section => {
+                    const selected = sectionId == section.id ? 'selected' : '';
+                    sectionOptions += `<option value="${section.id}" ${selected}>${section.name}</option>`;
+                });
+            }
+            
+            let subjectOptions = '<option value="">Select Subject</option>';
+            subjects.forEach(subject => {
+                const selected = subjectId == subject.id ? 'selected' : '';
+                subjectOptions += `<option value="${subject.id}" ${selected}>${subject.name}</option>`;
+            });
+            
+            // Add note for general assignments (when no class/section is specified)
+            const isGeneralAssignment = !classId && !sectionId && subjectId;
+            const generalNote = isGeneralAssignment ? 
+                '<small class="general-assignment-note">General subject assignment (all classes)</small>' : '';
+            
+            return `
+                <div class="subject-assignment-item" data-index="${index}">
+                    <select name="assignment_class_${index}" onchange="updateSectionOptions(${index}, this.value)">
+                        ${classOptions}
+                    </select>
+                    <select name="assignment_section_${index}">
+                        ${sectionOptions}
+                    </select>
+                    <select name="assignment_subject_${index}">
+                        ${subjectOptions}
+                    </select>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="removeSubjectAssignment(${index}, ${assignment.id || null})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    ${generalNote}
+                </div>
+            `;
+        }
+        function addSubjectAssignment() {
+            const container = document.getElementById('subjectAssignmentContainer');
+            const existingItems = container.querySelectorAll('.subject-assignment-item');
+            const index = existingItems.length;
+            
+            const newAssignment = {
+                class_id: '',
+                section_id: '',
+                subject_id: ''
+            };
+            
+            const newHTML = createSubjectAssignmentHTML(newAssignment, index);
+            container.insertAdjacentHTML('beforeend', newHTML);
+        }
+
+
+        function updateSectionOptions(index, classId) {
+            const sectionSelect = document.querySelector(`select[name="assignment_section_${index}"]`);
+            sectionSelect.innerHTML = '<option value="">Select Section</option>';
+            
+            if (classId) {
+                const classSections = sections.filter(s => s.class_id == classId);
+                classSections.forEach(section => {
+                    const option = document.createElement('option');
+                    option.value = section.id;
+                    option.textContent = section.name;
+                    sectionSelect.appendChild(option);
+                });
+            }
+        }
+
+        function saveTeacherChanges() {
+            const formData = new FormData();
+            formData.append('action', 'update_teacher');
+            formData.append('teacher_id', document.getElementById('editTeacherId').value);
+            formData.append('status', document.getElementById('editTeacherStatus').value);
+            formData.append('class_teacher_section', document.getElementById('editClassTeacherSection').value);
+            
+            // Collect subject assignments
+            const assignmentItems = document.querySelectorAll('.subject-assignment-item');
+            const assignments = [];
+            
+            assignmentItems.forEach((item, index) => {
+                const classId = item.querySelector(`select[name="assignment_class_${index}"]`).value;
+                const sectionId = item.querySelector(`select[name="assignment_section_${index}"]`).value;
+                const subjectId = item.querySelector(`select[name="assignment_subject_${index}"]`).value;
+                
+                if (classId && sectionId && subjectId) {
+                    assignments.push({
+                        class_id: classId,
+                        section_id: sectionId,
+                        subject_id: subjectId
+                    });
+                }
+            });
+            
+            formData.append('subject_assignments', JSON.stringify(assignments));
+            
+            // Show loading state
+            const saveBtn = document.querySelector('#editTeacherModal .btn-primary');
+            const originalText = saveBtn.textContent;
+            saveBtn.textContent = 'Saving...';
+            saveBtn.disabled = true;
+            
+            fetch('teacher_management_api.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Teacher updated successfully', 'success');
+                    closeEditTeacherModal();
+                    loadTeachers(); // Reload teachers table
+                    loadClassAssignments(); // Reload class assignments
+                } else {
+                    showNotification(data.message || 'Failed to update teacher', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating teacher:', error);
+                showNotification('Error updating teacher', 'error');
+            })
+            .finally(() => {
+                saveBtn.textContent = originalText;
+                saveBtn.disabled = false;
+            });
         }
         
         function viewTeacherDetails(teacherId) {
@@ -3445,6 +3816,33 @@ include 'sidebar.php';
         function viewTeacherAssignments(teacherId) {
             console.log('View teacher assignments:', teacherId);
             showNotification('Teacher assignments view will be implemented', 'info');
+        }
+        
+        function assignClassTeacher(sectionId) {
+            console.log('Assign class teacher for section:', sectionId);
+            
+            // Get section info first
+            $.ajax({
+                url: 'teacher_management_api.php',
+                type: 'GET',
+                data: { 
+                    action: 'get_section_info',
+                    section_id: sectionId 
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success && response.data) {
+                        openAssignModal(response.data);
+                    } else {
+                        showNotification('Failed to load section information', 'error');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Ajax error:', {xhr, status, error});
+                    console.error('Response text:', xhr.responseText);
+                    showNotification('Error loading section information: ' + error, 'error');
+                }
+            });
         }
         
        function reassignClassTeacher(sectionId) {
@@ -3480,10 +3878,31 @@ include 'sidebar.php';
             }
         }
         
-        function removeSubjectAssignment(assignmentId) {
-            console.log('Remove subject assignment:', assignmentId);
-            if (confirm('Are you sure you want to remove this subject assignment?')) {
-                showNotification('Subject assignment removal functionality will be implemented', 'info');
+        function removeSubjectAssignment(index, assignmentId) {
+            // If assignmentId exists, remove from backend
+            if (assignmentId) {
+                if (!confirm('Are you sure you want to remove this subject assignment?')) return;
+                fetch('teacher_management_api.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `action=remove_subject_assignment&assignment_id=${assignmentId}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.removed_assignment) {
+                        showNotification('Subject assignment removed successfully', 'success');
+                        // Reload assignments for the current teacher
+                        const teacherId = document.getElementById('editTeacherId').value;
+                        loadTeacherSubjectAssignments(teacherId);
+                    } else {
+                        showNotification('Failed to remove subject assignment', 'error');
+                    }
+                })
+                .catch(() => showNotification('Error removing subject assignment', 'error'));
+            } else {
+                // If not saved yet, just remove from DOM
+                const item = document.querySelector(`[data-index="${index}"]`);
+                if (item) item.remove();
             }
         }
         
@@ -3524,6 +3943,50 @@ include 'sidebar.php';
             $('#teacherScheduleEditor').toggle();
         });
 
+        function openAssignModal(sectionData) {
+            const modal = `
+                <div id="assignModal" class="modal-overlay">
+                    <div class="modal-container">
+                        <div class="modal-header">
+                            <h3>Assign Class Teacher</h3>
+                            <button class="modal-close" onclick="closeAssignModal()">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label><strong>Class:</strong> ${sectionData.class_name}</label>
+                            </div>
+                            <div class="form-group">
+                                <label><strong>Section:</strong> ${sectionData.section_name}</label>
+                            </div>
+                            <div class="form-group">
+                                <label><strong>Current Status:</strong> No class teacher assigned</label>
+                            </div>
+                            <hr style="margin: 20px 0;">
+                            <div class="form-group">
+                                <label for="assignTeacherId">Select Class Teacher:</label>
+                                <select id="assignTeacherId" class="form-control" required>
+                                    <option value="">-- Select Teacher --</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="assignReason">Notes (Optional):</label>
+                                <textarea id="assignReason" class="form-control" rows="3" placeholder="Enter any notes about this assignment (optional)"></textarea>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary" onclick="closeAssignModal()">Cancel</button>
+                                <button type="button" class="btn btn-primary" onclick="confirmAssignment(${sectionData.section_id})">Assign Teacher</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            $('body').append(modal);
+            $('#assignModal').css('display', 'flex').hide().fadeIn(300);
+            
+            // Populate teachers dropdown for assignment
+            populateTeachersDropdown(null, 'assignTeacherId');
+        }
         
         function openReassignModal(sectionData) {
             const modal = `
@@ -3577,8 +4040,8 @@ include 'sidebar.php';
         }
 
         
-function populateTeachersDropdown(currentTeacherId) {
-    const dropdown = $('#newTeacherId');
+function populateTeachersDropdown(currentTeacherId, dropdownId = 'newTeacherId') {
+    const dropdown = $(`#${dropdownId}`);
     dropdown.empty().append('<option value="">-- Select Teacher --</option>');
     
     // Use the global teachers data
@@ -3667,6 +4130,59 @@ function confirmReassignment(sectionId) {
 function closeReassignModal() {
     $('#reassignModal').fadeOut(300, function() {
         $(this).remove();
+    });
+}
+
+function closeAssignModal() {
+    $('#assignModal').fadeOut(300, function() {
+        $(this).remove();
+    });
+}
+
+function confirmAssignment(sectionId) {
+    const teacherId = $('#assignTeacherId').val();
+    const reason = $('#assignReason').val().trim();
+    
+    if (!teacherId) {
+        showNotification('Please select a teacher to assign', 'error');
+        return;
+    }
+    
+    const confirmMsg = `Are you sure you want to assign this teacher as the class teacher for this section?\n\nThis action will create a new class teacher assignment.`;
+    
+    if (!confirm(confirmMsg)) {
+        return;
+    }
+    
+    // Show loading state
+    $('.btn-primary', '#assignModal').prop('disabled', true).text('Assigning...');
+    
+    $.ajax({
+        url: 'teacher_management_api.php',
+        type: 'POST',
+        data: {
+            action: 'assign_class_teacher',
+            section_id: sectionId,
+            teacher_id: teacherId,
+            reason: reason
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                showNotification('Class teacher assigned successfully!', 'success');
+                closeAssignModal();
+                loadClassAssignments(); // Refresh the assignments table
+            } else {
+                showNotification(response.message || 'Failed to assign class teacher', 'error');
+                $('.btn-primary', '#assignModal').prop('disabled', false).text('Assign Teacher');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Ajax error:', {xhr, status, error});
+            console.error('Response text:', xhr.responseText);
+            showNotification('Error assigning class teacher: ' + error, 'error');
+            $('.btn-primary', '#assignModal').prop('disabled', false).text('Assign Teacher');
+        }
     });
 }
 
@@ -3876,6 +4392,7 @@ function loadSelectedTeacherScheduleWithDebug() {
             setTimeout(() => debugTeacherScheduleAPI(), 1000);
         });
 }
+
     </script>
 </body>
 </html>

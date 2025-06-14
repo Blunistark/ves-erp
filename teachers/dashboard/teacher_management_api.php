@@ -60,9 +60,7 @@ try {
             handleGetTeacherSubjects();
             break;
             
-        case 'bulk_assignment':
-            handleBulkAssignment();
-            break;
+
             
         case 'get_statistics':
             handleGetStatistics();
@@ -156,6 +154,10 @@ try {
             handleDeleteTeacher();
             break;
             
+        case 'update_teacher':
+            handleUpdateTeacher();
+            break;
+
         case 'update_teacher_status':
             handleUpdateTeacherStatus();
             break;
@@ -195,9 +197,7 @@ try {
             handleResolveSingleConflict();
             break;
             
-        case 'bulk_timetable_update':
-            handleBulkTimetableUpdate();
-            break;
+
             
         case 'get_classes_with_sections':
             handleGetClassesWithSections();
@@ -205,7 +205,7 @@ try {
         case 'get_all_subject_assignments':
             handleGetAllSubjectAssignments();
             break;
-              case 'remove_subject_assignment':
+        case 'remove_subject_assignment':
             handleRemoveSubjectAssignment();
             break;
             
@@ -226,9 +226,7 @@ try {
             handleGetAvailableSlots();
             break;
             
-        case 'bulk_assign_teacher_periods':
-            handleBulkAssignTeacherPeriods();
-            break;
+
               case 'delete_teacher_period':
             handleDeleteTeacherPeriod();
             break;
@@ -484,6 +482,8 @@ function handleGetTeacherSubjects() {
         $sql = "SELECT 
                     ts.id,
                     ts.subject_id,
+                    ts.class_id,
+                    ts.section_id,
                     sub.name as subject_name,
                     c.name as class_name,
                     s.name as section_name
@@ -496,9 +496,11 @@ function handleGetTeacherSubjects() {
         
         $subjects = executeQuery($sql, "i", [$teacher_id]);
         
+        // To this:
         echo json_encode([
             'success' => true,
-            'data' => $subjects ?: []
+            'assignments' => $subjects ?: [],
+            'data' => $subjects ?: [] // Keep for compatibility
         ]);
     } catch (Exception $e) {
         error_log("Error in handleGetTeacherSubjects: " . $e->getMessage());
@@ -730,6 +732,72 @@ function handleUpdateTeacherStatus() {
     }
 }
 
+
+/**
+ * Update teacher (including class teacher and subject assignments)
+ */
+function handleUpdateTeacher() {
+    $teacher_id = $_POST['teacher_id'] ?? null;
+    $status = $_POST['status'] ?? null;
+    $class_teacher_section = $_POST['class_teacher_section'] ?? null;
+    $subject_assignments = json_decode($_POST['subject_assignments'] ?? '[]', true);
+    
+    if (!$teacher_id) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Teacher ID is required'
+        ]);
+        return;
+    }
+    
+    try {
+        // Update teacher status
+        if ($status) {
+            $sql = "UPDATE users SET status = ? WHERE id = ? AND role IN ('teacher', 'headmaster')";
+            executeQuery($sql, "si", [$status, $teacher_id]);
+        }
+        
+        // Update class teacher assignment
+        // First remove existing class teacher assignments for this teacher
+        executeQuery("UPDATE sections SET class_teacher_user_id = NULL WHERE class_teacher_user_id = ?", "i", [$teacher_id]);
+        
+        // Assign new class teacher role if specified
+        if ($class_teacher_section && $class_teacher_section !== '') {
+            executeQuery("UPDATE sections SET class_teacher_user_id = ? WHERE id = ?", "ii", [$teacher_id, $class_teacher_section]);
+        }
+        
+        // Update subject assignments
+        // First delete existing subject assignments
+        executeQuery("DELETE FROM teacher_subjects WHERE teacher_user_id = ?", "i", [$teacher_id]);
+        
+        // Insert new subject assignments
+        if (!empty($subject_assignments)) {
+            $insert_sql = "INSERT INTO teacher_subjects (teacher_user_id, subject_id, class_id, section_id) VALUES (?, ?, ?, ?)";
+            
+            foreach ($subject_assignments as $assignment) {
+                $class_id = !empty($assignment['class_id']) ? $assignment['class_id'] : null;
+                $section_id = !empty($assignment['section_id']) ? $assignment['section_id'] : null;
+                $subject_id = $assignment['subject_id'];
+                
+                executeQuery($insert_sql, "iiii", [$teacher_id, $subject_id, $class_id, $section_id]);
+            }
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'message' => 'Teacher updated successfully'
+        ]);
+        
+    } catch (Exception $e) {
+        error_log("Error in handleUpdateTeacher: " . $e->getMessage());
+        echo json_encode([
+            'success' => false,
+            'message' => 'Failed to update teacher: ' . $e->getMessage()
+        ]);
+    }
+}
+
+
 /**
  * Get statistics
  */
@@ -800,38 +868,6 @@ function handleCheckConflicts() {
     echo json_encode([
         'success' => true,
         'data' => $conflicts
-    ]);
-}
-
-/**
- * Bulk assignment
- */
-function handleBulkAssignment() {
-    $assignments = json_decode($_POST['assignments'] ?? '[]', true);
-    
-    if (empty($assignments)) {
-        throw new Exception('No assignments provided');
-    }
-    
-    $success_count = 0;
-    $errors = [];
-    
-    foreach ($assignments as $assignment) {        try {
-            $sql = "UPDATE sections SET class_teacher_user_id = ? WHERE id = ?";
-            $result = executeQuery($sql, "ii", [$assignment['teacher_id'], $assignment['section_id']]);
-            if ($result) {
-                $success_count++;
-            }
-        } catch (Exception $e) {
-            $errors[] = "Failed to assign section {$assignment['section_id']}: " . $e->getMessage();
-        }
-    }
-    
-    echo json_encode([
-        'success' => true,
-        'assigned' => $success_count,
-        'errors' => $errors,
-        'message' => "$success_count assignments completed"
     ]);
 }
 
@@ -1176,72 +1212,6 @@ function handleResolveSingleConflict() {
     } else {
         throw new Exception('Failed to resolve conflict');
     }
-}
-
-/**
- * Handle bulk timetable updates
- */
-function handleBulkTimetableUpdate() {
-    $bulk_action = $_POST['bulk_action'] ?? null;
-    $class_ids = json_decode($_POST['class_ids'] ?? '[]', true);
-    
-    if (!$bulk_action || empty($class_ids)) {
-        throw new Exception('Bulk action and class selection required');
-    }
-    
-    $updated_count = 0;
-    
-    switch ($bulk_action) {
-        case 'clear_periods':
-            foreach ($class_ids as $class_id) {
-                $sql = "
-                    DELETE tp FROM timetable_periods tp
-                    JOIN timetables tt ON tp.timetable_id = tt.id
-                    WHERE tt.class_id = ?
-                ";
-                $result = executeQuery($sql, "i", [$class_id]);
-                if ($result) {
-                    $updated_count++;
-                }
-            }
-            break;
-            
-        default:
-            throw new Exception('Invalid bulk action');
-    }
-    
-    echo json_encode([
-        'success' => true,
-        'updated_count' => $updated_count,
-        'message' => "Bulk update completed successfully"
-    ]);
-}
-
-/**
- * Get classes with sections for bulk operations
- */
-function handleGetClassesWithSections() {
-    $sql = "
-        SELECT 
-            c.id,
-            c.name,
-            s.name as section_name,
-            CASE 
-                WHEN tt.id IS NOT NULL THEN 'has_timetable'
-                ELSE 'no_timetable'
-            END as timetable_status
-        FROM classes c
-        JOIN sections s ON c.id = s.class_id
-        LEFT JOIN timetables tt ON c.id = tt.class_id AND s.id = tt.section_id AND tt.status = 'published'
-        ORDER BY c.name, s.name
-    ";
-    
-    $classes = executeQuery($sql);
-    
-    echo json_encode([
-        'success' => true,
-        'data' => $classes ?: []
-    ]);
 }
 
 /**
@@ -1839,86 +1809,6 @@ function handleGetAvailableSlots() {
     ]);
 }
 
-/**
- * Bulk assign teacher periods
- */
-function handleBulkAssignTeacherPeriods() {
-    $teacher_id = $_POST['teacher_id'] ?? null;
-    $periods = json_decode($_POST['periods'] ?? '[]', true);
-    
-    if (!$teacher_id || empty($periods)) {
-        throw new Exception('Teacher ID and periods array are required');
-    }
-    
-    $success_count = 0;
-    $error_count = 0;
-    $errors = [];
-    
-    foreach ($periods as $period) {
-        try {
-            // Validate required fields for each period
-            if (!isset($period['timetable_id'], $period['day_of_week'], $period['period_number'], 
-                       $period['start_time'], $period['end_time'], $period['subject_id'])) {
-                throw new Exception('Missing required period fields');
-            }
-            
-            // Check for conflicts
-            $conflict_check_sql = "
-                SELECT COUNT(*) as conflicts
-                FROM timetable_periods tp
-                JOIN timetables tt ON tp.timetable_id = tt.id
-                WHERE tp.teacher_id = ? 
-                AND tp.day_of_week = ? 
-                AND tp.period_number = ?
-                AND tt.status = 'published'
-            ";
-            
-            $conflicts = executeQuery($conflict_check_sql, "isi", [
-                $teacher_id, $period['day_of_week'], $period['period_number']
-            ]);
-            
-            if ($conflicts && $conflicts[0]['conflicts'] > 0) {
-                $errors[] = "Conflict on {$period['day_of_week']} period {$period['period_number']}";
-                $error_count++;
-                continue;
-            }
-            
-            // Insert period
-            $sql = "
-                INSERT INTO timetable_periods 
-                (timetable_id, day_of_week, period_number, start_time, end_time, 
-                 subject_id, teacher_id, room, notes, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
-            ";
-            
-            $result = executeQuery($sql, "issississ", [
-                $period['timetable_id'], $period['day_of_week'], $period['period_number'],
-                $period['start_time'], $period['end_time'], $period['subject_id'],
-                $teacher_id, $period['room'] ?? null, $period['notes'] ?? null
-            ]);
-            
-            if ($result) {
-                $success_count++;
-            } else {
-                $error_count++;
-                $errors[] = "Failed to insert period on {$period['day_of_week']} period {$period['period_number']}";
-            }
-            
-        } catch (Exception $e) {
-            $error_count++;
-            $errors[] = $e->getMessage();
-        }
-    }
-    
-    echo json_encode([
-        'success' => $success_count > 0,
-        'success_count' => $success_count,
-        'error_count' => $error_count,
-        'errors' => $errors,
-        'message' => "$success_count periods assigned successfully" . 
-                    ($error_count > 0 ? ", $error_count failed" : "")
-    ]);
-}
 function handleSaveTeacherPeriod() {
     // Get JSON input
     $input = json_decode(file_get_contents('php://input'), true);

@@ -717,63 +717,61 @@ include 'sidebar.php';
             min-width: 800px; /* Ensure horizontal scrolling for many subjects */
         }
 
-        .curriculum-matrix th {
-            background: var(--bg-light);
-            padding: 12px 8px;
-            text-align: center;
-            font-weight: 600;
-            color: var(--text-primary);
+       /* Ensure table cells maintain proper alignment */
+        .curriculum-matrix td {
+            padding: 0; /* Remove default padding since assignment-cell has its own */
             border: 1px solid var(--border-color);
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }        .curriculum-matrix th.subject-header {
+            text-align: center;
+            vertical-align: middle;
+            position: relative;
+            width: auto; /* Allow natural width */
+            min-width: 45px; /* Minimum width for assignment cells */
+        }
+
+        /* Specific styling for assignment cells within table */
+        .curriculum-matrix td .assignment-cell {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            border: none; /* Remove border since td already has it */
+        }
+
+        /* Fix for sticky headers alignment */
+        .curriculum-matrix th.subject-header {
             background: var(--secondary-color);
             color: white;
             min-width: 120px;
             max-width: 120px;
-            padding: 12px 8px;
+            padding: 8px 4px; /* Reduced padding for better alignment */
             font-weight: 600;
             font-size: 0.8rem;
             line-height: 1.2;
             word-wrap: break-word;
             white-space: normal;
-        }        .curriculum-matrix th.class-header {
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .curriculum-matrix th.class-header {
             background: var(--primary-color);
             color: white;
             min-width: 120px;
             font-weight: 600;
-            padding: 12px 8px;
-            white-space: nowrap;
-        }
-
-        .curriculum-matrix td {
             padding: 8px;
-            border: 1px solid var(--border-color);
+            white-space: nowrap;
             text-align: center;
             vertical-align: middle;
-            position: relative;
-        }        .curriculum-matrix td.class-name {
-            background: #fef5f5;
-            font-weight: 600;
-            color: var(--text-primary);
-            text-align: left;
-            padding: 12px 16px;
-            position: sticky;
-            left: 0;
-            z-index: 5;
-            border-right: 2px solid var(--border-color);
-            min-width: 120px;
-            white-space: nowrap;
-        }.assignment-cell {
+        }
+        .assignment-cell {
             cursor: pointer;
             transition: all 0.2s ease;
             min-height: 45px;
             min-width: 45px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: table-cell; /* Changed from flex to table-cell for proper table alignment */
+            vertical-align: middle; /* Center vertically */
+            text-align: center; /* Center horizontally */
             position: relative;
+            padding: 8px; /* Add padding for better spacing */
         }
 
         .assignment-cell:hover {
@@ -806,6 +804,8 @@ include 'sidebar.php';
         .assignment-icon {
             font-size: 16px;
             font-weight: bold;
+            display: inline-block; /* Ensure proper horizontal alignment */
+            line-height: 1; /* Prevent vertical spacing issues */
         }
 
         .assignment-cell.assigned .assignment-icon {
@@ -820,10 +820,17 @@ include 'sidebar.php';
             color: white;
         }
 
-        .assignment-icon {
-            font-size: 1.2rem;
+        .assignment-cell-flex {
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-height: 45px;
+            min-width: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 8px;
         }
-
         .curriculum-legend {
             background: var(--bg-white);
             border-radius: var(--border-radius);
