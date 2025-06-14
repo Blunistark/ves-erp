@@ -46,6 +46,7 @@ include 'sidebar.php';
     <title>Academic Management - Unified System</title>
     
     <link rel="stylesheet" href="css/sidebar.css">
+    <link rel="stylesheet" href="css/academic_management_unified.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
@@ -73,6 +74,21 @@ include 'sidebar.php';
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.6;
             color: var(--text-primary);
+        }
+
+        .search-container{     {/** for bot class and subject */}
+
+            padding: 20px;
+            
+        }
+
+        .search-input{
+              width: 70%;
+            padding: 12px 16px 12px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+
         }
 
         .unified-container {
@@ -1544,6 +1560,7 @@ include 'sidebar.php';
             text-align: center;
         }
     </style>
+    
 </head>
 <body>
     <!-- Notification Element -->

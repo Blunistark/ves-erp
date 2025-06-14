@@ -154,7 +154,8 @@ include 'sidebar.php';
             right: 0;
             height: 2px;
             background: var(--primary-color);
-        }        .tab-content {
+        }       
+         .tab-content {
             display: none;
             padding: 24px;
         }
@@ -282,29 +283,71 @@ include 'sidebar.php';
         .card-body {
             padding: 24px;
         }
+{/** 
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 16px;
+    }
+    
+    .data-table th, .data-table td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .data-table th {
+        background: var(--bg-light);
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    
+    .data-table tr:hover {
+        background: rgba(253, 93, 93, 0.02);
+    }
+    */}
+.data-table {
+    width: 100%;
+    border-collapse: separate;        /* Changed from 'collapse' */
+    border-spacing: 0 12px;           /* 12px vertical space between rows */
+    margin-top: 16px;
+}
 
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 16px;
-        }
+.data-table th,
+.data-table td {
+    padding: 12px 16px;
+    text-align: left;
+    /* Removed border-bottom to prevent double-line effect */
+}
 
-        .data-table th, .data-table td {
-            padding: 12px 16px;
-            text-align: left;
-            border-bottom: 1px solid var(--border-color);
-        }
+.data-table th {
+    background: var(--bg-light);
+    font-weight: 600;
+    color: var(--text-primary);
+}
 
-        .data-table th {
-            background: var(--bg-light);
-            font-weight: 600;
-            color: var(--text-primary);
-        }
+.data-table tbody tr {
+    background: white;
+    border-radius: 8px;
+    
+    overflow: hidden; /* Ensures rounded corners work */
+}
 
-        .data-table tr:hover {
-            background: rgba(253, 93, 93, 0.02);
-        }
+/* ✅ Keep your hover effect */
+.data-table tr:hover {
+    background: rgba(253, 93, 93, 0.02);
+}
 
+.data-table td:last-child {
+    /* Your styles here */
+   margin:top 10px;
+   background:yellow;
+   justify-content:center;
+   align-items:center;
+}
+
+
+{/**                                                               chatty                                                    */}
         .status-badge {
             display: inline-block;
             padding: 4px 12px;
@@ -336,6 +379,7 @@ include 'sidebar.php';
         .actions {
             display: flex;
             gap: 8px;
+            
         }
 
         .btn-sm {
@@ -1201,6 +1245,15 @@ include 'sidebar.php';
             resize: vertical;
             min-height: 80px;
         }
+
+
+        {/**                                       this is comment                                            */}
+        #teachersTableBody tr {
+    background-color:rgb(255, 255, 255);
+    color: #333;
+    font-size: 16px;
+    
+  }
     </style>
 </head>
 <body>
