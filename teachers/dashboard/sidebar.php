@@ -149,26 +149,27 @@ if (isset($is_ajax) && $is_ajax) {
                 </div>
             </div>
 
-            <!-- Academic Structure -->
+              <!-- Academic Management -->
                 <div class="nav-group">
                     <button class="nav-group-toggle">
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                             </svg>
-                            <span>Academic Structure</span>
+                            <span>Academic Management</span>
                         </div>
                         <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
                     </button>
                     <div class="nav-group-content">
-                        <a href="academic_years.php" class="nav-subitem">Academic Years & Terms</a>
-                        <a href="classesmanage.php" class="nav-subitem">Manage Classes</a>
-                        <a href="classessections.php" class="nav-subitem">Manage Sections</a>
-                        <a href="subject_manage.php" class="nav-subitem">Manage Subjects</a>
-                        <a href="class_subjects.php" class="nav-subitem">Manage Class Subjects</a>
-                        <a href="teacher_subject_assign.php" class="nav-subitem">Teacher Subject Assignment</a>
+                        <a href="academic_management_unified.php" class="nav-subitem">Academic Management</a>
+                        <a href="academic_management_unified.php?tab=academic-years" class="nav-subitem">Academic Years</a>
+                        <a href="academic_management_unified.php?tab=classes-sections" class="nav-subitem">Classes & Sections</a>
+                        <a href="academic_management_unified.php?tab=subjects" class="nav-subitem">Subjects</a>
+                        <a href="academic_management_unified.php?tab=curriculum" class="nav-subitem">Curriculum Mapping</a>
+                        <a href="academic_management_unified.php?tab=reports" class="nav-subitem">Reports</a>
+                        <a href="academic_management_unified.php?tab=bulk-operations" class="nav-subitem">Bulk Operations</a>
                     </div>
                 </div>
             
