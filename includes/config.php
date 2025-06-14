@@ -30,9 +30,9 @@ date_default_timezone_set('Asia/Kolkata'); // India Standard Time (IST) +5:30
 
 // Database connection parameters
 define('DB_HOST', 'localhost');      // Database host
-define('DB_USER', 'admin');           // Database username
+define('DB_USER', 'ves-admin');           // Database username
 define('DB_PASS', 'admin');               // Database password
-define('DB_NAME', 'ERP');     // Database name
+define('DB_NAME', 'ves-admin');     // Database name
 
 
 /**
