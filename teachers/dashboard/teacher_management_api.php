@@ -415,7 +415,6 @@ function handleGetTeacherDetails() {
         // Get class teacher assignments
         $class_teacher_query = "
             SELECT 
-                s.id as section_id,
                 c.name as class_name,
                 s.name as section_name,
                 CONCAT(c.name, ' - ', s.name) as class_section
@@ -856,67 +855,22 @@ function handleGetTeacherWorkload() {
  * Remove class teacher
  */
 function handleRemoveClassTeacher() {
-    try {
-        $section_id = $_POST['section_id'] ?? null;
-        
-        if (!$section_id) {
-            throw new Exception('Section ID is required');
-        }
-        
-        // Debug: Log what we're trying to update
-        error_log("Attempting to remove class teacher for section_id: " . $section_id);
-        
-        // First, check if the section exists and has a class teacher
-        $checkSql = "SELECT id, name, class_teacher_user_id FROM sections WHERE id = ?";
-        $existing = executeQuery($checkSql, "i", [$section_id]);
-        
-        if (empty($existing)) {
-            throw new Exception('Section not found');
-        }
-        
-        error_log("Section found: " . json_encode($existing[0]));
-        
-        if (empty($existing[0]['class_teacher_user_id'])) {
-            // Already no class teacher assigned
-            echo json_encode([
-                'success' => true,
-                'message' => 'No class teacher was assigned to this section',
-                'debug' => 'Section already has no class teacher'
-            ]);
-            return;
-        }
-        
-        // Remove class teacher assignment
-        $sql = "UPDATE sections SET class_teacher_user_id = NULL WHERE id = ?";
-        $result = executeQuery($sql, "i", [$section_id]);
-        
-        // Debug: Check if the update worked
-        $afterUpdate = executeQuery($checkSql, "i", [$section_id]);
-        error_log("After update: " . json_encode($afterUpdate[0]));
-        
-        if ($result !== false) {
-            echo json_encode([
-                'success' => true,
-                'message' => 'Class teacher removed successfully',
-                'debug' => [
-                    'section_id' => $section_id,
-                    'before' => $existing[0],
-                    'after' => $afterUpdate[0] ?? null
-                ]
-            ]);
-        } else {
-            throw new Exception('Failed to update section');
-        }
-        
-    } catch (Exception $e) {
+    $section_id = $_POST['section_id'] ?? null;
+    
+    if (!$section_id) {
+        throw new Exception('Section ID is required');
+    }
+    
+    $sql = "UPDATE sections SET class_teacher_user_id = NULL WHERE id = ?";
+    $result = executeQuery($sql, "i", [$section_id]);
+    
+    if ($result) {
         echo json_encode([
-            'success' => false,
-            'message' => $e->getMessage(),
-            'debug' => [
-                'section_id' => $_POST['section_id'] ?? 'not provided',
-                'error' => $e->getMessage()
-            ]
+            'success' => true,
+            'message' => 'Class teacher removed successfully'
         ]);
+    } else {
+        throw new Exception('Failed to remove class teacher');
     }
 }
 
@@ -2888,15 +2842,4 @@ function handleCheckClassSectionConflicts() {
             'exclude_period_id' => $exclude_period_id
         ]
     ]);
-}
-
-// Force fresh database connection and clear query cache
-function clearDatabaseCache() {
-    global $conn;
-    if ($conn) {
-        // Force MySQL to clear query cache for this session
-        $conn->query("SELECT SQL_NO_CACHE 1");
-        // Reset connection to ensure fresh queries
-        $conn->query("SET SESSION query_cache_type = OFF");
-    }
 }
