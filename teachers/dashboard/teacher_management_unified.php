@@ -2665,7 +2665,8 @@ include 'sidebar.php';
         
         function viewTeacherDetails(teacherId) {
             console.log('View teacher details:', teacherId);
-            showNotification('Teacher details view will be implemented', 'info');
+            // Redirect to teacher details page
+            window.location.href = `teacher_details.php?id=${teacherId}`;
         }
         
         function viewTeacherAssignments(teacherId) {

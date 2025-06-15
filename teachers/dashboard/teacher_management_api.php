@@ -25,8 +25,17 @@ require_once 'con.php';
 // Set JSON content type
 header('Content-Type: application/json');
 
+// Enable error reporting for debugging, but capture errors cleanly
+error_reporting(E_ALL);
+ini_set('display_errors', 0); // Don't display errors directly
+ini_set('log_errors', 1);
+
+// Capture any unexpected output
+ob_start();
+
 // Get request data
-$action = $_POST['action'] ?? $_GET['action'] ?? '';
+$input = json_decode(file_get_contents('php://input'), true);
+$action = $input['action'] ?? $_POST['action'] ?? $_GET['action'] ?? '';
 $user_role = $_SESSION['role'];
 $user_id = $_SESSION['user_id'];
 
@@ -38,6 +47,10 @@ try {
             
         case 'get_teachers':
             handleGetTeachers();
+            break;
+
+        case 'get_teacher_details':
+            handleGetTeacherDetails();
             break;
             
         case 'get_available_teachers':
@@ -181,6 +194,10 @@ try {
             handleGetTeacherTimetables();
             break;
             
+        case 'get_predefined_timeslots':
+            handleGetPredefinedTimeslots();
+            break;
+            
         case 'get_teacher_schedules':
             handleGetTeacherSchedules();
             break;
@@ -220,6 +237,10 @@ try {
             
         case 'check_teacher_conflicts':
             handleCheckTeacherConflicts();
+            break;
+            
+        case 'check_class_section_conflicts':
+            handleCheckClassSectionConflicts();
             break;
             
         case 'get_available_slots':
@@ -312,6 +333,184 @@ try {
         'success' => false,
         'message' => $e->getMessage()
     ]);
+}
+
+/**
+ * Get detailed information for a specific teacher
+ */
+function handleGetTeacherDetails() {
+    global $conn;
+    
+    $teacher_id = $_GET['teacher_id'] ?? $_POST['teacher_id'] ?? null;
+    
+    if (!$teacher_id) {
+        echo json_encode(['success' => false, 'message' => 'Teacher ID is required']);
+        return;
+    }
+    
+    try {
+        // Get basic teacher information
+        $teacher_query = "
+            SELECT 
+                u.id,
+                u.full_name,
+                u.email,
+                u.status,
+                u.created_at,
+                t.employee_number,
+                t.date_of_birth,
+                t.gender,
+                t.phone,
+                t.address,
+                t.qualification,
+                t.experience_years,
+                t.joined_date
+            FROM users u 
+            JOIN teachers t ON u.id = t.user_id 
+            WHERE u.id = ? AND u.role IN ('teacher', 'headmaster')
+        ";
+        
+        $stmt = $conn->prepare($teacher_query);
+        $stmt->bind_param("i", $teacher_id);
+        $stmt->execute();
+        $teacher_result = $stmt->get_result();
+        $teacher = $teacher_result->fetch_assoc();
+        $stmt->close();
+        
+        if (!$teacher) {
+            echo json_encode(['success' => false, 'message' => 'Teacher not found']);
+            return;
+        }
+        
+        // Get assigned subjects with class information
+        $subjects_query = "
+            SELECT DISTINCT
+                s.id as subject_id,
+                s.name as subject_name,
+                s.code as subject_code,
+                GROUP_CONCAT(
+                    DISTINCT CONCAT(c.name, ' - ', sec.name) 
+                    ORDER BY c.name, sec.name 
+                    SEPARATOR ', '
+                ) as classes_sections
+            FROM teacher_class_subjects tcs
+            JOIN subjects s ON tcs.subject_id = s.id
+            LEFT JOIN classes c ON tcs.class_id = c.id
+            LEFT JOIN sections sec ON tcs.section_id = sec.id
+            WHERE tcs.teacher_user_id = ?
+            GROUP BY s.id, s.name, s.code
+            ORDER BY s.name
+        ";
+        
+        $stmt = $conn->prepare($subjects_query);
+        $stmt->bind_param("i", $teacher_id);
+        $stmt->execute();
+        $subjects_result = $stmt->get_result();
+        $subjects = [];
+        while ($row = $subjects_result->fetch_assoc()) {
+            $subjects[] = $row;
+        }
+        $stmt->close();
+        
+        // Get class teacher assignments
+        $class_teacher_query = "
+            SELECT 
+                s.id as section_id,
+                c.name as class_name,
+                s.name as section_name,
+                CONCAT(c.name, ' - ', s.name) as class_section
+            FROM sections s
+            JOIN classes c ON s.class_id = c.id
+            WHERE s.class_teacher_user_id = ?
+            ORDER BY c.name, s.name
+        ";
+        
+        $stmt = $conn->prepare($class_teacher_query);
+        $stmt->bind_param("i", $teacher_id);
+        $stmt->execute();
+        $class_teacher_result = $stmt->get_result();
+        $class_assignments = [];
+        while ($row = $class_teacher_result->fetch_assoc()) {
+            $class_assignments[] = $row;
+        }
+        $stmt->close();
+        
+        // Get timetable/schedule information
+        $timetable_query = "
+            SELECT 
+                tp.day_of_week,
+                tp.period_number,
+                tp.start_time,
+                tp.end_time,
+                s.name as subject_name,
+                s.code as subject_code,
+                c.name as class_name,
+                sec.name as section_name,
+                CONCAT(c.name, ' - ', sec.name) as class_section
+            FROM timetable_periods tp
+            JOIN timetables t ON tp.timetable_id = t.id
+            JOIN subjects s ON tp.subject_id = s.id
+            JOIN classes c ON t.class_id = c.id
+            JOIN sections sec ON t.section_id = sec.id
+            WHERE tp.teacher_id = ?
+            ORDER BY 
+                FIELD(tp.day_of_week, 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'),
+                tp.period_number
+        ";
+        
+        $stmt = $conn->prepare($timetable_query);
+        $stmt->bind_param("i", $teacher_id);
+        $stmt->execute();
+        $timetable_result = $stmt->get_result();
+        $timetable = [];
+        while ($row = $timetable_result->fetch_assoc()) {
+            $timetable[] = $row;
+        }
+        $stmt->close();
+        
+        // Get workload statistics
+        $workload_query = "
+            SELECT 
+                COUNT(DISTINCT tcs.subject_id) as total_subjects,
+                COUNT(DISTINCT CONCAT(tcs.class_id, '-', tcs.section_id)) as total_classes,
+                COUNT(tp.id) as total_periods_per_week
+            FROM teacher_class_subjects tcs
+            LEFT JOIN timetable_periods tp ON tcs.teacher_user_id = tp.teacher_id 
+                AND tcs.subject_id = tp.subject_id
+            WHERE tcs.teacher_user_id = ?
+        ";
+        
+        $stmt = $conn->prepare($workload_query);
+        $stmt->bind_param("i", $teacher_id);
+        $stmt->execute();
+        $workload_result = $stmt->get_result();
+        $workload = $workload_result->fetch_assoc();
+        $stmt->close();
+        
+        // Organize timetable by days
+        $organized_timetable = [];
+        foreach ($timetable as $period) {
+            $day = $period['day_of_week'];
+            if (!isset($organized_timetable[$day])) {
+                $organized_timetable[$day] = [];
+            }
+            $organized_timetable[$day][] = $period;
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'data' => [
+                'teacher' => $teacher,
+                'subjects' => $subjects,
+                'class_assignments' => $class_assignments,
+                'timetable' => $organized_timetable,
+                'workload' => $workload
+            ]
+        ]);
+        
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+    }
 }
 
 /**
@@ -516,7 +715,7 @@ function handleGetTeacherSubjects() {
  */
 function handleUpdateSubjectAssignments() {
     $teacher_id = $_POST['teacher_id'] ?? null;
-    $subject_ids = json_decode($_POST['subject_ids'] ?? '[]', true);
+    $assignments = json_decode($_POST['assignments'] ?? '[]', true);
     
     if (!$teacher_id) {
         echo json_encode([
@@ -527,14 +726,18 @@ function handleUpdateSubjectAssignments() {
     }
     
     try {
-        // Delete existing assignments
-        executeQuery("DELETE FROM teacher_subjects WHERE teacher_user_id = ?", "i", [$teacher_id]);
+        // Delete existing assignments from teacher_class_subjects table
+        executeQuery("DELETE FROM teacher_class_subjects WHERE teacher_user_id = ?", "i", [$teacher_id]);
         
         // Insert new assignments
-        if (!empty($subject_ids)) {
-            foreach ($subject_ids as $subject_id) {
-                $sql = "INSERT INTO teacher_subjects (teacher_user_id, subject_id, class_id, section_id) VALUES (?, ?, NULL, NULL)";
-                executeQuery($sql, "ii", [$teacher_id, intval($subject_id)]);
+        if (!empty($assignments)) {
+            foreach ($assignments as $assignment) {
+                $subject_id = intval($assignment['subject_id']);
+                $class_id = intval($assignment['class_id']);
+                $section_id = intval($assignment['section_id']);
+                
+                $sql = "INSERT INTO teacher_class_subjects (teacher_user_id, subject_id, class_id, section_id) VALUES (?, ?, ?, ?)";
+                executeQuery($sql, "iiii", [$teacher_id, $subject_id, $class_id, $section_id]);
             }
         }
         
@@ -653,22 +856,67 @@ function handleGetTeacherWorkload() {
  * Remove class teacher
  */
 function handleRemoveClassTeacher() {
-    $section_id = $_POST['section_id'] ?? null;
-    
-    if (!$section_id) {
-        throw new Exception('Section ID is required');
-    }
-    
-    $sql = "UPDATE sections SET class_teacher_user_id = NULL WHERE id = ?";
-    $result = executeQuery($sql, "i", [$section_id]);
-    
-    if ($result) {
+    try {
+        $section_id = $_POST['section_id'] ?? null;
+        
+        if (!$section_id) {
+            throw new Exception('Section ID is required');
+        }
+        
+        // Debug: Log what we're trying to update
+        error_log("Attempting to remove class teacher for section_id: " . $section_id);
+        
+        // First, check if the section exists and has a class teacher
+        $checkSql = "SELECT id, name, class_teacher_user_id FROM sections WHERE id = ?";
+        $existing = executeQuery($checkSql, "i", [$section_id]);
+        
+        if (empty($existing)) {
+            throw new Exception('Section not found');
+        }
+        
+        error_log("Section found: " . json_encode($existing[0]));
+        
+        if (empty($existing[0]['class_teacher_user_id'])) {
+            // Already no class teacher assigned
+            echo json_encode([
+                'success' => true,
+                'message' => 'No class teacher was assigned to this section',
+                'debug' => 'Section already has no class teacher'
+            ]);
+            return;
+        }
+        
+        // Remove class teacher assignment
+        $sql = "UPDATE sections SET class_teacher_user_id = NULL WHERE id = ?";
+        $result = executeQuery($sql, "i", [$section_id]);
+        
+        // Debug: Check if the update worked
+        $afterUpdate = executeQuery($checkSql, "i", [$section_id]);
+        error_log("After update: " . json_encode($afterUpdate[0]));
+        
+        if ($result !== false) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Class teacher removed successfully',
+                'debug' => [
+                    'section_id' => $section_id,
+                    'before' => $existing[0],
+                    'after' => $afterUpdate[0] ?? null
+                ]
+            ]);
+        } else {
+            throw new Exception('Failed to update section');
+        }
+        
+    } catch (Exception $e) {
         echo json_encode([
-            'success' => true,
-            'message' => 'Class teacher removed successfully'
+            'success' => false,
+            'message' => $e->getMessage(),
+            'debug' => [
+                'section_id' => $_POST['section_id'] ?? 'not provided',
+                'error' => $e->getMessage()
+            ]
         ]);
-    } else {
-        throw new Exception('Failed to remove class teacher');
     }
 }
 
@@ -1682,14 +1930,21 @@ function handleCheckTeacherConflicts() {
     $sql = "
         SELECT 
             tp.id as period_id,
+            tp.day_of_week,
+            tp.period_number,
             tp.start_time,
             tp.end_time,
+            u.full_name as teacher_name,
             sub.name as subject_name,
+            sub.code as subject_code,
             c.name as class_name,
             sec.name as section_name,
-            tt.academic_year,
-            tt.term
+            CONCAT(c.name, ' - ', sec.name) as class_section,
+            tt.academic_year_id,
+            tt.effective_date,
+            tt.status as timetable_status
         FROM timetable_periods tp
+        JOIN users u ON tp.teacher_id = u.id
         JOIN timetables tt ON tp.timetable_id = tt.id
         JOIN subjects sub ON tp.subject_id = sub.id
         JOIN classes c ON tt.class_id = c.id
@@ -1701,13 +1956,51 @@ function handleCheckTeacherConflicts() {
         AND tp.id != COALESCE(?, 0)
     ";
     
+    // Check for exact period conflicts (same teacher, same day, same period)
+    $sql = "
+        SELECT 
+            tp.id as period_id,
+            tp.day_of_week,
+            tp.period_number,
+            tp.start_time,
+            tp.end_time,
+            u.full_name as teacher_name,
+            sub.name as subject_name,
+            sub.code as subject_code,
+            c.name as class_name,
+            sec.name as section_name,
+            CONCAT(c.name, ' - ', sec.name) as class_section,
+            tt.academic_year_id,
+            tt.effective_date,
+            tt.status as timetable_status,
+            'exact_period' as conflict_type
+        FROM timetable_periods tp
+        JOIN users u ON tp.teacher_id = u.id
+        JOIN timetables tt ON tp.timetable_id = tt.id
+        JOIN subjects sub ON tp.subject_id = sub.id
+        JOIN classes c ON tt.class_id = c.id
+        JOIN sections sec ON tt.section_id = sec.id
+        WHERE tp.teacher_id = ? 
+        AND tp.day_of_week = ? 
+        AND tp.period_number = ?
+        AND tt.status IN ('published', 'draft')
+        AND tp.id != COALESCE(?, 0)
+    ";
+    
     $conflicts = executeQuery($sql, "isii", [$teacher_id, $day_of_week, $period_number, $exclude_period_id]);
     
     echo json_encode([
         'success' => true,
         'has_conflict' => !empty($conflicts),
         'conflicts' => $conflicts ?: [],
-        'message' => empty($conflicts) ? 'No conflicts found' : 'Conflicts detected'
+        'conflict_count' => count($conflicts ?: []),
+        'message' => empty($conflicts) ? 'No conflicts found' : count($conflicts) . ' conflict(s) detected for this teacher',
+        'debug' => [
+            'teacher_id' => $teacher_id,
+            'day_of_week' => $day_of_week,
+            'period_number' => $period_number,
+            'exclude_period_id' => $exclude_period_id
+        ]
     ]);
 }
 
@@ -1832,74 +2125,91 @@ function handleSaveTeacherPeriod() {
     }
 
     global $conn;
-    $effective_date = date('Y-m-d'); // current date or pass from input
-    $insert = "INSERT INTO timetables (class_id, section_id, effective_date) VALUES (?, ?, ?)";
-    $stmt_insert = $conn->prepare($insert);
-    $stmt_insert->bind_param("iis", $class_id, $section_id, $effective_date);
-    if (!$stmt_insert->execute()) {
-        die(json_encode(['success' => false, 'message' => 'Failed to create timetable']));
-    }
-    $timetable_id = $stmt_insert->insert_id;
+    
+    try {
+        // Step 1: Get or create timetable_id
+        $query = "SELECT id FROM timetables WHERE class_id = ? AND section_id = ? ORDER BY created_at DESC LIMIT 1";
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param("ii", $class_id, $section_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
 
-    // Step 1: Get or create timetable_id
-    $query = "SELECT id FROM timetables WHERE class_id = ? AND section_id = ?";
-    $stmt = $conn->prepare($query);
-    $stmt->bind_param("ii", $class_id, $section_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    if ($row = $result->fetch_assoc()) {
-        $timetable_id = $row['id'];
-    } else {
-        $insert = "INSERT INTO timetables (class_id, section_id) VALUES (?, ?)";
-        $stmt_insert = $conn->prepare($insert);
-        $stmt_insert->bind_param("ii", $class_id, $section_id);
-        if (!$stmt_insert->execute()) {
-            die(json_encode(['success' => false, 'message' => 'Failed to create timetable']));
+        if ($row = $result->fetch_assoc()) {
+            $timetable_id = $row['id'];
+        } else {
+            // Create new timetable
+            $effective_date = date('Y-m-d');
+            $insert = "INSERT INTO timetables (class_id, section_id, effective_date, status) VALUES (?, ?, ?, 'draft')";
+            $stmt_insert = $conn->prepare($insert);
+            $stmt_insert->bind_param("iis", $class_id, $section_id, $effective_date);
+            if (!$stmt_insert->execute()) {
+                die(json_encode(['success' => false, 'message' => 'Failed to create timetable']));
+            }
+            $timetable_id = $stmt_insert->insert_id;
         }
-        $timetable_id = $stmt_insert->insert_id;
-    }
 
-    // Step 2: Check for existing period for the teacher
-    $conflict_sql = "SELECT id FROM timetable_periods WHERE teacher_id = ? AND day_of_week = ? AND period_number = ?";
-    $stmt = $conn->prepare($conflict_sql);
-    $stmt->bind_param("isi", $teacher_id, $day_of_week, $period_number);
-    $stmt->execute();
-    $conflict_result = $stmt->get_result();
+        // Step 2: Check for existing period in this timetable/slot (unique constraint check)
+        $check_timetable_sql = "SELECT id FROM timetable_periods WHERE timetable_id = ? AND day_of_week = ? AND period_number = ?";
+        $stmt_check_tt = $conn->prepare($check_timetable_sql);
+        $stmt_check_tt->bind_param("isi", $timetable_id, $day_of_week, $period_number);
+        $stmt_check_tt->execute();
+        $existing_tt_result = $stmt_check_tt->get_result();
 
-    if ($conflict_row = $conflict_result->fetch_assoc()) {
-        // Update existing period
-        $period_id = $conflict_row['id'];
-        $update_sql = "UPDATE timetable_periods SET timetable_id = ?, subject_id = ?, start_time = ?, end_time = ?, notes = ? WHERE id = ?";
-        $stmt = $conn->prepare($update_sql);
-        $stmt->bind_param("iisssi", $timetable_id, $subject_id, $start_time, $end_time, $notes, $period_id);
-        if ($stmt->execute()) {
+        // Also check if this teacher has any period at this time slot (different timetable)
+        $check_teacher_sql = "SELECT id, timetable_id FROM timetable_periods WHERE teacher_id = ? AND day_of_week = ? AND period_number = ?";
+        $stmt_check_teacher = $conn->prepare($check_teacher_sql);
+        $stmt_check_teacher->bind_param("isi", $teacher_id, $day_of_week, $period_number);
+        $stmt_check_teacher->execute();
+        $existing_teacher_result = $stmt_check_teacher->get_result();
+
+        if ($existing_tt_row = $existing_tt_result->fetch_assoc()) {
+            // A period already exists in this timetable slot, update it
+            $period_id = $existing_tt_row['id'];
+            $update_sql = "UPDATE timetable_periods SET subject_id = ?, teacher_id = ?, start_time = ?, end_time = ?, notes = ? WHERE id = ?";
+            $stmt_update = $conn->prepare($update_sql);
+            $stmt_update->bind_param("isssi", $subject_id, $teacher_id, $start_time, $end_time, $notes, $period_id);
+            
+            if ($stmt_update->execute()) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Period updated successfully',
+                    'period_id' => $period_id,
+                    'action' => 'updated'
+                ]);
+            } else {
+                die(json_encode(['success' => false, 'message' => 'Failed to update period: ' . $stmt_update->error]));
+            }
+        } else if ($existing_teacher_row = $existing_teacher_result->fetch_assoc()) {
+            // This teacher already has a period at this time slot in a different timetable
             echo json_encode([
-                'success' => true,
-                'message' => 'Period updated successfully',
-                'period_id' => $period_id,
-                'action' => 'updated'
+                'success' => false, 
+                'message' => 'This teacher already has a class scheduled for ' . ucfirst($day_of_week) . ' Period ' . $period_number . '. Please choose a different time slot.',
+                'duplicate' => true
+
             ]);
         } else {
-            die(json_encode(['success' => false, 'message' => 'Failed to update period']));
+            // No conflicts, insert new period
+            $insert_sql = "INSERT INTO timetable_periods (timetable_id, day_of_week, period_number, start_time, end_time, subject_id, teacher_id, notes)
+                           VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            $stmt_insert = $conn->prepare($insert_sql);
+            $stmt_insert->bind_param("isissiis", $timetable_id, $day_of_week, $period_number, $start_time, $end_time, $subject_id, $teacher_id, $notes);
+            
+            if ($stmt_insert->execute()) {
+                $new_period_id = $stmt_insert->insert_id;
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Period created successfully',
+                    'period_id' => $new_period_id,
+                    'action' => 'created'
+                ]);
+            } else {
+                // Handle any remaining database errors
+                die(json_encode(['success' => false, 'message' => 'Failed to create period: ' . $stmt_insert->error]));
+            }
         }
-    } else {
-        // Insert new period
-        $insert_sql = "INSERT INTO timetable_periods (timetable_id, day_of_week, period_number, start_time, end_time, subject_id, teacher_id, notes)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-        $stmt = $conn->prepare($insert_sql);
-        $stmt->bind_param("isisssis", $timetable_id, $day_of_week, $period_number, $start_time, $end_time, $subject_id, $teacher_id, $notes);
-        if ($stmt->execute()) {
-            $new_period_id = $stmt->insert_id;
-            echo json_encode([
-                'success' => true,
-                'message' => 'Period created successfully',
-                'period_id' => $new_period_id,
-                'action' => 'created'
-            ]);
-        } else {
-            die(json_encode(['success' => false, 'message' => 'Failed to create period']));
-        }
+    } catch (Exception $e) {
+        error_log("Error in handleSaveTeacherPeriod: " . $e->getMessage());
+        die(json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]));
     }
 }
 
@@ -1916,6 +2226,7 @@ function handleDeleteTeacherPeriod() {
     
     $teacher_id = $input['teacher_id'] ?? null;
     $day_of_week = $input['day_of_week'] ?? null;
+   
     $period_number = $input['period_number'] ?? null;
     
     if (!$teacher_id || !$day_of_week || !$period_number) {
@@ -2441,4 +2752,151 @@ function handleGetBasicTeacherSchedule() {
     ]);
 }
 
-?>
+/**
+ * Get predefined timeslots for timetable periods
+ */
+function handleGetPredefinedTimeslots() {
+    try {
+        // Get standard timeslots based on existing timetable_periods data
+        // This provides a consistent set of period timings
+        $sql = "
+            SELECT 
+                period_number,
+                start_time,
+                end_time,
+                COUNT(*) as usage_count,
+                CONCAT('Period ', period_number, ' (', 
+                    DATE_FORMAT(start_time, '%h:%i %p'), ' - ', 
+                    DATE_FORMAT(end_time, '%h:%i %p'), ')') as display_name
+            FROM timetable_periods 
+            WHERE start_time IS NOT NULL 
+            AND end_time IS NOT NULL
+            AND start_time < end_time
+            AND TIME(start_time) BETWEEN '06:00:00' AND '18:00:00'
+            GROUP BY period_number, start_time, end_time
+            HAVING COUNT(*) >= 1
+            ORDER BY period_number, start_time
+        ";
+        
+        $result = executeQuery($sql);
+        $timeslots = [];
+        $seenPeriods = [];
+        
+        // Filter to get the most commonly used timeslot for each period
+        if (!empty($result)) {
+            foreach ($result as $row) {
+                $periodKey = $row['period_number'];
+                
+                // If we haven't seen this period yet, or this one is used more frequently
+                if (!isset($seenPeriods[$periodKey]) || 
+                    $row['usage_count'] > $seenPeriods[$periodKey]['usage_count']) {
+                    $seenPeriods[$periodKey] = $row;
+                }
+            }
+            
+            // Convert to indexed array and sort by period number
+            $timeslots = array_values($seenPeriods);
+            usort($timeslots, function($a, $b) {
+                return $a['period_number'] - $b['period_number'];
+            });
+        }
+        
+        // If no data found or insufficient data, provide default timeslots
+        if (empty($timeslots) || count($timeslots) < 6) {
+            $timeslots = [
+                ['period_number' => 1, 'start_time' => '08:00:00', 'end_time' => '08:45:00', 'display_name' => 'Period 1 (8:00 AM - 8:45 AM)'],
+                ['period_number' => 2, 'start_time' => '08:50:00', 'end_time' => '09:35:00', 'display_name' => 'Period 2 (8:50 AM - 9:35 AM)'],
+                ['period_number' => 3, 'start_time' => '09:40:00', 'end_time' => '10:25:00', 'display_name' => 'Period 3 (9:40 AM - 10:25 AM)'],
+                ['period_number' => 4, 'start_time' => '10:40:00', 'end_time' => '11:25:00', 'display_name' => 'Period 4 (10:40 AM - 11:25 AM)'],
+                ['period_number' => 5, 'start_time' => '11:30:00', 'end_time' => '12:15:00', 'display_name' => 'Period 5 (11:30 AM - 12:15 PM)'],
+                ['period_number' => 6, 'start_time' => '12:20:00', 'end_time' => '13:05:00', 'display_name' => 'Period 6 (12:20 PM - 1:05 PM)'],
+                ['period_number' => 7, 'start_time' => '13:45:00', 'end_time' => '14:30:00', 'display_name' => 'Period 7 (1:45 PM - 2:30 PM)'],
+                ['period_number' => 8, 'start_time' => '14:35:00', 'end_time' => '15:20:00', 'display_name' => 'Period 8 (2:35 PM - 3:20 PM)']
+            ];
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'data' => $timeslots
+        ]);
+        
+    } catch (Exception $e) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Error fetching timeslots: ' . $e->getMessage()
+        ]);
+    }
+}
+
+/**
+ * Check for class/section conflicts - if the same class-section already has a period at this time
+ */
+function handleCheckClassSectionConflicts() {
+    $class_id = $_GET['class_id'] ?? null;
+    $section_id = $_GET['section_id'] ?? null;
+    $day_of_week = $_GET['day_of_week'] ?? null;
+    $period_number = $_GET['period_number'] ?? null;
+    $exclude_period_id = $_GET['exclude_period_id'] ?? null;
+    
+    if (!$class_id || !$section_id || !$day_of_week || !$period_number) {
+        throw new Exception('Required parameters: class_id, section_id, day_of_week, period_number');
+    }
+    
+    $sql = "
+        SELECT 
+            tp.id as period_id,
+            tp.day_of_week,
+            tp.period_number,
+            tp.start_time,
+            tp.end_time,
+            u.full_name as teacher_name,
+            sub.name as subject_name,
+            sub.code as subject_code,
+            c.name as class_name,
+            sec.name as section_name,
+            CONCAT(c.name, ' - ', sec.name) as class_section,
+            tt.academic_year_id,
+            tt.effective_date,
+            tt.status as timetable_status
+        FROM timetable_periods tp
+        JOIN timetables tt ON tp.timetable_id = tt.id
+        JOIN classes c ON tt.class_id = c.id
+        JOIN sections sec ON tt.section_id = sec.id
+        JOIN subjects sub ON tp.subject_id = sub.id
+        JOIN users u ON tp.teacher_id = u.id
+        WHERE tt.class_id = ? 
+        AND tt.section_id = ?
+        AND tp.day_of_week = ? 
+        AND tp.period_number = ?
+        AND tt.status IN ('published', 'draft')
+        AND tp.id != COALESCE(?, 0)
+    ";
+    
+    $conflicts = executeQuery($sql, "iisii", [$class_id, $section_id, $day_of_week, $period_number, $exclude_period_id]);
+    
+    echo json_encode([
+        'success' => true,
+        'has_conflict' => !empty($conflicts),
+        'conflicts' => $conflicts ?: [],
+        'conflict_count' => count($conflicts ?: []),
+        'message' => empty($conflicts) ? 'No class/section conflicts found' : count($conflicts) . ' class/section conflict(s) detected',
+        'debug' => [
+            'class_id' => $class_id,
+            'section_id' => $section_id,
+            'day_of_week' => $day_of_week,
+            'period_number' => $period_number,
+            'exclude_period_id' => $exclude_period_id
+        ]
+    ]);
+}
+
+// Force fresh database connection and clear query cache
+function clearDatabaseCache() {
+    global $conn;
+    if ($conn) {
+        // Force MySQL to clear query cache for this session
+        $conn->query("SELECT SQL_NO_CACHE 1");
+        // Reset connection to ensure fresh queries
+        $conn->query("SET SESSION query_cache_type = OFF");
+    }
+}
