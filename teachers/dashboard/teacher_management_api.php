@@ -20,7 +20,7 @@ if (!isLoggedIn() || !hasRole(['admin', 'headmaster'])) {
 }
 
 // Include database connection
-require_once 'con.php';
+require_once __DIR__ . '/../../includes/config.php';
 
 // Set JSON content type
 header('Content-Type: application/json');
@@ -415,6 +415,7 @@ function handleGetTeacherDetails() {
         // Get class teacher assignments
         $class_teacher_query = "
             SELECT 
+                s.id as section_id,
                 c.name as class_name,
                 s.name as section_name,
                 CONCAT(c.name, ' - ', s.name) as class_section

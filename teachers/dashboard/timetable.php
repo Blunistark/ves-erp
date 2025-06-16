@@ -788,9 +788,16 @@
                 } else if (this.id === 'classSelect') {
                     // When the class filter changes, find and render the selected timetable
                     const selectedValue = this.value;
-                    const selectedTimetableId = parseInt(selectedValue);
-                    if (!isNaN(selectedTimetableId)) {
-                        selectAndRenderTimetable(selectedTimetableId);
+                    
+                    if (selectedValue === '') {
+                        // "All Classes" selected - show aggregated timetable
+                        renderAggregatedTimetable();
+                    } else {
+                        // Specific class selected - show that class's timetable
+                        const selectedTimetableId = parseInt(selectedValue);
+                        if (!isNaN(selectedTimetableId)) {
+                            selectAndRenderTimetable(selectedTimetableId);
+                        }
                     }
                 }
             });
@@ -976,13 +983,18 @@
                                 // Determine which timetable to render initially
                                 const initialClassFilterValue = document.getElementById('classSelect').value;
 
-                                // Find the timetable that matches the initial filter value
-                                const initialTimetable = allTimetables.find(t => String(t.id) === initialClassFilterValue);
-                                if (initialTimetable) {
-                                    selectAndRenderTimetable(initialTimetable.id);
+                                if (initialClassFilterValue === '') {
+                                    // "All Classes" is selected (default) - show aggregated timetable
+                                    renderAggregatedTimetable();
                                 } else {
-                                    // Fallback to the first timetable if the default filter value doesn't match
-                                    selectAndRenderTimetable(allTimetables[0].id);
+                                    // Find the timetable that matches the initial filter value
+                                    const initialTimetable = allTimetables.find(t => String(t.id) === initialClassFilterValue);
+                                    if (initialTimetable) {
+                                        selectAndRenderTimetable(initialTimetable.id);
+                                    } else {
+                                        // Fallback to aggregated view if the filter value doesn't match
+                                        renderAggregatedTimetable();
+                                    }
                                 }
                                 
                                 // Update upcoming class display after timetable is loaded
@@ -1300,14 +1312,15 @@
                 const className = block.querySelector('.class-name')?.textContent || '';
                 const subjectName = block.querySelector('.class-subject')?.textContent || '';
                 
-                const matchesClass = classFilter === 'all' || className.toLowerCase().includes(classFilter.toLowerCase());
-                const matchesSubject = subjectFilter === 'all' || subjectName.toLowerCase().includes(subjectFilter.toLowerCase());
+                // Fix: Check for empty string instead of 'all' for "All Classes/Subjects"
+                const matchesClass = classFilter === '' || className.toLowerCase().includes(classFilter.toLowerCase());
+                const matchesSubject = subjectFilter === '' || subjectName.toLowerCase().includes(subjectFilter.toLowerCase());
                 
                 if (matchesClass && matchesSubject) {
                     shouldShow = true;
                     
                     // If showing the row but filters are active, highlight matching blocks
-                    if (classFilter !== 'all' || subjectFilter !== 'all') {
+                    if (classFilter !== '' || subjectFilter !== '') {
                         block.classList.add('highlighted');
                     } else {
                         block.classList.remove('highlighted');
@@ -1452,6 +1465,8 @@
         if (allPeriods.length > 0) {
             // Pass null or undefined for className and sectionName as they are now in the period objects
             buildTimetableFromPeriods(allPeriods, null, null);
+            // Apply any active filters after building the timetable
+            filterTimetable();
         } else {
             showTimetableError('No timetable data available for any class.');
         }

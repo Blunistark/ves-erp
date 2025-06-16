@@ -839,9 +839,9 @@ include 'sidebar.php';
                 </div>
             `;
             $('#teacherBasicInfo').html(basicInfoHtml);            // Display workload statistics
-            const totalWorkingHours = 40; // Standard working hours per week
+            const totalPeriodsPerWeek = 48; // 8 periods × 6 days (Mon-Sat)
             const assignedPeriods = workload.total_periods_per_week || 0;
-            const leisureHours = Math.max(0, totalWorkingHours - assignedPeriods);
+            const freePeriods = Math.max(0, totalPeriodsPerWeek - assignedPeriods);
             
             const workloadHtml = `
                 <div class="stat-card">
@@ -857,8 +857,8 @@ include 'sidebar.php';
                     <div class="stat-label">Periods per Week</div>
                 </div>
                 <div class="stat-card leisure">
-                    <div class="stat-number">${leisureHours}</div>
-                    <div class="stat-label">Leisure Hours</div>
+                    <div class="stat-number">${freePeriods}</div>
+                    <div class="stat-label">Free Periods</div>
                 </div>                <div class="stat-card">
                     <div class="stat-number">${class_assignments.length}</div>
                     <div class="stat-label">Class Teacher Of</div>
@@ -915,7 +915,7 @@ include 'sidebar.php';
                                     </div>
                                 </div>
                                 ${conflictIndicator}
-                                ${isTimetableEditMode ? '<button class="remove-period-btn" onclick="removePeriod(event, \''+day+'\', '+period+')">&times;</button>' : ''}
+                                ${isTimetableEditMode ? `<button class="remove-period-btn" onclick="removePeriod(event, '${day}', ${period})">&times;</button>` : ''}
                             </td>
                         `;
                     } else {
