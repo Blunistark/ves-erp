@@ -368,7 +368,7 @@ function getStudentsList($conn, $params) {
     $limit = isset($params['limit']) ? (int)$params['limit'] : 20; // Default 20 students per page
     $offset = ($page - 1) * $limit;    
     $sql = "SELECT s.user_id as id, s.admission_number, s.full_name, s.admission_date, 
-                   s.roll_number, s.photo, u.email, s.mobile as phone,s.student_state_code,
+                   s.roll_number, s.photo, u.email, s.mobile as phone,
                    c.name AS class_name, se.name AS section_name, u.status, s.gender_code as gender,
                    s.dob as date_of_birth, s.mother_name, s.father_name
             FROM students s
@@ -592,9 +592,20 @@ function updateStudent($conn, $studentUserId, $postData, $filesData) {
         $updateUserFields = [];
         $userBindParams = [];
         $userBindTypes = '';
-        
-        $email = isset($_POST['email']) ? trim($_POST['email']) : null;
-        if ($email === '') $email = null;
+
+        if (!empty($postData['email']) && $postData['email'] !== $currentEmail) {
+            // Check if new email already exists for another user
+            $stmtCheckEmail = $conn->prepare("SELECT id FROM users WHERE email = ? AND id != ?");
+            $stmtCheckEmail->bind_param("si", $postData['email'], $studentUserId);
+            $stmtCheckEmail->execute();
+            if ($stmtCheckEmail->get_result()->num_rows > 0) {
+                throw new Exception("New email address is already in use by another account.");
+            }
+            $stmtCheckEmail->close();
+            $updateUserFields[] = "email = ?";
+            $userBindParams[] = $postData['email'];
+            $userBindTypes .= 's';
+        }
 
         if (!empty($postData['username'])) {
             $updateUserFields[] = "username = ?";
@@ -1113,8 +1124,8 @@ function addStudent($conn, $postData, $filesData) {
     try {
         // --- Input Validation (Basic) ---
         $requiredFields = [
-            'full_name', 'dob', 'class_id', 'section_id', 'academic_year_id',
-            'gender_code', 'admission_date', 'mobile', 'father_name'
+            'full_name', 'email', 'password', 'class_id', 'section_id', 'academic_year_id',
+            'gender_code', 'dob', 'admission_date', 'mobile', 'father_name'
         ];
         foreach ($requiredFields as $field) {
             if (empty($postData[$field])) {
@@ -1123,18 +1134,22 @@ function addStudent($conn, $postData, $filesData) {
         }
 
         // --- User Creation ---
+        $email = $postData['email'];
+        $password = $postData['password'];
+        $password_hash = password_hash($password, PASSWORD_DEFAULT);
         $role = 'student';
         $status = safe_get($postData, 'status', 'active'); // Default to active
         $full_name = safe_get($postData, 'full_name');
-        $dob = safe_get($postData, 'dob');
-        // Always use DOB as password for students
-        $password = $dob;
-        $password_hash = password_hash($password, PASSWORD_DEFAULT);
-        // If email is missing or empty for students, use a temporary placeholder for insert
-        $email = isset($postData['email']) ? trim($postData['email']) : '';
-        if ($role === 'student' && ($email === '' || $email === null)) {
-            $email = 'pending@noemail.local'; // Use a non-null placeholder for initial insert
+
+        // Check if email already exists
+        $stmtCheckEmail = $conn->prepare("SELECT id FROM users WHERE email = ?");
+        $stmtCheckEmail->bind_param("s", $email);
+        $stmtCheckEmail->execute();
+        $resultCheckEmail = $stmtCheckEmail->get_result();
+        if ($resultCheckEmail->num_rows > 0) {
+            throw new Exception("Email already exists.");
         }
+        $stmtCheckEmail->close();
 
         $sqlUser = "INSERT INTO users (email, password_hash, full_name, role, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NOW(), NOW())";
         $stmtUser = $conn->prepare($sqlUser);
@@ -1147,17 +1162,6 @@ function addStudent($conn, $postData, $filesData) {
         }
         $userId = $stmtUser->insert_id;
         $stmtUser->close();
-
-        // If student and original email was missing, set unique placeholder email now
-        if ($role === 'student' && (!isset($postData['email']) || trim($postData['email']) === '')) {
-            $placeholderEmail = 'student' . $userId . '@noemail.local';
-            $stmtUpdateEmail = $conn->prepare("UPDATE users SET email = ? WHERE id = ?");
-            if ($stmtUpdateEmail) {
-                $stmtUpdateEmail->bind_param('si', $placeholderEmail, $userId);
-                $stmtUpdateEmail->execute();
-                $stmtUpdateEmail->close();
-            }
-        }
 
         // --- Student Photo Handling ---
         $photoPath = null;
@@ -1427,3 +1431,5 @@ function bulkPromoteStudents($conn, $postData) {
         ]
         ];
 }
+
+?>

@@ -16,6 +16,7 @@ if (!isLoggedIn() || !hasRole('admin')) {
 // Get unread notification counts
 $unread_notifications = 0;
 $unread_announcements = 0;
+$pending_approvals = 0;
 
 // Connect to the database
 require_once 'con.php';
@@ -49,6 +50,16 @@ if (isset($_SESSION['user_id'])) {
     $result2 = $stmt2->get_result();
     if ($row2 = $result2->fetch_assoc()) {
         $unread_announcements = $row2['count'];
+    }
+    
+    // Count pending notification approvals
+    $approval_query = "SELECT COUNT(*) as count FROM notification_approvals 
+                      WHERE status = 'pending'";
+    $stmt3 = $conn->prepare($approval_query);
+    $stmt3->execute();
+    $result3 = $stmt3->get_result();
+    if ($row3 = $result3->fetch_assoc()) {
+        $pending_approvals = $row3['count'];
     }
 }
 ?>
@@ -392,8 +403,8 @@ if (isset($_SESSION['user_id'])) {
                     </button>
                     <div class="nav-group-content">
                         <a href="student_management_unified.php" class="nav-subitem <?php echo basename($_SERVER['PHP_SELF']) == 'student_management_unified.php' ? 'active' : ''; ?>">Student Management</a>
-                        <a href="student_transfer.php" class="nav-subitem <?php echo basename($_SERVER['PHP_SELF']) == 'student_transfer.php' ? 'active' : ''; ?>">Transfer/Promotion</a>
-                        <a href="student_transfer_records.php" class="nav-subitem <?php echo basename($_SERVER['PHP_SELF']) == 'student_transfer_records.php' ? 'active' : ''; ?>">Transfer Records</a>
+                    <!--    <a href="student_transfer.php" class="nav-subitem <?php echo basename($_SERVER['PHP_SELF']) == 'student_transfer.php' ? 'active' : ''; ?>">Transfer/Promotion</a>-->
+                    <!--    <a href="student_transfer_records.php" class="nav-subitem <?php echo basename($_SERVER['PHP_SELF']) == 'student_transfer_records.php' ? 'active' : ''; ?>">Transfer Records</a>-->
                     </div>
                 </div>
 
@@ -440,13 +451,12 @@ if (isset($_SESSION['user_id'])) {
                         </svg>
                     </button>
                     <div class="nav-group-content">
-                        <a href="academic_management_unified.php" class="nav-subitem">Academic Management</a>
                         <a href="academic_management_unified.php?tab=academic-years" class="nav-subitem">Academic Years</a>
                         <a href="academic_management_unified.php?tab=classes-sections" class="nav-subitem">Classes & Sections</a>
                         <a href="academic_management_unified.php?tab=subjects" class="nav-subitem">Subjects</a>
                         <a href="academic_management_unified.php?tab=curriculum" class="nav-subitem">Curriculum Mapping</a>
-                        <a href="academic_management_unified.php?tab=reports" class="nav-subitem">Reports</a>
-                        <a href="academic_management_unified.php?tab=bulk-operations" class="nav-subitem">Bulk Operations</a>
+                        <!--<a href="academic_management_unified.php?tab=reports" class="nav-subitem">Reports</a>-->
+                        <!--<a href="academic_management_unified.php?tab=bulk-operations" class="nav-subitem">Bulk Operations</a>-->
                     </div>
                 </div>
 
@@ -536,6 +546,12 @@ if (isset($_SESSION['user_id'])) {
                             Send Notifications
                             <?php if ($unread_notifications > 0): ?>
                                 <span class="notification-badge"><?php echo $unread_notifications; ?></span>
+                            <?php endif; ?>
+                        </a>
+                        <a href="notification_approvals.php" class="nav-subitem">
+                            Approve Notifications
+                            <?php if ($pending_approvals > 0): ?>
+                                <span class="notification-badge"><?php echo $pending_approvals; ?></span>
                             <?php endif; ?>
                         </a>
                     </div>

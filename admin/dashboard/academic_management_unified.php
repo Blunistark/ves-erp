@@ -1574,14 +1574,14 @@ include 'sidebar.php';
                     <i class="fas fa-link"></i>
                     Curriculum Mapping
                 </button>
-                <button class="tab-button" data-tab="reports" onclick="showTab('reports')">
-                    <i class="fas fa-chart-bar"></i>
-                    Reports
-                </button>
-                <button class="tab-button" data-tab="bulk-operations" onclick="showTab('bulk-operations')">
-                    <i class="fas fa-tasks"></i>
-                    Bulk Operations
-                </button>
+                <!--<button class="tab-button" data-tab="reports" onclick="showTab('reports')">-->
+                <!--    <i class="fas fa-chart-bar"></i>-->
+                <!--    Reports-->
+                <!--</button>-->
+                <!--<button class="tab-button" data-tab="bulk-operations" onclick="showTab('bulk-operations')">-->
+                <!--    <i class="fas fa-tasks"></i>-->
+                <!--    Bulk Operations-->
+                <!--</button>-->
             </div>
 
             <!-- Tab Content: Academic Years -->

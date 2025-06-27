@@ -226,3 +226,254 @@ outline: none;
         opacity: 0;
     }
 }
+
+/* Mobile Optimized Navigation Styles */
+
+/* Section Headers */
+.nav-section-header {
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.section-title {
+    font-weight: 600;
+}
+
+.mobile-section-toggle {
+    background: none;
+    border: none;
+    padding: 0.25rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: none; /* Hidden by default, shown on mobile */
+}
+
+.mobile-section-toggle:hover {
+    background: #e2e8f0;
+}
+
+.toggle-icon {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.2s ease;
+}
+
+.toggle-icon.rotated {
+    transform: rotate(180deg);
+}
+
+/* Section Content */
+.nav-section-content {
+    max-height: 1000px;
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+    opacity: 1;
+}
+
+.nav-section-content:not(.active) {
+    max-height: 0;
+    opacity: 0;
+}
+
+/* Flattened Navigation Groups */
+.nav-group-flat {
+    margin-bottom: 0.25rem;
+}
+
+.nav-group-flat .nav-group-toggle {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+}
+
+.nav-group-flat .nav-group-content {
+    padding-left: 2.5rem;
+    background: #f8fafc;
+}
+
+.nav-group-flat .nav-subitem {
+    padding: 0.5rem 1rem;
+    font-size: 0.8125rem;
+    color: #64748b;
+}
+
+/* Mobile Hidden Elements */
+.mobile-hidden {
+    display: block;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+        width: 100%;
+        max-width: 320px;
+    }
+    
+    .sidebar.show {
+        transform: translateX(0);
+    }
+    
+    .mobile-section-toggle {
+        display: block;
+    }
+    
+    /* Default collapse all sections on mobile */
+    .nav-section-content {
+        max-height: 0;
+        opacity: 0;
+    }
+    
+    .nav-section-content.active {
+        max-height: 1000px;
+        opacity: 1;
+    }
+    
+    /* Optimize text sizes for mobile */
+    .nav-item span,
+    .nav-group-toggle span {
+        font-size: 0.875rem;
+    }
+    
+    .nav-subitem {
+        font-size: 0.8125rem;
+        padding: 0.625rem 1rem;
+    }
+    
+    /* Increase touch targets */
+    .nav-item,
+    .nav-group-toggle {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+    }
+    
+    /* Mobile-specific spacing */
+    .nav-group {
+        margin-bottom: 0.5rem;
+    }
+    
+    .sidebar-header {
+        padding: 1rem;
+    }
+    
+    .logo-text {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Very small screens - ultra-compact mode */
+    .sidebar {
+        max-width: 280px;
+    }
+    
+    .mobile-hidden {
+        display: none !important;
+    }
+    
+    .nav-item span,
+    .nav-group-toggle span {
+        font-size: 0.8125rem;
+    }
+    
+    .nav-subitem {
+        font-size: 0.75rem;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .sidebar-header {
+        padding: 0.75rem;
+    }
+    
+    .logo-text {
+        font-size: 0.875rem;
+    }
+    
+    /* Hide less critical items */
+    [data-mobile-priority="low"] {
+        display: none !important;
+    }
+    
+    /* Compact academic management on very small screens */
+    .nav-group-flat .nav-group-content .mobile-hidden {
+        display: none !important;
+    }
+}
+
+/* Mobile optimized class for enhanced mobile experience */
+.sidebar.mobile-optimized {
+    /* Enhanced scrolling performance on mobile */
+    overscroll-behavior: contain;
+    scroll-behavior: smooth;
+}
+
+.sidebar.mobile-optimized .nav-item {
+    /* Improved touch target sizing for mobile */
+    min-height: 48px;
+}
+
+.sidebar.mobile-optimized [data-mobile-priority="high"] {
+    order: -1;
+    border-left: 3px solid #3b82f6;
+    background: rgba(59, 130, 246, 0.05);
+}
+
+/* Improved touch feedback */
+@media (hover: none) and (pointer: coarse) {
+    .nav-item:active,
+    .nav-group-toggle:active,
+    .mobile-section-toggle:active {
+        background: #e2e8f0;
+        transform: scale(0.98);
+    }
+}
+
+/* Enhanced accessibility for mobile */
+@media (max-width: 768px) {
+    .nav-item:focus,
+    .nav-group-toggle:focus,
+    .mobile-section-toggle:focus {
+        outline: 2px solid #3b82f6;
+        outline-offset: 2px;
+    }
+    
+    /* Ensure minimum contrast ratios */
+    .nav-section-header {
+        background: #f1f5f9;
+    }
+    
+    .section-title {
+        color: #475569;
+    }
+}
+
+/* Swipe gesture indicator (optional visual feedback) */
+.sidebar.show::before {
+    content: '';
+    position: absolute;
+    right: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 40px;
+    background: #e2e8f0;
+    border-radius: 0 4px 4px 0;
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+@media (max-width: 768px) {
+    .sidebar.show::before {
+        display: block;
+    }
+}

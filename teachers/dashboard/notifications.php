@@ -12,6 +12,25 @@ include 'con.php';
 // this caused the header issues 
 $user_id = $_SESSION['user_id'];
 
+// Check if user is a headmaster
+$is_headmaster = ($_SESSION['role'] === 'headmaster');
+
+// Get all classes for headmaster view if needed
+$all_classes_for_headmaster_view = [];
+if ($is_headmaster) {
+    $all_classes_sql = "SELECT DISTINCT c.id, c.name as class_name, s.id as section_id, s.name as section_name,
+                               'Headmaster Access' as assignment_type
+                        FROM classes c
+                        JOIN sections s ON c.id = s.class_id
+                        ORDER BY c.name, s.name";
+    $all_classes_stmt = mysqli_prepare($conn, $all_classes_sql);
+    mysqli_stmt_execute($all_classes_stmt);
+    $all_classes_result = mysqli_stmt_get_result($all_classes_stmt);
+    while ($row = mysqli_fetch_assoc($all_classes_result)) {
+        $all_classes_for_headmaster_view[] = $row;
+    }
+}
+
 // Get teacher's assigned classes for notification targeting
 // This includes both class teacher assignments and subject teaching assignments
 $teacher_classes_sql = "
@@ -79,7 +98,7 @@ $user_name = $_SESSION['full_name'] ?? 'Teacher';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teacher Notifications - Dashboard</title>
+    <title><?php echo $is_headmaster ? 'Headmaster' : 'Teacher'; ?> Notifications - Dashboard</title>
     
     <link rel="stylesheet" href="css/sidebar.css">
     <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
@@ -567,8 +586,8 @@ $user_name = $_SESSION['full_name'] ?? 'Teacher';
     <div class="main-content">
         <!-- Header Section -->
         <div class="header-section">
-            <h1>Teacher Notifications</h1>
-            <p>Communicate with your students and manage class announcements</p>
+            <h1><?php echo $is_headmaster ? 'Headmaster Notifications' : 'Teacher Notifications'; ?></h1>
+            <p><?php echo $is_headmaster ? 'Communicate with your school community (requires admin approval)' : 'Communicate with your students and manage class announcements (requires admin approval)'; ?></p>
         </div>
 
         <!-- Action Tabs -->
@@ -596,6 +615,13 @@ $user_name = $_SESSION['full_name'] ?? 'Teacher';
                         <label for="notification-message">Message <span style="color: red;">*</span></label>
                         <textarea id="notification-message" name="message" class="form-control" 
                                   rows="4" placeholder="Enter your message here" required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="admin-message">Message to Admin (Optional)</label>
+                        <textarea id="admin-message" name="admin_message" class="form-control" 
+                                  rows="2" placeholder="Optional note to admin about this notification request"></textarea>
+                        <small class="form-text text-muted">This message will be visible to the admin when reviewing your notification request.</small>
                     </div>
                     
                     <div class="form-row">
@@ -837,7 +863,7 @@ $user_name = $_SESSION['full_name'] ?? 'Teacher';
                 return;
             }
 
-            // Prepare form data
+            // Prepare form data for admin approval
             const formData = {
                 title: title,
                 message: message,
@@ -847,12 +873,13 @@ $user_name = $_SESSION['full_name'] ?? 'Teacher';
                 target_value: Array.from(selectedClasses).map(el => el.value).join(','),
                 expires_at: $('#expires-at').val() || null,
                 scheduled_for: $('#scheduled-for').val() || null,
-                requires_acknowledgment: $('input[name="requires_acknowledgment"]').is(':checked') ? 1 : 0
+                requires_acknowledgment: $('input[name="requires_acknowledgment"]').is(':checked') ? 1 : 0,
+                message_to_admin: $('#admin-message').val().trim() || 'Notification approval request from teacher dashboard'
             };
 
-            // Send to API
+            // Submit for admin approval
             $.ajax({
-                url: '/erp/backend/api/notifications?action=create',
+                url: '/erp/backend/api/notifications?action=submit_for_approval',
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -860,11 +887,11 @@ $user_name = $_SESSION['full_name'] ?? 'Teacher';
                 data: JSON.stringify(formData),
                 success: function(response) {
                     if (response.success) {
-                        showAlert('Notification sent successfully!', 'success');
+                        showAlert('Notification submitted for admin approval!', 'success');
                         resetForm();
                         loadNotificationCounts();
                     } else {
-                        showAlert(response.message || 'Failed to send notification', 'error');
+                        showAlert(response.message || 'Failed to submit notification for approval', 'error');
                     }
                 },
                 error: function() {

@@ -146,6 +146,7 @@ if (!function_exists('prepareAllClassesForHeadmasterView')) {
 
     <div class="action-tabs">
         <button class="tab-button active" onclick="switchTab('create')">Create Notification</button>
+        <button class="tab-button" onclick="switchTab('submissions')">My Submissions</button>
         <button class="tab-button" onclick="switchTab('sent')">Sent</button>
         <button class="tab-button" onclick="switchTab('received')">Received</button>
     </div>
@@ -269,6 +270,11 @@ if (!function_exists('prepareAllClassesForHeadmasterView')) {
                         Require acknowledgment from recipients
                     </label>
                 </div>
+                <div class="form-group">
+                    <label for="approval-message">Message to Admin (optional)</label>
+                    <textarea id="approval-message" name="approval_message" class="form-control" 
+                              placeholder="Add any message for the admin about why this notification is needed..."></textarea>
+                </div>
             </div>
 
             <div class="form-group">
@@ -277,11 +283,19 @@ if (!function_exists('prepareAllClassesForHeadmasterView')) {
                         <path d="M15.854.146a.5.5 0 0 1 0 .708L11.707 6l-1.414-1.414L14.146.854a.5.5 0 0 1 .708 0z"/>
                         <path d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
                     </svg>
-                    Send Notification
+                    Submit for Admin Approval
                 </button>
                 <button type="button" class="btn btn-secondary" onclick="resetForm()">Reset</button>
             </div>
         </form>
+    </div>
+
+    <!-- My Submissions Tab -->
+    <div id="submissions-tab" class="tab-content">
+        <div class="notification-list">
+            <div id="submissions-loading" class="loading">Loading your submissions...</div>
+            <div id="submissions-list"></div>
+        </div>
     </div>
 
     <!-- Sent Notifications Tab -->
@@ -383,6 +397,7 @@ if (!function_exists('prepareAllClassesForHeadmasterView')) {
 
         if (tab === 'sent') loadSentNotifications();
         else if (tab === 'received') loadReceivedNotifications();
+        else if (tab === 'submissions') loadSubmissions();
     }
 
     function toggleClassSelection(element) {
@@ -438,22 +453,24 @@ if (!function_exists('prepareAllClassesForHeadmasterView')) {
             target_value: target_value_val,
             expires_at: $('#expires-at').val() || null,
             scheduled_for: $('#scheduled-for').val() || null,
-            requires_acknowledgment: $('input[name="requires_acknowledgment"]').is(':checked') ? 1 : 0
+            requires_acknowledgment: $('input[name="requires_acknowledgment"]').is(':checked') ? 1 : 0,
+            approval_message: $('#approval-message').val() || 'Teacher requesting approval for notification'
         };
 
         $.ajax({
-            url: '/erp/backend/api/notifications.php?action=create',
+            url: '/erp/backend/api/notifications.php?action=submit_for_approval',
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             data: JSON.stringify(formData),
             success: function(response) {
                 if (response.success) {
-                    showAlert('Notification sent successfully!', 'success');
+                    showAlert('Notification submitted for admin approval successfully!', 'success');
                     resetForm();
                     loadNotificationCounts();
-                    if (currentTab === 'sent') loadSentNotifications(); // Refresh sent tab if active
+                    // Switch to submissions tab to see the status
+                    switchTab('submissions');
                 } else {
-                    showAlert(response.message || 'Failed to send notification', 'error');
+                    showAlert(response.message || 'Failed to submit notification for approval', 'error');
                 }
             },
             error: function() { showAlert('Network error. Please try again.', 'error'); }
@@ -532,6 +549,33 @@ if (!function_exists('prepareAllClassesForHeadmasterView')) {
         });
     }
 
+    function loadSubmissions() {
+        $('#submissions-loading').show();
+        $('#submissions-list').empty();
+        $.ajax({
+            url: '/erp/backend/api/notifications.php?action=get_teacher_submissions',
+            method: 'GET',
+            success: function(response) {
+                $('#submissions-loading').hide();
+                if (response.success) {
+                    if (response.data.length === 0) {
+                        $('#submissions-list').html('<p class="loading">No submissions found.</p>');
+                        return;
+                    }
+                    let html = '';
+                    response.data.forEach(function(submission) { html += buildSubmissionItem(submission); });
+                    $('#submissions-list').html(html);
+                } else {
+                    $('#submissions-list').html('<p class="loading">Error loading submissions.</p>');
+                }
+            },
+            error: function() {
+                $('#submissions-loading').hide();
+                $('#submissions-list').html('<p class="loading">Network error loading submissions.</p>');
+            }
+        });
+    }
+
     function buildNotificationItem(notification, isSent) {
         const priorityClass = notification.priority || 'normal';
         const priorityColor = { 'normal': '#10b981', 'important': '#f59e0b', 'urgent': '#ef4444' }[priorityClass];
@@ -567,6 +611,50 @@ if (!function_exists('prepareAllClassesForHeadmasterView')) {
         `;
     }
 
+    function buildSubmissionItem(submission) {
+        const statusColors = {
+            'pending': '#f59e0b',
+            'approved': '#10b981',
+            'rejected': '#ef4444'
+        };
+        const statusColor = statusColors[submission.status] || '#6b7280';
+        const date = new Date(submission.submitted_at).toLocaleDateString();
+        const time = new Date(submission.submitted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        return `
+            <div class="notification-item">
+                <div class="notification-header">
+                    <div>
+                        <div class="notification-title" style="border-left: 4px solid ${statusColor}; padding-left: 1rem;">
+                            ${submission.title || 'Untitled'}
+                        </div>
+                        <div class="notification-meta">
+                            <span>Status: <strong style="color: ${statusColor}">${submission.status.toUpperCase()}</strong></span>
+                            <span>Type: ${submission.type || 'N/A'}</span>
+                            <span>Priority: ${submission.priority || 'N/A'}</span>
+                            <span>Submitted: ${date} at ${time}</span>
+                            ${submission.approved_at ? `<span>Processed: ${new Date(submission.approved_at).toLocaleDateString()}</span>` : ''}
+                        </div>
+                    </div>
+                </div>
+                <div class="notification-content">
+                    ${submission.message || ''}
+                </div>
+                ${submission.admin_comments ? `
+                    <div style="margin-top: 1rem; padding: 1rem; background-color: #f9fafb; border-radius: 8px; border-left: 4px solid ${statusColor};">
+                        <strong>Admin Comments:</strong> ${submission.admin_comments}
+                    </div>
+                ` : ''}
+                ${submission.status === 'pending' ? `
+                    <div style="margin-top: 1rem; padding: 1rem; background-color: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                        <strong>⏳ Waiting for admin approval...</strong>
+                        <br><small>Your notification is pending review by the administration.</small>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
+
     function markAsRead(notificationId, buttonElement) {
         $.ajax({
             url: '/erp/backend/api/notifications.php?action=mark_read',
@@ -593,6 +681,7 @@ if (!function_exists('prepareAllClassesForHeadmasterView')) {
     function resetForm() {
         $('#create-notification-form')[0].reset();
         $('#notification-message').summernote('code', '');
+        $('#approval-message').val('');
         $('.class-option').removeClass('selected');
         $('.class-option input[type="checkbox"]').prop('checked', false);
         $('.priority-option').removeClass('selected');
