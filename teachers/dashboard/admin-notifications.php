@@ -20,52 +20,52 @@ $permissions = [
     'max_priority_level' => 'urgent'
 ];
 
-// Get notification statistics
+// Get notification statistics for approval workflow
 $stats = [
-    'total_notifications' => 0,
-    'weekly_notifications' => 0,
-    'urgent_notifications' => 0,
-    'acknowledgment_required' => 0
+    'total_submissions' => 0,
+    'pending_approvals' => 0,
+    'approved_notifications' => 0,
+    'weekly_submissions' => 0
 ];
 
-// Get total notifications count
-$total_query = "SELECT COUNT(*) as count FROM notifications WHERE created_by = ?";
+// Get total submissions count (including all statuses)
+$total_query = "SELECT COUNT(*) as count FROM notification_approvals WHERE teacher_id = ?";
 $total_stmt = mysqli_prepare($conn, $total_query);
 mysqli_stmt_bind_param($total_stmt, "i", $user_id);
 mysqli_stmt_execute($total_stmt);
 $total_result = mysqli_stmt_get_result($total_stmt);
 if ($row = mysqli_fetch_assoc($total_result)) {
-    $stats['total_notifications'] = $row['count'];
+    $stats['total_submissions'] = $row['count'];
 }
 
-// Get weekly notifications count
-$weekly_query = "SELECT COUNT(*) as count FROM notifications WHERE created_by = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
+// Get pending approvals count
+$pending_query = "SELECT COUNT(*) as count FROM notification_approvals WHERE teacher_id = ? AND status = 'pending'";
+$pending_stmt = mysqli_prepare($conn, $pending_query);
+mysqli_stmt_bind_param($pending_stmt, "i", $user_id);
+mysqli_stmt_execute($pending_stmt);
+$pending_result = mysqli_stmt_get_result($pending_stmt);
+if ($row = mysqli_fetch_assoc($pending_result)) {
+    $stats['pending_approvals'] = $row['count'];
+}
+
+// Get approved notifications count
+$approved_query = "SELECT COUNT(*) as count FROM notification_approvals WHERE teacher_id = ? AND status = 'approved'";
+$approved_stmt = mysqli_prepare($conn, $approved_query);
+mysqli_stmt_bind_param($approved_stmt, "i", $user_id);
+mysqli_stmt_execute($approved_stmt);
+$approved_result = mysqli_stmt_get_result($approved_stmt);
+if ($row = mysqli_fetch_assoc($approved_result)) {
+    $stats['approved_notifications'] = $row['count'];
+}
+
+// Get weekly submissions count
+$weekly_query = "SELECT COUNT(*) as count FROM notification_approvals WHERE teacher_id = ? AND submitted_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
 $weekly_stmt = mysqli_prepare($conn, $weekly_query);
 mysqli_stmt_bind_param($weekly_stmt, "i", $user_id);
 mysqli_stmt_execute($weekly_stmt);
 $weekly_result = mysqli_stmt_get_result($weekly_stmt);
 if ($row = mysqli_fetch_assoc($weekly_result)) {
-    $stats['weekly_notifications'] = $row['count'];
-}
-
-// Get urgent notifications count
-$urgent_query = "SELECT COUNT(*) as count FROM notifications WHERE created_by = ? AND priority = 'urgent' AND is_active = 1";
-$urgent_stmt = mysqli_prepare($conn, $urgent_query);
-mysqli_stmt_bind_param($urgent_stmt, "i", $user_id);
-mysqli_stmt_execute($urgent_stmt);
-$urgent_result = mysqli_stmt_get_result($urgent_stmt);
-if ($row = mysqli_fetch_assoc($urgent_result)) {
-    $stats['urgent_notifications'] = $row['count'];
-}
-
-// Get acknowledgment required count
-$ack_query = "SELECT COUNT(*) as count FROM notifications WHERE created_by = ? AND requires_acknowledgment = 1 AND is_active = 1";
-$ack_stmt = mysqli_prepare($conn, $ack_query);
-mysqli_stmt_bind_param($ack_stmt, "i", $user_id);
-mysqli_stmt_execute($ack_stmt);
-$ack_result = mysqli_stmt_get_result($ack_stmt);
-if ($row = mysqli_fetch_assoc($ack_result)) {
-    $stats['acknowledgment_required'] = $row['count'];
+    $stats['weekly_submissions'] = $row['count'];
 }
 
 // Get all classes for targeting
@@ -449,20 +449,16 @@ while ($row = mysqli_fetch_assoc($classes_result)) {
             margin-top: 1rem;
         }
         
-        .recipient-tag {
-            background-color: #6366f1;
-            color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
+        .help-text {
+            color: #6b7280;
             font-size: 0.875rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+            margin-top: 0.5rem;
+            font-style: italic;
         }
         
-        .recipient-tag .remove {
-            cursor: pointer;
-            font-weight: bold;
+        .form-section h3 {
+            color: #374151;
+            margin-bottom: 1rem;
         }
         
         .btn {
@@ -572,24 +568,6 @@ while ($row = mysqli_fetch_assoc($classes_result)) {
             color: #6b7280;
         }
         
-        .analytics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-        }
-        
-        .analytics-card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        
-        .analytics-card h4 {
-            margin-bottom: 1rem;
-            color: #374151;
-        }
-        
         /* Responsive optimizations */
         @media (max-width: 1024px) {
             .main-content {
@@ -649,9 +627,6 @@ while ($row = mysqli_fetch_assoc($classes_result)) {
                 gap: 1rem;
             }
             
-            .analytics-grid {
-                grid-template-columns: 1fr;
-            }
         }
         
         @media (max-width: 480px) {
@@ -725,27 +700,27 @@ while ($row = mysqli_fetch_assoc($classes_result)) {
     <div class="main-content">
         <!-- Header Section -->
         <div class="header-section">
-            <h1>Administrative Notifications</h1>
-            <p>Manage school-wide communications and announcements with full administrative privileges</p>
+            <h1>Headmaster Notifications</h1>
+            <p>Manage school-wide communications and announcements (requires admin approval)</p>
         </div>
 
         <!-- Quick Stats -->
         <div class="quick-stats">
             <div class="stat-card">
-                <div class="stat-number"><?php echo $stats['total_notifications']; ?></div>
-                <div class="stat-label">Total Notifications</div>
+                <div class="stat-number"><?php echo $stats['total_submissions']; ?></div>
+                <div class="stat-label">Total Submissions</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number"><?php echo $stats['weekly_notifications']; ?></div>
+                <div class="stat-number"><?php echo $stats['pending_approvals']; ?></div>
+                <div class="stat-label">Pending Approvals</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number"><?php echo $stats['approved_notifications']; ?></div>
+                <div class="stat-label">Approved & Sent</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number"><?php echo $stats['weekly_submissions']; ?></div>
                 <div class="stat-label">This Week</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number"><?php echo $stats['urgent_notifications']; ?></div>
-                <div class="stat-label">Urgent Alerts</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number"><?php echo $stats['acknowledgment_required']; ?></div>
-                <div class="stat-label">Require Acknowledgment</div>
             </div>
         </div>
 
@@ -753,7 +728,6 @@ while ($row = mysqli_fetch_assoc($classes_result)) {
         <div class="action-tabs">
             <button class="tab-button active" onclick="switchTab('create')">Create Notification</button>
             <button class="tab-button" onclick="switchTab('manage')">Manage Notifications</button>
-            <button class="tab-button" onclick="switchTab('analytics')">Analytics</button>
         </div>
 
         <!-- Create Notification Tab -->
@@ -891,13 +865,24 @@ while ($row = mysqli_fetch_assoc($classes_result)) {
                     </div>
                 </div>
 
+                <!-- Approval Request Section -->
+                <div class="form-section">
+                    <h3>📋 Admin Approval Request</h3>
+                    <div class="form-group">
+                        <label for="approval-message">Message to Admin (optional)</label>
+                        <textarea id="approval-message" name="approval_message" class="form-control" 
+                                  rows="3" placeholder="Explain to the admin why this notification needs to be sent..."></textarea>
+                        <small class="help-text">This message will help the admin understand the context and urgency of your notification request.</small>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <button type="submit" class="btn btn-primary">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                             <path d="M15.854.146a.5.5 0 0 1 0 .708L11.707 6l-1.414-1.414L14.146.854a.5.5 0 0 1 .708 0z"/>
                             <path d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
                        </svg>
-                       Send Notification
+                       Submit for Admin Approval
                    </button>
                    <button type="button" class="btn btn-secondary" onclick="resetForm()">Reset</button>
                </div>
@@ -914,23 +899,6 @@ while ($row = mysqli_fetch_assoc($classes_result)) {
            </div>
        </div>
 
-       <!-- Analytics Tab -->
-       <div id="analytics-tab" class="tab-content">
-           <div class="analytics-grid">
-               <div class="analytics-card">
-                   <h4>Notification Performance</h4>
-                   <div id="analytics-performance">Loading...</div>
-               </div>
-               <div class="analytics-card">
-                   <h4>Acknowledgment Rates</h4>
-                   <div id="analytics-acknowledgment">Loading...</div>
-               </div>
-               <div class="analytics-card">
-                   <h4>Recent Activity</h4>
-                   <div id="analytics-activity">Loading...</div>
-               </div>
-           </div>
-       </div>
    </div>
 
    <!-- Scripts -->
@@ -1020,8 +988,6 @@ while ($row = mysqli_fetch_assoc($classes_result)) {
            // Load data for the selected tab
            if (tab === 'manage') {
                loadManageNotifications();
-           } else if (tab === 'analytics') {
-               loadAnalytics();
            }
        }
 
@@ -1151,7 +1117,8 @@ while ($row = mysqli_fetch_assoc($classes_result)) {
                priority: selectedPriority,
                expires_at: $('#expires-at').val() || null,
                scheduled_for: $('#scheduled-for').val() || null,
-               requires_acknowledgment: $('input[name="requires_acknowledgment"]').is(':checked') ? 1 : 0
+               requires_acknowledgment: $('input[name="requires_acknowledgment"]').is(':checked') ? 1 : 0,
+               approval_message: $('#approval-message').val() || 'Headmaster requesting approval for notification'
            };
 
            // Set targeting data based on mode
@@ -1181,9 +1148,9 @@ while ($row = mysqli_fetch_assoc($classes_result)) {
                    break;
            }
 
-           // Send to API
+           // Send to API for approval
            $.ajax({
-               url: '/erp/backend/api/notifications?action=create',
+               url: '/erp/backend/api/notifications?action=submit_for_approval',
                method: 'POST',
                headers: {
                    'Content-Type': 'application/json'
@@ -1191,12 +1158,12 @@ while ($row = mysqli_fetch_assoc($classes_result)) {
                data: JSON.stringify(formData),
                success: function(response) {
                    if (response.success) {
-                       showAlert('Notification sent successfully!', 'success');
+                       showAlert('Notification submitted for admin approval successfully!', 'success');
                        resetForm();
-                       // Reload stats
+                       // Reload stats (they may change due to pending approvals)
                        location.reload();
                    } else {
-                       showAlert(response.message || 'Failed to send notification', 'error');
+                       showAlert(response.message || 'Failed to submit notification for approval', 'error');
                    }
                },
                error: function() {
@@ -1268,39 +1235,6 @@ while ($row = mysqli_fetch_assoc($classes_result)) {
            });
        }
 
-       function loadAnalytics() {
-           // Load analytics data
-           $.ajax({
-               url: '/erp/backend/api/notifications?action=analytics',
-               method: 'GET',
-               success: function(response) {
-                   if (response.success) {
-                       updateAnalytics(response.data);
-                   }
-               }
-           });
-       }
-
-       function updateAnalytics(data) {
-           $('#analytics-performance').html(`
-               <p>Total Sent: ${data.total_sent || 0}</p>
-               <p>Read Rate: ${data.read_rate || 0}%</p>
-               <p>Response Rate: ${data.response_rate || 0}%</p>
-           `);
-           
-           $('#analytics-acknowledgment').html(`
-               <p>Acknowledgments Required: ${data.ack_required || 0}</p>
-               <p>Acknowledgments Received: ${data.ack_received || 0}</p>
-               <p>Acknowledgment Rate: ${data.ack_rate || 0}%</p>
-           `);
-           
-           $('#analytics-activity').html(`
-               <p>Notifications This Week: ${data.weekly_count || 0}</p>
-               <p>Urgent Notifications: ${data.urgent_count || 0}</p>
-               <p>Last Sent: ${data.last_sent || 'Never'}</p>
-           `);
-       }
-
        function buildNotificationItem(notification, showActions) {
            const priorityClass = notification.priority || 'normal';
            const priorityColor = {
@@ -1365,6 +1299,7 @@ while ($row = mysqli_fetch_assoc($classes_result)) {
        function resetForm() {
            $('#create-notification-form')[0].reset();
            $('#notification-message').summernote('code', '');
+           $('#approval-message').val('');
            $('.class-option').removeClass('selected');
            $('.class-option input[type="checkbox"]').prop('checked', false);
            $('.priority-option').removeClass('selected');

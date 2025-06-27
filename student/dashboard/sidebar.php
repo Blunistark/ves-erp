@@ -89,21 +89,21 @@ if (isset($_SESSION['user_id'])) {
     </a>
 
     <!-- Digital ID Card -->
-    <div class="nav-group">
-        <button class="nav-group-toggle">
-            <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
-            </svg>
-            <span>Digital ID Cards</span>
-            <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-        </button>
-        <div class="nav-group-content">
-            <a href="id-card_student.php" class="nav-subitem <?php echo basename($_SERVER['PHP_SELF']) == 'id-card_student.php' ? 'active' : ''; ?>">Student ID Card</a>
-            <a href="id-card_parent.php" class="nav-subitem <?php echo basename($_SERVER['PHP_SELF']) == 'id-card_parent.php' ? 'active' : ''; ?>">Parent ID Card</a>
-        </div>
-    </div>
+    <!--<div class="nav-group">-->
+    <!--    <button class="nav-group-toggle">-->
+    <!--        <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">-->
+    <!--            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />-->
+    <!--        </svg>-->
+    <!--        <span>Digital ID Cards</span>-->
+    <!--        <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">-->
+    <!--            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />-->
+    <!--        </svg>-->
+    <!--    </button>-->
+    <!--    <div class="nav-group-content">-->
+    <!--        <a href="id-card_student.php" class="nav-subitem <?php echo basename($_SERVER['PHP_SELF']) == 'id-card_student.php' ? 'active' : ''; ?>">Student ID Card</a>-->
+    <!--        <a href="id-card_parent.php" class="nav-subitem <?php echo basename($_SERVER['PHP_SELF']) == 'id-card_parent.php' ? 'active' : ''; ?>">Parent ID Card</a>-->
+    <!--    </div>-->
+    <!--</div>-->
 
     <!-- Homework -->
     <a href="homework.php" class="nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'homework.php' ? 'active' : ''; ?>">
@@ -145,13 +145,13 @@ if (isset($_SESSION['user_id'])) {
         <span>Announcements</span>
     </a>
 
-    <!-- Class Notice Board -->
+    <!-- Class Notice Board
     <a href="notice.php" class="nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'notice.php' ? 'active' : ''; ?>">
         <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
         </svg>
         <span>Class Notice Board</span>
-    </a>
+    </a> -->
 
     <!-- SA Assessments -->
     <div class="nav-group">

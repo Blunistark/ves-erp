@@ -3,7 +3,26 @@ include 'sidebar.php';
 include 'con.php';
 
 // Check if user is logged in and is an admin
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+if (!isset($_SESSION['user_id'])) {
+    header('Location: ../index.php');
+    exit();
+}
+
+// Debug session information
+error_log("Admin notifications access - User ID: " . $_SESSION['user_id'] . ", Role: " . ($_SESSION['role'] ?? 'not set'));
+
+// Redirect headmasters to teacher dashboard for notification management
+if ($_SESSION['role'] === 'headmaster') {
+    error_log("Redirecting headmaster to teacher dashboard");
+    // Add JavaScript redirect as backup
+    echo "<script>alert('Headmasters must use the teacher dashboard for notifications!'); window.location.href = '../../teachers/dashboard/notifications.php';</script>";
+    header('Location: ../../teachers/dashboard/notifications.php');
+    exit();
+}
+
+// Only admins can access this page
+if ($_SESSION['role'] !== 'admin') {
+    error_log("Non-admin user attempted to access admin notifications: " . ($_SESSION['role'] ?? 'no role'));
     header('Location: ../index.php');
     exit();
 }
@@ -1102,6 +1121,12 @@ $stats = mysqli_fetch_assoc($stats_result);
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     
     <script>
+        // Failsafe: Check user role and redirect headmasters
+        <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'headmaster'): ?>
+            alert('Headmasters must use the teacher dashboard for notifications. Redirecting...');
+            window.location.href = '../../teachers/dashboard/notifications.php';
+        <?php endif; ?>
+        
         // Tab switching functionality
         function showTab(tabName) {
             // Hide all tab contents

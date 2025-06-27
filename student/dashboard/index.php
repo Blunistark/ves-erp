@@ -557,7 +557,7 @@ $user_role = $_SESSION['role'] ?? 'student';
                     </div>
                 </a>
 
-                <!-- Digital ID Card -->
+                <!-- Digital ID Card
                 <a href="id-card_student.php" class="nav-card">
                     <div class="nav-card-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -572,7 +572,7 @@ $user_role = $_SESSION['role'] ?? 'student';
                     </div>
                 </a>
 
-                <!-- Parent ID Card -->
+           
                 <a href="id-card_parent.php" class="nav-card">
                     <div class="nav-card-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -585,7 +585,7 @@ $user_role = $_SESSION['role'] ?? 'student';
                         <h3>Parent ID Card</h3>
                         <p>Generate digital ID cards for parents</p>
                     </div>
-                </a>
+                </a> -->
 
                 <!-- Student Subjects -->
                 <a href="subjects.php" class="nav-card">
@@ -645,7 +645,7 @@ $user_role = $_SESSION['role'] ?? 'student';
                     </div>
                 </a>
 
-                <!-- Class Notice Board -->
+                <!-- Class Notice Board
                 <a href="notice.php" class="nav-card">
                     <div class="nav-card-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -658,7 +658,7 @@ $user_role = $_SESSION['role'] ?? 'student';
                         <h3>Class Notice Board</h3>
                         <p>Manage class-specific notices</p>
                     </div>
-                </a>
+                </a> -->
 
                 <!-- Student Results -->
                 <a href="results.php" class="nav-card">
@@ -712,7 +712,7 @@ $user_role = $_SESSION['role'] ?? 'student';
                     </div>
                 </a>
 
-                <!-- Online Class Announcements -->
+                <!-- Online Class Announcements
                 <a href="online-classes.php" class="nav-card">
                     <div class="nav-card-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -725,10 +725,10 @@ $user_role = $_SESSION['role'] ?? 'student';
                         <h3>Online Classes</h3>
                         <p>Manage virtual class announcements</p>
                     </div>
-                </a>
+                </a> -->
 
                 <!-- Profile Management -->
-                <a href="adminprofile.php" class="nav-card">
+                <a href="profile.php" class="nav-card">
                     <div class="nav-card-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -737,23 +737,10 @@ $user_role = $_SESSION['role'] ?? 'student';
                     </div>
                     <div class="nav-card-content">
                         <h3>Profile</h3>
-                        <p>Update admin details</p>
+                        <p>View your profile</p>
                     </div>
                 </a>
 
-                <!-- Settings -->
-                <a href="settings.php" class="nav-card">
-                    <div class="nav-card-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="3"/>
-                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                        </svg>
-                    </div>
-                    <div class="nav-card-content">
-                        <h3>Settings</h3>
-                        <p>System configuration</p>
-                    </div>
-                </a>
 
                 <!-- Logout -->
                 <a href="logout.php" class="nav-card">

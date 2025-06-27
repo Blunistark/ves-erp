@@ -422,11 +422,22 @@ if (isset($_SESSION['user_id'])) {
         width: 100%;
     }
 
+    /* Subjects Table Container */
+    .table-container {
+        width: 100%;
+        overflow-x: auto;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        -webkit-overflow-scrolling: touch;
+    }
+
     /* Subjects Table */
     .subjects-table {
         width: 100%;
+        min-width: 600px;
         border-collapse: collapse;
         border-spacing: 0;
+        margin: 0;
     }
 
     .subjects-table th {
@@ -787,7 +798,8 @@ if (isset($_SESSION['user_id'])) {
                 <!-- Grades Tab Content -->
                 <div class="tab-content" id="grades-tab">
                     <?php if (!empty($student_subjects)): ?>
-                    <table class="subjects-table">
+                    <div class="table-container">
+                        <table class="subjects-table">
                         <thead>
                             <tr>
                                 <th>Subject</th>
@@ -823,6 +835,7 @@ if (isset($_SESSION['user_id'])) {
                             <?php endforeach; ?>
                         </tbody>
                     </table>
+                    </div>
                     <?php else: ?>
                     <div class="no-subjects-message">
                         <div class="no-subjects-icon">
@@ -843,7 +856,8 @@ if (isset($_SESSION['user_id'])) {
                 <!-- Attendance Tab Content -->
                 <div class="tab-content" id="attendance-tab" style="display: none;">
                     <?php if (!empty($student_subjects)): ?>
-                    <table class="subjects-table">
+                    <div class="table-container">
+                        <table class="subjects-table">
                         <thead>
                             <tr>
                                 <th>Subject</th>
@@ -879,6 +893,7 @@ if (isset($_SESSION['user_id'])) {
                             <?php endforeach; ?>
                         </tbody>
                     </table>
+                    </div>
                     <?php else: ?>
                     <div class="no-subjects-message">
                         <h3>No Attendance Data</h3>
@@ -890,7 +905,8 @@ if (isset($_SESSION['user_id'])) {
                 <!-- Assignments Tab Content -->
                 <div class="tab-content" id="assignments-tab" style="display: none;">
                     <?php if (!empty($student_subjects)): ?>
-                    <table class="subjects-table">
+                    <div class="table-container">
+                        <table class="subjects-table">
                         <thead>
                             <tr>
                                 <th>Subject</th>
@@ -931,6 +947,7 @@ if (isset($_SESSION['user_id'])) {
                             <?php endforeach; ?>
                         </tbody>
                     </table>
+                    </div>
                     <?php else: ?>
                     <div class="no-subjects-message">
                         <h3>No Assignment Data</h3>

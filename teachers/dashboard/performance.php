@@ -22,12 +22,19 @@ while ($row = $classSectionResult->fetch_assoc()) {
 $selected_class_id = $classSections[0]['class_id'] ?? '';
 $selected_section_id = $classSections[0]['section_id'] ?? '';
 
-// Fetch unique assessment types for this teacher's class-section(s)
-$typeQuery = "SELECT DISTINCT type FROM assessments WHERE teacher_user_id = $teacher_user_id AND class_id = $selected_class_id AND section_id = $selected_section_id";
-$typeResult = $conn->query($typeQuery);
-$assessmentTypes = [];
-while ($row = $typeResult->fetch_assoc()) {
-    $assessmentTypes[] = $row['type'];
+// Validate that we have valid class and section IDs
+if (empty($selected_class_id) || empty($selected_section_id)) {
+    // If no class-section assignments found, initialize with empty arrays
+    $assessmentTypes = [];
+    $selected_type = 'all';
+} else {
+    // Fetch unique assessment types for this teacher's class-section(s)
+    $typeQuery = "SELECT DISTINCT type FROM assessments WHERE teacher_user_id = $teacher_user_id AND class_id = $selected_class_id AND section_id = $selected_section_id";
+    $typeResult = $conn->query($typeQuery);
+    $assessmentTypes = [];
+    while ($row = $typeResult->fetch_assoc()) {
+        $assessmentTypes[] = $row['type'];
+    }
 }
 $selected_type = $_GET['assessment_type'] ?? 'all';
 

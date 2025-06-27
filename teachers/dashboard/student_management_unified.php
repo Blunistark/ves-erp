@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Unified Student Management System
  * Comprehensive student management interface
@@ -48,12 +47,11 @@ include 'sidebar.php';
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Management - Unified System</title>
-
+    
     <link rel="stylesheet" href="css/sidebar.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -66,8 +64,8 @@ include 'sidebar.php';
             --border-color: #e2e8f0;
             --bg-light: #f7fafc;
             --bg-white: #ffffff;
-            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
-            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
             --border-radius: 8px;
         }
 
@@ -193,9 +191,7 @@ include 'sidebar.php';
             color: #e53e3e;
         }
 
-        .form-input,
-        .form-select,
-        .form-textarea {
+        .form-input, .form-select, .form-textarea {
             width: 100%;
             padding: 12px 16px;
             border: 2px solid var(--border-color);
@@ -204,9 +200,7 @@ include 'sidebar.php';
             transition: all 0.3s ease;
         }
 
-        .form-input:focus,
-        .form-select:focus,
-        .form-textarea:focus {
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
             outline: none;
             border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(253, 93, 93, 0.1);
@@ -301,8 +295,7 @@ include 'sidebar.php';
             margin-top: 16px;
         }
 
-        .data-table th,
-        .data-table td {
+        .data-table th, .data-table td {
             padding: 12px 16px;
             text-align: left;
             border-bottom: 1px solid var(--border-color);
@@ -377,9 +370,7 @@ include 'sidebar.php';
             border-radius: var(--border-radius);
             margin-bottom: 20px;
             display: none;
-        }
-
-        .notification.success {
+        }        .notification.success {
             background: rgba(38, 231, 166, 0.1);
             color: #059669;
             border: 1px solid rgba(38, 231, 166, 0.3);
@@ -415,14 +406,19 @@ include 'sidebar.php';
         }
 
         @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
+            to { transform: rotate(360deg); }
         }
 
         /* Role-based styling */
         .admin-only {
-            <?php if ($user_role !== 'admin'): ?>display: none !important;
+            <?php if ($user_role !== 'admin'): ?>
+            display: none !important;
+            <?php endif; ?>
+        }
+
+        .headmaster-allowed {
+            <?php if (!in_array($user_role, ['admin', 'headmaster'])): ?>
+            display: none !important;
             <?php endif; ?>
         }
 
@@ -603,7 +599,7 @@ include 'sidebar.php';
             .filter-grid {
                 grid-template-columns: 1fr;
             }
-
+            
             .section-header {
                 flex-direction: column;
                 gap: 12px;
@@ -612,7 +608,6 @@ include 'sidebar.php';
         }
     </style>
 </head>
-
 <body>
     <div class="unified-container">
         <!-- Header Section -->
@@ -714,16 +709,16 @@ include 'sidebar.php';
                             <div class="spinner"></div>
                             <p>Loading students...</p>
                         </div>
-
+                        
                         <table class="data-table" id="studentsTable" style="display: none;">
                             <thead>
                                 <tr>
                                     <th>Student Info</th>
-                                    <th>SATS Number</th>
                                     <th>Class & Section</th>
                                     <th>Roll Number</th>
                                     <th>Status</th>
-                                    <th class="admin-only">Actions</th>
+                                    <th>Contact</th>
+                                    <th class="headmaster-allowed">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="studentsTableBody">
@@ -735,9 +730,7 @@ include 'sidebar.php';
                         </div>
                     </div>
                 </div>
-            </div> 
-            
-            <!-- Add Student Tab -->
+            </div>            <!-- Add Student Tab -->
             <div class="tab-content admin-only" id="add-tab">
                 <div class="card">
                     <div class="card-header">
@@ -775,12 +768,7 @@ include 'sidebar.php';
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label required" for="addStudentSatsNumber">SATS Number</label>
-                                    <input type="text" class="form-input" id="addStudentSatsNumber" name="student_state_code" maxlength="10" placeholder="Enter SATS Number">
-                                    <div class="help-text">State government SATS number</div>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label required">Blood Group</label>
+                                    <label class="form-label">Blood Group</label>
                                     <select name="blood_group_code" class="form-select">
                                         <option value="">Select Blood Group</option>
                                         <option value="A+">A+</option>
@@ -802,7 +790,7 @@ include 'sidebar.php';
                                 <div class="form-group">
                                     <label class="form-label required">Password</label>
                                     <input type="password" name="password" class="form-input" required>
-                                    <div class="help-text">Auto filled using DOB</div>
+                                    <div class="help-text">For new students only. Leave blank when editing.</div>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label required">Mobile</label>
@@ -1008,39 +996,31 @@ include 'sidebar.php';
             <div class="modal-body">
                 <form id="editStudentForm" enctype="multipart/form-data">
                     <input type="hidden" name="student_id" id="editStudentId">
+                    <input type="hidden" name="user_id" id="editUserId">
                     <div class="form-grid">
                         <div class="form-group">
-                            <label class="form-label required">First Name</label>
-                            <input type="text" name="first_name" id="editFirstName" class="form-input" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label required">Last Name</label>
-                            <input type="text" name="last_name" id="editLastName" class="form-input" required>
+                            <label class="form-label required">Full Name</label>
+                            <input type="text" name="full_name" id="editFullName" class="form-input" required>
                         </div>
                         <div class="form-group">
                             <label class="form-label required">Date of Birth</label>
-                            <input type="date" name="date_of_birth" id="editDateOfBirth" class="form-input" required>
+                            <input type="date" name="dob" id="editDateOfBirth" class="form-input" required>
                         </div>
                         <div class="form-group">
                             <label class="form-label required">Gender</label>
-                            <select name="gender" id="editGender" class="form-select" required>
-                                <option value="male">Male</option>
-                                <option value="female">Female</option>
-                                <option value="other">Other</option>
+                            <select name="gender_code" id="editGender" class="form-select" required>
+                                <option value="MALE">Male</option>
+                                <option value="FEMALE">Female</option>
+                                <option value="OTHER">Other</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">SATS Number</label>
-                            <input type="text" name="student_state_code" id="editStudentSatsNumber" class="form-input" maxlength="10" placeholder="Enter SATS Number">
-                            <div class="help-text">State government SATS number</div>
-                        </div>
-                        <div class="form-group">
                             <label class="form-label">Email</label>
-                            <input type="email" name="email" id="editEmail" class="form-input">
+                            <input type="email" name="contact_email" id="editEmail" class="form-input">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Phone</label>
-                            <input type="tel" name="phone" id="editPhone" class="form-input">
+                            <input type="tel" name="mobile" id="editPhone" class="form-input">
                         </div>
                         <div class="form-group">
                             <label class="form-label required">Class</label>
@@ -1091,13 +1071,12 @@ include 'sidebar.php';
         </div>
     </div>
 
-    <script>
-        // Initialize data
+    <script>        // Initialize data
         const classes = <?php echo json_encode($classes); ?>;
         const sections = <?php echo json_encode($sections); ?>;
         const academic_years = <?php echo json_encode($academic_years); ?>;
         const parents = <?php echo json_encode($parents); ?>;
-
+        
         let currentPage = 1;
         let totalPages = 1;
         let currentFilters = {};
@@ -1122,11 +1101,11 @@ include 'sidebar.php';
             tabButtons.forEach(button => {
                 button.addEventListener('click', function() {
                     const targetTab = this.getAttribute('data-tab');
-
+                    
                     // Remove active class from all tabs and contents
                     tabButtons.forEach(btn => btn.classList.remove('active'));
                     tabContents.forEach(content => content.classList.remove('active'));
-
+                    
                     // Add active class to clicked tab and corresponding content
                     this.classList.add('active');
                     document.getElementById(targetTab + '-tab').classList.add('active');
@@ -1134,7 +1113,7 @@ include 'sidebar.php';
             });
         }
 
-        function populateDropdowns() { // Populate class dropdowns
+        function populateDropdowns() {            // Populate class dropdowns
             const classSelects = document.querySelectorAll('#filterClass, #addStudentClass, #bulkFromClass, #bulkToClass, #reportClass, #editStudentClassSelect');
             classSelects.forEach(select => {
                 select.innerHTML = '<option value="">Select Class</option>';
@@ -1145,12 +1124,11 @@ include 'sidebar.php';
 
             // Populate academic years dropdown
             const academicYearSelect = document.querySelector('#addStudentAcademicYear');
-            if (academicYearSelect) {
-                academicYearSelect.innerHTML = '<option value="">Select Academic Year</option>';
+            if (academicYearSelect) {                academicYearSelect.innerHTML = '<option value="">Select Academic Year</option>';
                 academic_years.forEach(year => {
                     academicYearSelect.innerHTML += `<option value="${year.id}">${year.name}</option>`;
                 });
-
+                
                 // Auto-select current academic year if available
                 if (academic_years.length > 0) {
                     academicYearSelect.value = academic_years[0].id;
@@ -1167,7 +1145,7 @@ include 'sidebar.php';
 
             // Setup section dropdowns based on class selection
             setupSectionDependency('#addStudentClass', '#addStudentSection');
-            setupSectionDependency('#editStudentClassSelect', '#editStudentSection');
+            setupSectionDependency('#editStudentClassSelect', '#editStudentSectionSelect');
             setupSectionDependency('#filterClass', '#filterSection');
             setupSectionDependency('#reportClass', '#reportSection');
         }
@@ -1175,12 +1153,12 @@ include 'sidebar.php';
         function setupSectionDependency(classSelectId, sectionSelectId) {
             const classSelect = document.querySelector(classSelectId);
             const sectionSelect = document.querySelector(sectionSelectId);
-
+            
             if (classSelect && sectionSelect) {
                 classSelect.addEventListener('change', function() {
                     const classId = this.value;
                     sectionSelect.innerHTML = '<option value="">Select Section</option>';
-
+                    
                     if (classId) {
                         const classSections = sections.filter(section => section.class_id == classId);
                         classSections.forEach(section => {
@@ -1189,9 +1167,7 @@ include 'sidebar.php';
                     }
                 });
             }
-        }
-
-        function setupEventListeners() {
+        }        function setupEventListeners() {
             // Search and filter listeners
             document.getElementById('searchTerm').addEventListener('input', debounce(handleFilterChange, 500));
             document.getElementById('filterClass').addEventListener('change', handleFilterChange);
@@ -1210,10 +1186,10 @@ include 'sidebar.php';
             if (admissionDateField && !admissionDateField.value) {
                 const today = new Date().toISOString().split('T')[0];
                 admissionDateField.value = today;
-            } // Auto-fill password with DOB for new students
+            }            // Auto-fill password with DOB for new students
             const dobField = document.querySelector('input[name="dob"]');
             const passwordField = document.querySelector('input[name="password"]');
-
+            
             if (dobField && passwordField) {
                 dobField.addEventListener('change', function() {
                     // Only auto-fill password if we're adding a new student (not editing)
@@ -1233,8 +1209,7 @@ include 'sidebar.php';
         function handleFilterChange() {
             currentPage = 1;
             refreshStudentList();
-        }
-
+        }        
         function refreshStudentList() {
             const filters = {
                 search: document.getElementById('searchTerm').value,
@@ -1246,49 +1221,49 @@ include 'sidebar.php';
             };
 
             currentFilters = filters;
-
+            
             showLoading();
-
+            
             fetch('student_management_api.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(filters)
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    hideLoading();
-                    console.log('API Response:', data); // Debug log
-                    if (data.success) {
-                        displayStudents(data.students);
-                        updatePagination(data.pagination);
-                        updateStats(data.stats);
-                    } else {
-                        showNotification(data.message || 'Failed to load students', 'error');
-                    }
-                })
-                .catch(error => {
-                    hideLoading();
-                    console.error('Error:', error);
-                    showNotification('Error loading students: ' + error.message, 'error');
-                });
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(filters)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                hideLoading();
+                console.log('API Response:', data); // Debug log
+                if (data.success) {
+                    displayStudents(data.students);
+                    updatePagination(data.pagination);
+                    updateStats(data.stats);
+                } else {
+                    showNotification(data.message || 'Failed to load students', 'error');
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                console.error('Error:', error);
+                showNotification('Error loading students: ' + error.message, 'error');
+            });
         }
 
         function displayStudents(students) {
             const tbody = document.getElementById('studentsTableBody');
             const table = document.getElementById('studentsTable');
-
+            
             if (!tbody || !table) {
                 console.error('Table elements not found');
                 return;
             }
-
+            
             if (!students || students.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">No students found</td></tr>';
             } else {
@@ -1300,12 +1275,15 @@ include 'sidebar.php';
                                 <span class="student-admission">Adm: ${student.admission_number || 'N/A'}</span>
                             </div>
                         </td>
-                        <td>${student.student_state_code || ''}</td>
                         <td>${(student.class_name || 'N/A') + ' - ' + (student.section_name || 'N/A')}</td>
                         <td>${student.roll_number || 'N/A'}</td>
                         <td><span class="status-badge status-${student.status || 'active'}">${student.status || 'active'}</span></td>
-                        <td class="admin-only">
+                        <td>${student.email || 'N/A'}<br><small>${student.phone || 'N/A'}</small></td>
+                        <td class="headmaster-allowed">
                             <div class="actions">
+                                <button class="btn btn-outline btn-sm" onclick="viewStudent(${student.id})">
+                                    <i class="fas fa-eye"></i>
+                                </button>
                                 <button class="btn btn-outline btn-sm" onclick="editStudent(${student.id})">
                                     <i class="fas fa-edit"></i>
                                 </button>
@@ -1314,21 +1292,21 @@ include 'sidebar.php';
                     </tr>
                 `).join('');
             }
-
+            
             table.style.display = 'table';
         }
 
         function updatePagination(pagination) {
             totalPages = pagination.totalPages;
             const paginationContainer = document.getElementById('studentPagination');
-
+            
             if (totalPages <= 1) {
                 paginationContainer.style.display = 'none';
                 return;
             }
 
             let paginationHTML = '';
-
+            
             // Previous button
             paginationHTML += `
                 <button class="pagination-btn" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
@@ -1372,90 +1350,85 @@ include 'sidebar.php';
             document.getElementById('activeStudentsCount').textContent = stats.active || 0;
             document.getElementById('classesCount').textContent = classes.length;
             document.getElementById('sectionsCount').textContent = sections.length;
-        }
-
-        function handleAddStudent(event) {
+        }        function handleAddStudent(event) {
             event.preventDefault();
             const formData = new FormData(event.target);
-
+            
             // Copy email to contact_email for database compatibility
             const email = formData.get('email');
             if (email) {
                 formData.append('contact_email', email);
             }
-
-            let rollNumber = formData.get('roll_number');
-            if (!rollNumber || isNaN(rollNumber)) {
-                formData.set('roll_number', '0'); // or set to a default valid integer like '0'
-            }
-
+            
             // Check if we're editing (student_id is present) or adding
             const studentId = formData.get('student_id');
             const isEditing = studentId && studentId.trim() !== '';
-
+            
             const action = isEditing ? 'update_student' : 'add_student';
             formData.append('action', action);
-
+            
             if (isEditing) {
                 formData.append('student_user_id', studentId);
             }
 
             fetch('student_management_api.php', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        const message = isEditing ? 'Student updated successfully!' : 'Student added successfully!';
-                        showNotification(message, 'success');
-
-                        if (!isEditing) {
-                            event.target.reset();
-                        } else {
-                            clearStudentForm(); // Clear form after successful edit
-                        }
-
-                        refreshStudentList();
-
-                        // Switch back to list tab after successful operation
-                        showTab('list');
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const message = isEditing ? 'Student updated successfully!' : 'Student added successfully!';
+                    showNotification(message, 'success');
+                    
+                    if (!isEditing) {
+                        event.target.reset();
                     } else {
-                        showNotification(data.message, 'error');
-                        console.error("API Error:", data);
+                        clearStudentForm(); // Clear form after successful edit
                     }
-                })
-                .catch(error => {
-                    const errorMessage = isEditing ? 'Error updating student: ' : 'Error adding student: ';
-                    showNotification(errorMessage + error.message, 'error');
-                });
-        }
-
-        function handleEditStudent(event) {
+                    
+                    refreshStudentList();
+                    
+                    // Switch back to list tab after successful operation
+                    showTab('list');
+                } else {
+                    showNotification(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                const errorMessage = isEditing ? 'Error updating student: ' : 'Error adding student: ';
+                showNotification(errorMessage + error.message, 'error');
+            });
+        }function handleEditStudent(event) {
             event.preventDefault();
             const formData = new FormData(event.target);
             formData.append('action', 'update_student');
 
-            fetch('student_management_api.php', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showNotification('Student updated successfully!', 'success');
-                        closeModal('editStudentModal');
-                        refreshStudentList();
-                    } else {
-                        showNotification(data.message, 'error');
-                    }
-                })
-                .catch(error => {
-                    showNotification('Error updating student: ' + error.message, 'error');
-                });
-        }
+            // Debug: Log form data
+            console.log('Form data being sent:');
+            for (let [key, value] of formData.entries()) {
+                console.log(key, ':', value);
+            }
 
-        function handleBulkPromote(event) {
+            fetch('student_management_api.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('API response:', data); // Debug log
+                if (data.success) {
+                    showNotification('Student updated successfully!', 'success');
+                    closeModal('editStudentModal');
+                    refreshStudentList();
+                } else {
+                    showNotification(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('Error updating student: ' + error.message, 'error');
+            });
+        }        function handleBulkPromote(event) {
             event.preventDefault();
             const formData = new FormData(event.target);
             const data = Object.fromEntries(formData);
@@ -1463,106 +1436,101 @@ include 'sidebar.php';
 
             if (confirm('Are you sure you want to promote all students from the selected class?')) {
                 fetch('student_management_api.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(data)
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            showNotification(`Successfully promoted ${data.promoted_count} students!`, 'success');
-                            refreshStudentList();
-                        } else {
-                            showNotification(data.message, 'error');
-                        }
-                    })
-                    .catch(error => {
-                        showNotification('Error promoting students: ' + error.message, 'error');
-                    });
-            }
-        }
-
-        function handleBulkImport(event) {
-            event.preventDefault();
-            const formData = new FormData(event.target);
-            formData.append('action', 'bulk_import_students');
-
-            fetch('student_management_api.php', {
                     method: 'POST',
-                    body: formData
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        showNotification(`Successfully imported ${data.imported_count} students!`, 'success');
+                        showNotification(`Successfully promoted ${data.promoted_count} students!`, 'success');
                         refreshStudentList();
                     } else {
                         showNotification(data.message, 'error');
                     }
                 })
                 .catch(error => {
-                    showNotification('Error importing students: ' + error.message, 'error');
+                    showNotification('Error promoting students: ' + error.message, 'error');
                 });
+            }
+        }        function handleBulkImport(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            formData.append('action', 'bulk_import_students');
+
+            fetch('student_management_api.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(`Successfully imported ${data.imported_count} students!`, 'success');
+                    refreshStudentList();
+                } else {
+                    showNotification(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('Error importing students: ' + error.message, 'error');
+            });
         }
 
         function handleGenerateReport(event) {
             event.preventDefault();
             const formData = new FormData(event.target);
             const params = new URLSearchParams(formData);
-
+            
             window.open(`student_report.php?${params.toString()}`, '_blank');
-        }
-
-        function viewStudent(studentId) {
+        }        function viewStudent(studentId) {
             fetch('student_management_api.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        action: 'get_student_details',
-                        student_id: studentId
-                    })
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: 'get_student_details',
+                    student_id: studentId
                 })
-                .then(response => response.json()).then(data => {
-                    if (data.success) {
-                        displayStudentDetails(data.data);
-                        openModal('studentDetailsModal');
-                    } else {
-                        showNotification(data.message, 'error');
-                    }
-                })
-                .catch(error => {
-                    showNotification('Error loading student details: ' + error.message, 'error');
-                });
-        }
-
-        function editStudent(studentId) {
+            })
+            .then(response => response.json())            .then(data => {
+                if (data.success) {
+                    displayStudentDetails(data.data);
+                    openModal('studentDetailsModal');
+                } else {
+                    showNotification(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('Error loading student details: ' + error.message, 'error');
+            });
+        }        function editStudent(studentId) {
             fetch('student_management_api.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        action: 'get_student_details',
-                        student_id: studentId
-                    })
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: 'get_student_details',
+                    student_id: studentId
                 })
-                .then(response => response.json()).then(data => {
-                    if (data.success) {
-                        populateAddFormForEdit(data.data);
-                        // Switch to Add Student tab and show it's in edit mode
-                        showTab('add');
-                        showNotification('Editing student: ' + data.data.full_name, 'info');
-                    } else {
-                        showNotification('Error: ' + data.message, 'error');
-                    }
-                })
-                .catch(error => {
-                    showNotification('Error loading student details: ' + error.message, 'error');
-                });
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('Student data received:', data.data); // Debug log
+                    populateEditForm(data.data);
+                    openModal('editStudentModal');
+                    showNotification('Editing student: ' + data.data.full_name, 'info');
+                } else {
+                    showNotification('Error: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('Error loading student details: ' + error.message, 'error');
+            });
         }
 
         function displayStudentDetails(student) {
@@ -1571,9 +1539,6 @@ include 'sidebar.php';
                 <div class="form-grid">
                     <div class="form-group">
                         <strong>Name:</strong> ${student.full_name}
-                    </div>
-                    <div>
-                        <strong>SATS Number:</strong> ${student.student_state_code || 'N/A'}
                     </div>
                     <div class="form-group">
                         <strong>Admission Number:</strong> ${student.admission_number}
@@ -1617,60 +1582,123 @@ include 'sidebar.php';
         }
 
         function populateEditForm(student) {
-            document.getElementById('editStudentId').value = student.id;
-            document.getElementById('editFirstName').value = student.first_name || '';
-            document.getElementById('editLastName').value = student.last_name || '';
-            document.getElementById('editDateOfBirth').value = student.date_of_birth || '';
-            document.getElementById('editGender').value = student.gender || '';
-            document.getElementById('editEmail').value = student.email || '';
-            document.getElementById('editPhone').value = student.phone || '';
-            document.getElementById('editRollNumber').value = student.roll_number || '';
-            document.getElementById('editStatus').value = student.status || 'active';
-            document.getElementById('editAddress').value = student.address || '';
-
+            console.log('Populating edit form with student data:', student); // Debug log
+            
+            // Set both hidden student ID fields
+            const studentIdField = document.getElementById('editStudentId');
+            const userIdField = document.getElementById('editUserId');
+            
+            if (studentIdField) {
+                const studentId = student.user_id || student.id;
+                studentIdField.value = studentId;
+                console.log('Set student_id field to:', studentId);
+            } else {
+                console.error('editStudentId field not found');
+            }
+            
+            if (userIdField) {
+                const userId = student.user_id || student.id;
+                userIdField.value = userId;
+                console.log('Set user_id field to:', userId);
+            } else {
+                console.error('editUserId field not found');
+            }
+            
+            // Populate full name field
+            const fullName = student.full_name || '';
+            console.log('Full Name:', fullName); // Debug log
+            
+            const fullNameField = document.getElementById('editFullName');
+            if (fullNameField) {
+                fullNameField.value = fullName;
+                console.log('Set full name field to:', fullName);
+            } else {
+                console.error('editFullName field not found');
+            }
+            
+            const dobField = document.getElementById('editDateOfBirth');
+            if (dobField) {
+                dobField.value = student.dob || student.date_of_birth || student.birth_date || '';
+            }
+            
+            // Handle gender field (convert to uppercase to match database format)
+            const gender = student.gender_code || student.gender || '';
+            console.log('Gender:', gender); // Debug log
+            const genderField = document.getElementById('editGender');
+            if (genderField) {
+                genderField.value = gender.toUpperCase();
+                console.log('Set gender field to:', gender.toUpperCase());
+            } else {
+                console.error('editGender field not found');
+            }
+            
+            const emailField = document.getElementById('editEmail');
+            if (emailField) {
+                emailField.value = student.contact_email || student.user_email || student.email || '';
+            }
+            
+            const phoneField = document.getElementById('editPhone');
+            if (phoneField) {
+                phoneField.value = student.mobile || student.phone || student.contact || '';
+            }
+            
+            const rollField = document.getElementById('editRollNumber');
+            if (rollField) {
+                rollField.value = student.roll_number || student.roll_no || '';
+            }
+            
+            const addressField = document.getElementById('editAddress');
+            if (addressField) {
+                addressField.value = student.address || '';
+            }
+            
+            const statusField = document.getElementById('editStatus');
+            if (statusField) {
+                statusField.value = student.user_status || student.status || 'active';
+            }
+            
             // Set class and trigger section population
-            const classSelect = document.getElementById('editStudentClassSelect');
-            classSelect.value = student.class_id || '';
-            classSelect.dispatchEvent(new Event('change'));
-
+            const classField = document.getElementById('editStudentClassSelect');
+            if (classField) {
+                classField.value = student.class_id || '';
+                classField.dispatchEvent(new Event('change'));
+            }
+            
             // Set section after a brief delay to allow section population
             setTimeout(() => {
-                document.getElementById('editStudentSectionSelect').value = student.section_id || '';
+                const sectionField = document.getElementById('editStudentSectionSelect');
+                if (sectionField) sectionField.value = student.section_id || '';
             }, 100);
-        }
-
-        function loadReportStats() {
+        }        function loadReportStats() {
             fetch('student_management_api.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        action: 'get_students'
-                    })
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: 'get_students'
                 })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success && data.stats) {
-                        document.getElementById('reportTotalStudents').textContent = data.stats.total || 0;
-                        document.getElementById('reportActiveStudents').textContent = data.stats.active || 0;
-                        document.getElementById('reportMaleStudents').textContent = data.stats.male || 0;
-                        document.getElementById('reportFemaleStudents').textContent = data.stats.female || 0;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading report stats:', error);
-                });
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.stats) {
+                    document.getElementById('reportTotalStudents').textContent = data.stats.total || 0;
+                    document.getElementById('reportActiveStudents').textContent = data.stats.active || 0;
+                    document.getElementById('reportMaleStudents').textContent = data.stats.male || 0;
+                    document.getElementById('reportFemaleStudents').textContent = data.stats.female || 0;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading report stats:', error);
+            });
         }
 
         function downloadSampleCSV() {
             const csvContent = `first_name,last_name,admission_number,date_of_birth,gender,blood_group,email,phone,class_id,section_id,roll_number,address
 John,Doe,ADM001,2010-01-15,male,A+,john.doe@email.com,1234567890,1,1,1,123 Main Street
 Jane,Smith,ADM002,2010-02-20,female,B+,jane.smith@email.com,0987654321,1,1,2,456 Oak Avenue`;
-
-            const blob = new Blob([csvContent], {
-                type: 'text/csv'
-            });
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -1694,7 +1722,7 @@ Jane,Smith,ADM002,2010-02-20,female,B+,jane.smith@email.com,0987654321,1,1,2,456
             notification.textContent = message;
             notification.className = `notification ${type}`;
             notification.style.display = 'block';
-
+            
             setTimeout(() => {
                 notification.style.display = 'none';
             }, 5000);
@@ -1726,33 +1754,31 @@ Jane,Smith,ADM002,2010-02-20,female,B+,jane.smith@email.com,0987654321,1,1,2,456
             // Remove active class from all tabs and contents
             const tabButtons = document.querySelectorAll('.tab-button');
             const tabContents = document.querySelectorAll('.tab-content');
-
+            
             tabButtons.forEach(btn => btn.classList.remove('active'));
             tabContents.forEach(content => content.classList.remove('active'));
-
+            
             // Add active class to the specified tab
             const targetButton = document.querySelector(`[data-tab="${tabName}"]`);
             const targetContent = document.getElementById(`${tabName}-tab`);
-
+            
             if (targetButton && targetContent) {
                 targetButton.classList.add('active');
                 targetContent.classList.add('active');
             }
-        }
-
-        function populateAddFormForEdit(student) {
+        }        function populateAddFormForEdit(student) {
             // Set the hidden student ID
             document.getElementById('editStudentId').value = student.user_id || student.id;
-
+            
             // Update UI to show edit mode
             document.getElementById('addStudentTitle').textContent = 'Edit Student';
             document.getElementById('editModeNotice').style.display = 'block';
             document.getElementById('submitButtonText').textContent = 'Update Student';
             document.getElementById('resetButtonText').textContent = 'Clear Form';
-
+            
             // Populate form fields with actual API field names
             const form = document.getElementById('addStudentForm');
-
+            
             // Basic fields
             form.querySelector('input[name="full_name"]').value = student.full_name || '';
             form.querySelector('input[name="admission_date"]').value = student.admission_date || '';
@@ -1767,45 +1793,42 @@ Jane,Smith,ADM002,2010-02-20,female,B+,jane.smith@email.com,0987654321,1,1,2,456
             form.querySelector('input[name="nationality"]').value = student.nationality || '';
             form.querySelector('textarea[name="address"]').value = student.address || '';
             form.querySelector('input[name="pincode"]').value = student.pincode || '';
-            form.querySelector('input[name="alt_mobile"]').value = student.alt_mobile || ''; // Don't populate password field when editing
+            form.querySelector('input[name="alt_mobile"]').value = student.alt_mobile || '';            // Don't populate password field when editing
             form.querySelector('input[name="password"]').value = '';
             form.querySelector('input[name="password"]').removeAttribute('required');
-            form.querySelector('input[name="student_state_code"]').value = student.student_state_code || '';
-
+            
             // Set class and trigger section population
             const classSelect = form.querySelector('select[name="class_id"]');
             classSelect.value = student.class_id || '';
             classSelect.dispatchEvent(new Event('change'));
-
+            
             // Set section and academic year after a brief delay to allow section population
             setTimeout(() => {
                 form.querySelector('select[name="section_id"]').value = student.section_id || '';
                 form.querySelector('select[name="academic_year_id"]').value = student.academic_year_id || '';
             }, 100);
-        }
-
-        function clearStudentForm() {
+        }        function clearStudentForm() {
             // Reset form
             document.getElementById('addStudentForm').reset();
-
+            
             // Clear hidden student ID
             document.getElementById('editStudentId').value = '';
-
+            
             // Reset UI to add mode
             document.getElementById('addStudentTitle').textContent = 'Add New Student';
             document.getElementById('editModeNotice').style.display = 'none';
             document.getElementById('submitButtonText').textContent = 'Add Student';
-            document.getElementById('resetButtonText').textContent = 'Reset Form'; // Restore password field as required for new students
+            document.getElementById('resetButtonText').textContent = 'Reset Form';            // Restore password field as required for new students
             const passwordField = document.querySelector('input[name="password"]');
             passwordField.setAttribute('required', 'required');
-
+            
             // Set admission date to today
             const admissionDateField = document.querySelector('input[name="admission_date"]');
             if (admissionDateField) {
                 const today = new Date().toISOString().split('T')[0];
                 admissionDateField.value = today;
             }
-
+            
             showNotification('Form cleared. You can now add a new student.', 'info');
         }
 
@@ -1818,5 +1841,4 @@ Jane,Smith,ADM002,2010-02-20,female,B+,jane.smith@email.com,0987654321,1,1,2,456
         });
     </script>
 </body>
-
 </html>
