@@ -701,8 +701,6 @@ include 'sidebar.php';
             </form>
         </div>
     </div>    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script>        const teacherId = <?php echo json_encode($teacher_id); ?>;
         const availableClasses = <?php echo json_encode($classes); ?>;
         const availableSections = <?php echo json_encode($sections); ?>;
@@ -718,15 +716,6 @@ include 'sidebar.php';
             loadTimeslots();
             loadTeacherDetails();
             setupEventListeners();
-            
-            // Test jsPDF loading
-            setTimeout(function() {
-                if (typeof window.jspdf === 'undefined') {
-                    console.warn('jsPDF library failed to load from CDN');
-                } else {
-                    console.log('jsPDF library loaded successfully');
-                }
-            }, 2000);
         });        function setupEventListeners() {
             // Period form submission
             $('#periodForm').on('submit', function(e) {
@@ -850,9 +839,9 @@ include 'sidebar.php';
                 </div>
             `;
             $('#teacherBasicInfo').html(basicInfoHtml);            // Display workload statistics
-            const totalPeriodsPerWeek = 48; // 8 periods × 6 days (Mon-Sat)
+            const totalWorkingHours = 40; // Standard working hours per week
             const assignedPeriods = workload.total_periods_per_week || 0;
-            const freePeriods = Math.max(0, totalPeriodsPerWeek - assignedPeriods);
+            const leisureHours = Math.max(0, totalWorkingHours - assignedPeriods);
             
             const workloadHtml = `
                 <div class="stat-card">
@@ -868,8 +857,8 @@ include 'sidebar.php';
                     <div class="stat-label">Periods per Week</div>
                 </div>
                 <div class="stat-card leisure">
-                    <div class="stat-number">${freePeriods}</div>
-                    <div class="stat-label">Free Periods</div>
+                    <div class="stat-number">${leisureHours}</div>
+                    <div class="stat-label">Leisure Hours</div>
                 </div>                <div class="stat-card">
                     <div class="stat-number">${class_assignments.length}</div>
                     <div class="stat-label">Class Teacher Of</div>
@@ -926,7 +915,7 @@ include 'sidebar.php';
                                     </div>
                                 </div>
                                 ${conflictIndicator}
-                                ${isTimetableEditMode ? `<button class="remove-period-btn" onclick="removePeriod(event, '${day}', ${period})">&times;</button>` : ''}
+                                ${isTimetableEditMode ? '<button class="remove-period-btn" onclick="removePeriod(event, \''+day+'\', '+period+')">&times;</button>' : ''}
                             </td>
                         `;
                     } else {
@@ -1738,239 +1727,6 @@ include 'sidebar.php';
                     'opacity': '0.7'
                 });
             }
-        }
-        
-        // Export Functions
-        function exportTeacherDetails() {
-            if (!currentTeacherData) {
-                alert('Teacher data not loaded yet. Please wait and try again.');
-                return;
-            }
-            
-            // Check if jsPDF is loaded
-            if (typeof window.jspdf === 'undefined') {
-                alert('PDF library is still loading. Please try again in a moment.');
-                return;
-            }
-            
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            // Set up the document
-            doc.setFontSize(20);
-            doc.text('Teacher Details Report', 20, 20);
-            
-            // Teacher basic information
-            const teacher = currentTeacherData.teacher;
-            doc.setFontSize(14);
-            doc.text('Personal Information', 20, 40);
-            
-            doc.setFontSize(10);
-            let yPosition = 50;
-            const lineHeight = 8;
-            
-            // Add teacher details
-            const details = [
-                `Employee ID: ${teacher.employee_number || 'N/A'}`,
-                `Full Name: ${teacher.full_name || 'N/A'}`,
-                `Email: ${teacher.email || 'N/A'}`,
-                `Phone: ${teacher.phone || 'N/A'}`,
-                `Gender: ${teacher.gender || 'N/A'}`,
-                `Date of Birth: ${teacher.date_of_birth || 'N/A'}`,
-                `Qualification: ${teacher.qualification || 'N/A'}`,
-                `Experience: ${teacher.experience || 'N/A'}`,
-                `Joining Date: ${teacher.joining_date || 'N/A'}`,
-                `Status: ${teacher.status || 'N/A'}`,
-                `Address: ${teacher.address || 'N/A'}`
-            ];
-            
-            details.forEach(detail => {
-                doc.text(detail, 20, yPosition);
-                yPosition += lineHeight;
-            });
-            
-            // Workload Statistics
-            yPosition += 10;
-            doc.setFontSize(14);
-            doc.text('Workload Overview', 20, yPosition);
-            yPosition += 10;
-            
-            doc.setFontSize(10);
-            const workload = currentTeacherData.workload;
-            const totalPeriodsPerWeek = 48;
-            const assignedPeriods = workload.total_periods_per_week || 0;
-            const freePeriods = Math.max(0, totalPeriodsPerWeek - assignedPeriods);
-            
-            const workloadDetails = [
-                `Subjects Assigned: ${workload.total_subjects || 0}`,
-                `Classes Teaching: ${workload.total_classes || 0}`,
-                `Periods per Week: ${assignedPeriods}`,
-                `Free Periods: ${freePeriods}`,
-                `Class Teacher Of: ${currentTeacherData.class_assignments.length}`
-            ];
-            
-            workloadDetails.forEach(detail => {
-                doc.text(detail, 20, yPosition);
-                yPosition += lineHeight;
-            });
-            
-            // Assigned Subjects
-            if (currentTeacherData.subjects && currentTeacherData.subjects.length > 0) {
-                yPosition += 10;
-                doc.setFontSize(14);
-                doc.text('Assigned Subjects', 20, yPosition);
-                yPosition += 10;
-                
-                doc.setFontSize(10);
-                currentTeacherData.subjects.forEach(subject => {
-                    doc.text(`• ${subject.subject_name} (${subject.subject_code || ''}) - ${subject.classes_sections || 'All Classes'}`, 20, yPosition);
-                    yPosition += lineHeight;
-                });
-            }
-            
-            // Class Teacher Assignments
-            if (currentTeacherData.class_assignments && currentTeacherData.class_assignments.length > 0) {
-                yPosition += 10;
-                doc.setFontSize(14);
-                doc.text('Class Teacher Assignments', 20, yPosition);
-                yPosition += 10;
-                
-                doc.setFontSize(10);
-                currentTeacherData.class_assignments.forEach(assignment => {
-                    doc.text(`• ${assignment.class_name} - ${assignment.section_name}`, 20, yPosition);
-                    yPosition += lineHeight;
-                });
-            }
-            
-            // Add timestamp
-            doc.setFontSize(8);
-            doc.text(`Generated on: ${new Date().toLocaleString()}`, 20, 280);
-            
-            // Save the PDF
-            doc.save(`${teacher.full_name || 'Teacher'}_Details_${new Date().toISOString().split('T')[0]}.pdf`);
-        }
-        
-        function exportTimetable() {
-            if (!currentTeacherData) {
-                alert('Teacher data not loaded yet. Please wait and try again.');
-                return;
-            }
-            
-            // Check if jsPDF is loaded
-            if (typeof window.jspdf === 'undefined') {
-                alert('PDF library is still loading. Please try again in a moment.');
-                return;
-            }
-            
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('landscape'); // Use landscape for better timetable layout
-            
-            // Set up the document
-            doc.setFontSize(16);
-            const teacher = currentTeacherData.teacher;
-            doc.text(`Weekly Timetable - ${teacher.full_name || 'Teacher'}`, 20, 20);
-            
-            doc.setFontSize(9);
-            doc.text(`Employee ID: ${teacher.employee_number || 'N/A'}`, 20, 30);
-            doc.text(`Generated on: ${new Date().toLocaleString()}`, 20, 38);
-            
-            // Timetable data
-            const timetable = currentTeacherData.timetable;
-            const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-            const dayLabels = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-            const periods = [1, 2, 3, 4, 5, 6, 7, 8];
-            
-            // Table setup - better aligned and centered
-            const pageWidth = doc.internal.pageSize.getWidth();
-            const totalTableWidth = 7 * 40; // 7 columns × 40px width
-            const startX = (pageWidth - totalTableWidth) / 2; // Center the table
-            const startY = 50;
-            const cellWidth = 40;
-            const cellHeight = 18;
-            const headerHeight = 22;
-            
-            // Draw table headers
-            doc.setFontSize(10);
-            doc.setFont(undefined, 'bold');
-            
-            // Time column header
-            doc.rect(startX, startY, cellWidth, headerHeight);
-            doc.text('Period', startX + 12, startY + 14);
-            
-            // Day headers
-            dayLabels.forEach((day, index) => {
-                const x = startX + cellWidth + (index * cellWidth);
-                doc.rect(x, startY, cellWidth, headerHeight);
-                // Center the day text
-                const textWidth = doc.getTextWidth(day);
-                const centerX = x + (cellWidth - textWidth) / 2;
-                doc.text(day, centerX, startY + 14);
-            });
-            
-            // Draw table rows
-            doc.setFont(undefined, 'normal');
-            periods.forEach((period, periodIndex) => {
-                const y = startY + headerHeight + (periodIndex * cellHeight);
-                
-                // Period number cell
-                doc.rect(startX, y, cellWidth, cellHeight);
-                doc.setFontSize(9);
-                const periodText = `P${period}`;
-                const periodTextWidth = doc.getTextWidth(periodText);
-                const periodCenterX = startX + (cellWidth - periodTextWidth) / 2;
-                doc.text(periodText, periodCenterX, y + 11);
-                
-                // Day cells
-                days.forEach((day, dayIndex) => {
-                    const x = startX + cellWidth + (dayIndex * cellWidth);
-                    doc.rect(x, y, cellWidth, cellHeight);
-                    
-                    // Find period data for this day and period
-                    const dayPeriods = timetable[day] || [];
-                    const periodData = dayPeriods.find(p => p.period_number == period);
-                    
-                    if (periodData) {
-                        // Add subject and class info - better aligned
-                        doc.setFontSize(7);
-                        let subjectText = (periodData.subject_name || 'N/A');
-                        // Truncate if too long
-                        if (subjectText.length > 12) {
-                            subjectText = subjectText.substring(0, 12) + '..';
-                        }
-                        const classText = `${periodData.class_name || ''}-${periodData.section_name || ''}`;
-                        
-                        // Center align the text
-                        const subjectWidth = doc.getTextWidth(subjectText);
-                        const classWidth = doc.getTextWidth(classText);
-                        const subjectCenterX = x + (cellWidth - subjectWidth) / 2;
-                        const classCenterX = x + (cellWidth - classWidth) / 2;
-                        
-                        doc.text(subjectText, subjectCenterX, y + 7);
-                        doc.text(classText, classCenterX, y + 13);
-                    } else {
-                        doc.setFontSize(8);
-                        const freeText = 'Free';
-                        const freeTextWidth = doc.getTextWidth(freeText);
-                        const freeCenterX = x + (cellWidth - freeTextWidth) / 2;
-                        doc.text(freeText, freeCenterX, y + 11);
-                    }
-                });
-            });
-            
-            // Add legend at a safe position
-            const legendY = startY + headerHeight + (periods.length * cellHeight) + 15;
-            doc.setFontSize(8);
-            doc.text('Legend: Each cell shows Subject and Class-Section (P1-P8 = Period 1-8)', startX, legendY);
-            
-            // Add footer
-            doc.setFontSize(7);
-            const footerText = 'VES School Management System';
-            const footerWidth = doc.getTextWidth(footerText);
-            const footerCenterX = (pageWidth - footerWidth) / 2;
-            doc.text(footerText, footerCenterX, legendY + 12);
-            
-            // Save the PDF
-            doc.save(`${teacher.full_name || 'Teacher'}_Timetable_${new Date().toISOString().split('T')[0]}.pdf`);
         }
     </script>
 </body>

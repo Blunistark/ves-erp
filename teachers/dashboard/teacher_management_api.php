@@ -415,7 +415,6 @@ function handleGetTeacherDetails() {
         // Get class teacher assignments
         $class_teacher_query = "
             SELECT 
-                s.id as section_id,
                 c.name as class_name,
                 s.name as section_name,
                 CONCAT(c.name, ' - ', s.name) as class_section

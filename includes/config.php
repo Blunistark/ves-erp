@@ -34,6 +34,7 @@ define('DB_USER', 'u786183242_ves_db6');           // Database username
 define('DB_PASS', '@Tinauto500');               // Database password
 define('DB_NAME', 'u786183242_ves_db6');     // Database name
 
+
 /**
  * Get database connection
  * @return mysqli|false Database connection object or false on failure
